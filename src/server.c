@@ -34,16 +34,9 @@
 static int bind_lua( lua_State *L )
 {
     llsocket_t *s = luaL_checkudata( L, 1, LLS_SERVER );
-    int backlog = (int)lua_tointeger( L, 2 );
-    
-    // use default backlog size
-    if( !backlog ){
-        backlog = SOMAXCONN;
-    }
     
     // bind and listen
-    if( bind( s->fd, (struct sockaddr*)s->addr, (socklen_t)s->addrlen ) == 0 && 
-        ( s->type == SOCK_DGRAM || listen( s->fd, backlog ) == 0 ) ){
+    if( bind( s->fd, (struct sockaddr*)s->addr, (socklen_t)s->addrlen ) == 0 ){
         lua_pushboolean( L, 1 );
         return 1;
     }
@@ -54,6 +47,31 @@ static int bind_lua( lua_State *L )
     
     return 2;
 }
+
+
+static int listen_lua( lua_State *L )
+{
+    llsocket_t *s = luaL_checkudata( L, 1, LLS_SERVER );
+    int backlog = (int)lua_tointeger( L, 2 );
+    
+    // use default backlog size
+    if( !backlog ){
+        backlog = SOMAXCONN;
+    }
+    
+    // bind and listen
+    if( listen( s->fd, backlog ) == 0 ){
+        lua_pushboolean( L, 1 );
+        return 1;
+    }
+    
+    // got error
+    lua_pushboolean( L, 0 );
+    lua_pushinteger( L, errno );
+    
+    return 2;
+}
+
 
 static int fd_lua( lua_State *L )
 {
@@ -89,6 +107,7 @@ int lls_server_mt( lua_State *L )
         { "fd", fd_lua },
         { "close", close_lua },
         { "bind", bind_lua },
+        { "listen", listen_lua },
         { NULL, NULL }
     };
     int i;
