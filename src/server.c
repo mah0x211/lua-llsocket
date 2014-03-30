@@ -57,12 +57,12 @@ static int bind_lua( lua_State *L )
 
 static int fd_lua( lua_State *L )
 {
-    return fd_mt( L, LLS_CLIENT );
+    return fd_mt( L, LLS_SERVER );
 }
 
 static int close_lua( lua_State *L )
 {
-    return close_mt( L, LLS_CLIENT );
+    return close_mt( L, LLS_SERVER );
 }
 
 /* metamethods */
