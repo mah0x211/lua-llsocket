@@ -52,6 +52,10 @@ static int connect_lua( lua_State *L )
     return 2;
 }
 
+static int fd_lua( lua_State *L )
+{
+    return fd_mt( L, LLS_CLIENT );
+}
 
 /* metamethods */
 static int gc_lua( lua_State *L )

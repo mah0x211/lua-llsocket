@@ -159,8 +159,15 @@ LUALIB_API int luaopen_llsocket( lua_State *L );
 LUALIB_API int luaopen_llsocket_inet( lua_State *L );
 
 // shared methods
-int fd_lua( lua_State *L );
 int close_lua( lua_State *L );
+static inline int fd_mt( lua_State *L, const char *tname )
+{
+    llsocket_t *s = luaL_checkudata( L, 1, tname );
+    
+    lua_pushinteger( L, s->fd );
+    
+    return 1;
+}
 
 
 // metatables

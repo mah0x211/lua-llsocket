@@ -31,15 +31,6 @@
 #include "llsocket.h"
 
 
-int fd_lua( lua_State *L )
-{
-    llsocket_t *s = lua_touserdata( L, 1 );
-    
-    lua_pushinteger( L, s->fd );
-    
-    return 1;
-}
-
 
 int close_lua( lua_State *L )
 {
