@@ -159,7 +159,6 @@ LUALIB_API int luaopen_llsocket( lua_State *L );
 LUALIB_API int luaopen_llsocket_inet( lua_State *L );
 
 // shared methods
-int gc_lua( lua_State *L );
 int fd_lua( lua_State *L );
 int close_lua( lua_State *L );
 
@@ -167,6 +166,24 @@ int close_lua( lua_State *L );
 // metatables
 int lls_server_mt( lua_State *L );
 int lls_client_mt( lua_State *L );
+
+static inline int gc_mt( lua_State *L )
+{
+    llsocket_t *s = lua_touserdata( L, 1 );
+    
+    if( s->fd )
+    {
+        lls_close( s->fd );
+        // remove unix domain socket file
+        if( s->family == AF_UNIX ){
+            unlink( ((struct sockaddr_un*)s->addr)->sun_path );
+        }
+    }
+    pdealloc( s->addr );
+    
+    return 0;
+}
+
 
 #define tostring_mt(L,meta) do { \
     lua_pushfstring( L, meta ": %p", lua_touserdata( L, 1 ) ); \

@@ -31,25 +31,6 @@
 #include "llsocket.h"
 
 
-int gc_lua( lua_State *L )
-{
-    llsocket_t *s = lua_touserdata( L, 1 );
-    
-    if( s->fd )
-    {
-        lls_close( s->fd );
-        // remove unix domain socket file
-        if( s->family == AF_UNIX ){
-            unlink( ((struct sockaddr_un*)s->addr)->sun_path );
-        }
-    }
-    
-    pdealloc( s->addr );
-    
-    return 0;
-}
-
-
 int fd_lua( lua_State *L )
 {
     llsocket_t *s = lua_touserdata( L, 1 );

@@ -57,6 +57,11 @@ static int bind_lua( lua_State *L )
 
 
 /* metamethods */
+static int gc_lua( lua_State *L )
+{
+    return gc_mt( L );
+}
+
 static int tostring_lua( lua_State *L )
 {
     tostring_mt( L, LLS_SERVER );
