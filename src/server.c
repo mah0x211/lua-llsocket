@@ -31,7 +31,7 @@
 #include "llsocket.h"
 
 
-static int listen_lua( lua_State *L )
+static int bind_lua( lua_State *L )
 {
     llsocket_t *s = luaL_checkudata( L, 1, LLS_SERVER );
     int backlog = (int)lua_tointeger( L, 2 );
@@ -74,7 +74,7 @@ int lls_server_mt( lua_State *L )
     struct luaL_Reg method[] = {
         { "fd", fd_lua },
         { "close", close_lua },
-        { "bind", listen_lua },
+        { "bind", bind_lua },
         { NULL, NULL }
     };
     int i;
