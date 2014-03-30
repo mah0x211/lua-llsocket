@@ -60,6 +60,10 @@ static int fd_lua( lua_State *L )
     return fd_mt( L, LLS_CLIENT );
 }
 
+static int close_lua( lua_State *L )
+{
+    return close_mt( L, LLS_CLIENT );
+}
 
 /* metamethods */
 static int gc_lua( lua_State *L )

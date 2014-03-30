@@ -159,12 +159,27 @@ LUALIB_API int luaopen_llsocket( lua_State *L );
 LUALIB_API int luaopen_llsocket_inet( lua_State *L );
 
 // shared methods
-int close_lua( lua_State *L );
 static inline int fd_mt( lua_State *L, const char *tname )
 {
     llsocket_t *s = luaL_checkudata( L, 1, tname );
     
     lua_pushinteger( L, s->fd );
+    
+    return 1;
+}
+
+static inline int close_mt( lua_State *L, const char *tname )
+{
+    llsocket_t *s = luaL_checkudata( L, 1, tname );
+    
+    if( s->fd ){
+        lls_close( s->fd );
+        s->fd = 0;
+        lua_pushboolean( L, 1 );
+    }
+    else {
+        lua_pushboolean( L, 0 );
+    }
     
     return 1;
 }

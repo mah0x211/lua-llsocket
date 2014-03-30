@@ -32,23 +32,6 @@
 
 
 
-int close_lua( lua_State *L )
-{
-    llsocket_t *s = lua_touserdata( L, 1 );
-    
-    if( s->fd ){
-        lls_close( s->fd );
-        s->fd = 0;
-        lua_pushboolean( L, 1 );
-    }
-    else {
-        lua_pushboolean( L, 0 );
-    }
-    
-    return 1;
-}
-
-
 int lls_inet_init( llsocket_t *s, const char *host, size_t hlen, 
                   const char *port, size_t plen, int flags, int socktype )
 {
