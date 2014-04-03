@@ -93,7 +93,9 @@ static inline int lls_stream_accept( lua_State *L, const char *tname,
                                      const char *peerName, size_t peerSize )
 {
     llsocket_t *s = luaL_checkudata( L, 1, tname );
-    int fd = accept( s->fd, NULL, NULL );
+    struct sockaddr addr;
+    socklen_t addrlen = 0;
+    int fd = accept( s->fd, &addr, &addrlen );
     
     if( fd != -1 )
     {
@@ -102,6 +104,9 @@ static inline int lls_stream_accept( lua_State *L, const char *tname,
             llsocket_t *peer = lua_newuserdata( L, peerSize );
             
             if( peer ){
+                peer->fd = fd;
+                peer->addrlen = addrlen;
+                memcpy( (void*)&peer->addr, (void*)&addr, (size_t)addrlen );
                 lstate_setmetatable( L, peerName );
                 return 1;
             }
