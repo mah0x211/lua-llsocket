@@ -37,28 +37,6 @@ LUALIB_API int luaopen_llsocket_inet_stream( lua_State *L );
 LUALIB_API int luaopen_llsocket_inet_stream_server( lua_State *L );
 LUALIB_API int luaopen_llsocket_inet_stream_client( lua_State *L );
 
-static inline int lls_stream_delay( lua_State *L, const char *tname )
-{
-    llsocket_t *s = luaL_checkudata( L, 1, tname );
-    int flg = 0;
-    
-    // check args
-    luaL_checktype( L, 2, LUA_TBOOLEAN );
-    flg = lua_toboolean( L, 2 );
-    
-    // set delay flag
-    if( setsockopt( s->fd, IPPROTO_TCP, TCP_NODELAY, &flg, sizeof(int) ) == 0 ){
-        lua_pushboolean( L, 1 );
-        return 1;
-    }
-    
-    // got error
-    lua_pushboolean( L, 0 );
-    lua_pushinteger( L, errno );
-    
-    return 2;
-}
-
 
 static inline int lls_stream_listen( lua_State *L, const char *tname )
 {
@@ -99,7 +77,7 @@ static inline int lls_stream_islisten( lua_State *L, const char *tname )
         lua_pushboolean( L, flg );
         return 1;
     }
-
+    
     // got error
     lua_pushboolean( L, 0 );
     lua_pushinteger( L, errno );
