@@ -57,6 +57,7 @@
 #define prealloc(n,t,p) (t*)realloc( p, (n) * sizeof(t) )
 #define pdealloc(p)     free((void*)p)
 
+
 // print message to stdout
 #define plog(fmt,...) \
     printf( fmt "\n", ##__VA_ARGS__ )
@@ -79,78 +80,7 @@
     fprintf( stderr, #f "(): " fmt " : %s\n", ##__VA_ARGS__, strerror(errno) )
 
 
-#define LLS_SERVER  "llsocket.server"
-#define LLS_CLIENT  "llsocket.client"
-
-
-typedef struct {
-    // socket descriptor
-    int32_t fd;
-    // type of address family
-    int family;
-    // socket type: SOCK_STREAM|SOCK_DGRAM|SOCK_SEQPACKET
-    int type;
-    // type of protocol: AF_UNIX|AF_INET
-    int proto;
-    // opaque address byte length
-    size_t addrlen;
-    // opaque address 
-    void *addr;
-} llsocket_t;
-
-
-static inline int lls_isaccept( int fd ){
-    int flg = 0;
-    socklen_t len = sizeof(int);
-    
-    if( getsockopt( fd, SOL_SOCKET, SO_ACCEPTCONN, &flg, &len ) == 0 ){
-        return flg;
-    }
-    
-    return 0;
-}
-
-
-static inline int lls_set_nonblock( int fd ){
-    int flg = fcntl( fd, F_GETFL );
-    return fcntl( fd, F_SETFL, flg|O_NONBLOCK );
-}
-
-
-#define lls_set_cloexec(fd) fcntl(fd, F_SETFD, FD_CLOEXEC)
-
-
-static inline int lls_set_nodelay( int fd ){
-    int flg = 1;
-    return setsockopt( fd, IPPROTO_TCP, TCP_NODELAY, &flg, sizeof(int) );
-}
-
-
-static inline int lls_set_reuseaddr( int fd ){
-    int flg = 1;
-    return setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, &flg, sizeof(int) );
-}
-
-
-static inline int lls_fd_init( int fd ){
-    return -( lls_set_nonblock( fd ) || lls_set_cloexec( fd ) || 
-              lls_set_reuseaddr( fd ) );
-}
-
-
-static inline void lls_close( int fd )
-{
-    if( lls_isaccept( fd ) ){
-        shutdown( fd, SHUT_RDWR );
-    }
-    close( fd );
-}
-
-
-int lls_inet_init( llsocket_t *s, const char *host, size_t hlen, 
-                   const char *port, size_t plen, int flags, int socktype );
-
-
+// helper macros
 #define lstate_setmetatable(L,label) do { \
     luaL_getmetatable( L, label ); \
     lua_setmetatable( L, -2 ); \
@@ -164,11 +94,86 @@ int lls_inet_init( llsocket_t *s, const char *host, size_t hlen,
 }while(0)
 
 
+
+// define data structures
+
+#define DECLARE_LLS_STRUCT_BASE \
+    /* socket descriptor */ \
+    int32_t fd; \
+    /* type of address family */ \
+    int family; \
+    /* socket type: SOCK_STREAM|SOCK_DGRAM|SOCK_SEQPACKET */ \
+    int type; \
+    /* type of protocol: AF_UNIX|AF_INET */ \
+    int proto; \
+    /* opaque address byte length */ \
+    size_t addrlen
+
+typedef struct {
+    DECLARE_LLS_STRUCT_BASE;
+    struct sockaddr addr;
+} llsocket_t;
+
+typedef struct {
+    DECLARE_LLS_STRUCT_BASE;
+    struct sockaddr_in addr;
+} lls_inet_t;
+
+
+// modules
 LUALIB_API int luaopen_llsocket( lua_State *L );
-LUALIB_API int luaopen_llsocket_inet( lua_State *L );
+
+
+// module definition register
+static inline int lls_define_mt( lua_State *L, const char *tname, 
+                                 struct luaL_Reg mmethod[], 
+                                 struct luaL_Reg method[] )
+{
+    int i;
+    
+    // create table __metatable
+    luaL_newmetatable( L, tname );
+    // metamethods
+    i = 0;
+    while( mmethod[i].name ){
+        lstate_fn2tbl( L, mmethod[i].name, mmethod[i].func );
+        i++;
+    }
+    // methods
+    lua_pushstring( L, "__index" );
+    lua_newtable( L );
+    i = 0;
+    while( method[i].name ){
+        lstate_fn2tbl( L, method[i].name, method[i].func );
+        i++;
+    }
+    lua_rawset( L, -3 );
+    
+    return 1;
+}
+
+
+// fd helper
+#define lls_set_cloexec(fd) fcntl(fd, F_SETFD, FD_CLOEXEC)
+
+static inline int lls_set_nonblock( int fd ){
+    int flg = fcntl( fd, F_GETFL );
+    return fcntl( fd, F_SETFL, flg|O_NONBLOCK );
+}
+
+static inline int lls_set_reuseaddr( int fd ){
+    int flg = 1;
+    return setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, &flg, sizeof(int) );
+}
+
 
 // shared methods
-static inline int fd_mt( lua_State *L, const char *tname )
+#define lls_tostring(L,meta) ({ \
+    lua_pushfstring( L, meta ": %p", lua_touserdata( L, 1 ) ); \
+    1; \
+})
+
+static inline int lls_fd( lua_State *L, const char *tname )
 {
     llsocket_t *s = luaL_checkudata( L, 1, tname );
     
@@ -177,12 +182,12 @@ static inline int fd_mt( lua_State *L, const char *tname )
     return 1;
 }
 
-static inline int close_mt( lua_State *L, const char *tname )
+static inline int lls_close( lua_State *L, const char *tname )
 {
     llsocket_t *s = luaL_checkudata( L, 1, tname );
     
     if( s->fd ){
-        lls_close( s->fd );
+        close( s->fd );
         s->fd = 0;
         lua_pushboolean( L, 1 );
     }
@@ -194,31 +199,45 @@ static inline int close_mt( lua_State *L, const char *tname )
 }
 
 
-// metatables
-int lls_server_mt( lua_State *L );
-int lls_client_mt( lua_State *L );
-
-static inline int gc_mt( lua_State *L )
+static inline int lls_connect( lua_State *L, const char *tname )
 {
-    llsocket_t *s = lua_touserdata( L, 1 );
+    llsocket_t *s = luaL_checkudata( L, 1, tname );
+    int rc = connect( s->fd, &s->addr, (socklen_t)s->addrlen );
     
-    if( s->fd )
-    {
-        lls_close( s->fd );
-        // remove unix domain socket file
-        if( s->family == AF_UNIX ){
-            unlink( ((struct sockaddr_un*)s->addr)->sun_path );
-        }
+    if( rc == 0 ){
+        lua_pushboolean( L, 1 );
+        return 1;
     }
-    pdealloc( s->addr );
+    else if( errno == EINPROGRESS ){
+        lua_pushboolean( L, 0 );
+        return 1;
+    }
     
-    return 0;
+    // got error
+    lua_pushboolean( L, 0 );
+    lua_pushinteger( L, errno );
+    
+    return 2;
 }
 
 
-#define tostring_mt(L,meta) do { \
-    lua_pushfstring( L, meta ": %p", lua_touserdata( L, 1 ) ); \
-}while(0)
+static inline int lls_bind( lua_State *L, const char *tname )
+{
+    llsocket_t *s = luaL_checkudata( L, 1, tname );
+    
+    // reuseaddr and bind
+    if( lls_set_reuseaddr( s->fd ) != -1 &&
+        bind( s->fd, &s->addr, (socklen_t)s->addrlen ) == 0 ){
+        lua_pushboolean( L, 1 );
+        return 1;
+    }
+    
+    // got error
+    lua_pushboolean( L, 0 );
+    lua_pushinteger( L, errno );
+    
+    return 2;
+}
 
 
 #endif

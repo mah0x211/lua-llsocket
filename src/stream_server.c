@@ -20,7 +20,7 @@
  *  THE SOFTWARE.
  *
  *
- *  server.c
+ *  stream_server.c
  *  lua-llsocket
  *
  *  Created by Masatoshi Teruya on 14/03/29.
@@ -28,84 +28,55 @@
  *
  */
 
-#include "llsocket.h"
+#include "lls_inet.h"
+#include "lls_stream.h"
 
-
-static int bind_lua( lua_State *L )
-{
-    llsocket_t *s = luaL_checkudata( L, 1, LLS_SERVER );
-    
-    // reuseaddr and bind
-    if( lls_set_reuseaddr( s->fd ) != -1 &&
-        bind( s->fd, (struct sockaddr*)s->addr, (socklen_t)s->addrlen ) == 0 ){
-        lua_pushboolean( L, 1 );
-        return 1;
-    }
-    
-    // got error
-    lua_pushboolean( L, 0 );
-    lua_pushinteger( L, errno );
-    
-    return 2;
-}
+#define MODULE_MT   "llsocket.inet.stream.server"
 
 
 static int listen_lua( lua_State *L )
 {
-    llsocket_t *s = luaL_checkudata( L, 1, LLS_SERVER );
-    // use default backlog size
-    int backlog = SOMAXCONN;
-    
-    // check args
-    if( !lua_isnoneornil( L, 2 ) )
-    {
-        backlog = luaL_checkint( L, 2 );
-        if( backlog < 1 ){
-            return luaL_argerror( L, 1, "backlog must be larger than 0" );
-        }
-    }
-    
-    // bind and listen
-    if( listen( s->fd, backlog ) == 0 ){
-        lua_pushboolean( L, 1 );
-        return 1;
-    }
-    
-    // got error
-    lua_pushboolean( L, 0 );
-    lua_pushinteger( L, errno );
-    
-    return 2;
+    return lls_stream_listen( L, MODULE_MT );
+}
+
+
+static int islisten_lua( lua_State *L )
+{
+    return lls_stream_islisten( L, MODULE_MT );
 }
 
 
 static int fd_lua( lua_State *L )
 {
-    return fd_mt( L, LLS_SERVER );
+    return lls_fd( L, MODULE_MT );
 }
 
 static int close_lua( lua_State *L )
 {
-    return close_mt( L, LLS_SERVER );
+    return lls_close( L, MODULE_MT );
+}
+
+static int bind_lua( lua_State *L )
+{
+    return lls_bind( L, MODULE_MT );
 }
 
 /* metamethods */
-static int gc_lua( lua_State *L )
-{
-    return gc_mt( L );
-}
-
 static int tostring_lua( lua_State *L )
 {
-    tostring_mt( L, LLS_SERVER );
-    return 1;
+    return lls_tostring( L, MODULE_MT );
+}
+
+static int alloc_lua( lua_State *L )
+{
+    return lls_inet_alloc( L, MODULE_MT, AI_PASSIVE, SOCK_STREAM );
 }
 
 
-int lls_server_mt( lua_State *L )
+LUALIB_API int luaopen_llsocket_inet_stream_server( lua_State *L )
 {
     struct luaL_Reg mmethod[] = {
-        { "__gc", gc_lua },
+        { "__gc", lls_inet_gc },
         { "__tostring", tostring_lua },
         { NULL, NULL }
     };
@@ -114,29 +85,14 @@ int lls_server_mt( lua_State *L )
         { "close", close_lua },
         { "bind", bind_lua },
         { "listen", listen_lua },
+        { "isListen", islisten_lua },
         { NULL, NULL }
     };
-    int i;
     
-    // create table __metatable
-    luaL_newmetatable( L, LLS_SERVER );
-    // metamethods
-    i = 0;
-    while( mmethod[i].name ){
-        lstate_fn2tbl( L, mmethod[i].name, mmethod[i].func );
-        i++;
-    }
-    // methods
-    lua_pushstring( L, "__index" );
-    lua_newtable( L );
-    i = 0;
-    while( method[i].name ){
-        lstate_fn2tbl( L, method[i].name, method[i].func );
-        i++;
-    }
-    lua_rawset( L, -3 );
+    lls_define_mt( L, MODULE_MT, mmethod, method );
+    lua_pop( L, 1 );
+    lua_pushcfunction( L, alloc_lua );
     
     return 1;
 }
-
 

@@ -20,66 +20,22 @@
  *  THE SOFTWARE.
  *
  *
- *  stream_client.c
+ *  lls_inet.h
  *  lua-llsocket
  *
- *  Created by Masatoshi Teruya on 14/03/30.
+ *  Created by Masatoshi Teruya on 14/04/03.
  *  Copyright 2014 Masatoshi Teruya. All rights reserved.
  *
  */
 
-#include "lls_inet.h"
-#include "lls_stream.h"
+#ifndef ___LLSOCKET_INET_LUA___
+#define ___LLSOCKET_INET_LUA___
 
+#include "llsocket.h"
 
-#define MODULE_MT   "llsocket.inet.stream.client"
+LUALIB_API int luaopen_llsocket_inet( lua_State *L );
 
+int lls_inet_alloc( lua_State *L, const char *tname, int flags, int socktype );
+int lls_inet_gc( lua_State *L );
 
-static int fd_lua( lua_State *L )
-{
-    return lls_fd( L, MODULE_MT );
-}
-
-static int close_lua( lua_State *L )
-{
-    return lls_close( L, MODULE_MT );
-}
-
-static int connect_lua( lua_State *L )
-{
-    return lls_connect( L, MODULE_MT );
-}
-
-/* metamethods */
-static int tostring_lua( lua_State *L )
-{
-    return lls_tostring( L, MODULE_MT );
-}
-
-static int alloc_lua( lua_State *L )
-{
-    return lls_inet_alloc( L, MODULE_MT, 0, SOCK_STREAM );
-}
-
-
-LUALIB_API int luaopen_llsocket_inet_stream_client( lua_State *L )
-{
-    struct luaL_Reg mmethod[] = {
-        { "__gc", lls_inet_gc },
-        { "__tostring", tostring_lua },
-        { NULL, NULL }
-    };
-    struct luaL_Reg method[] = {
-        { "fd", fd_lua },
-        { "close", close_lua },
-        { "connect", connect_lua },
-        { NULL, NULL }
-    };
-    
-    lls_define_mt( L, MODULE_MT, mmethod, method );
-    lua_pop( L, 1 );
-    lua_pushcfunction( L, alloc_lua );
-    
-    return 1;
-}
-
+#endif
