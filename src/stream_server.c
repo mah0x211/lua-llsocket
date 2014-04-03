@@ -64,6 +64,12 @@ static int listen_lua( lua_State *L )
     return lls_stream_listen( L, MODULE_MT );
 }
 
+static int accept_lua( lua_State *L )
+{
+    return lls_stream_accept( L, MODULE_MT, LLS_STREAM_PEER_MT, 
+                              sizeof( lls_inet_t ) );
+}
+
 static int islisten_lua( lua_State *L )
 {
     return lls_stream_islisten( L, MODULE_MT );
@@ -95,6 +101,7 @@ LUALIB_API int luaopen_llsocket_inet_stream_server( lua_State *L )
         { "nodelay", nodelay_lua },
         { "bind", bind_lua },
         { "listen", listen_lua },
+        { "accept", accept_lua },
         { "isListen", islisten_lua },
         { NULL, NULL }
     };

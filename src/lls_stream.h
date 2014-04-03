@@ -89,6 +89,34 @@ static inline int lls_stream_islisten( lua_State *L, const char *tname )
 }
 
 
+static inline int lls_stream_accept( lua_State *L, const char *tname, 
+                                     const char *peerName, size_t peerSize )
+{
+    llsocket_t *s = luaL_checkudata( L, 1, tname );
+    int fd = accept( s->fd, NULL, NULL );
+    
+    if( fd != -1 )
+    {
+        if( lls_set_cloexec( fd ) != -1 )
+        {
+            llsocket_t *peer = lua_newuserdata( L, peerSize );
+            
+            if( peer ){
+                lstate_setmetatable( L, peerName );
+                return 1;
+            }
+        }
+        close( fd );
+    }
+    
+    // got error
+    lua_pushnil( L );
+    lua_pushinteger( L, errno );
+    
+    return 2;
+}
+
+
 #endif
 
 
