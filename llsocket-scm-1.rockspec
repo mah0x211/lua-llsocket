@@ -19,8 +19,8 @@ build = {
             sources = { 
                 "src/llsocket.c",
                 "src/inet.c",
-                "src/server.c",
-                "src/client.c"
+                "src/stream_server.c",
+                "src/stream_client.c"
             },
         }
     }
