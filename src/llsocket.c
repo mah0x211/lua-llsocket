@@ -31,9 +31,8 @@
 #include "llsocket.h"
 
 
-
 int lls_inet_init( llsocket_t *s, const char *host, size_t hlen, 
-                  const char *port, size_t plen, int flags, int socktype )
+                   const char *port, size_t plen, int flags, int socktype )
 {
     const struct addrinfo hints = {
         // AI_PASSIVE:bind socket if node is null
@@ -70,23 +69,28 @@ int lls_inet_init( llsocket_t *s, const char *host, size_t hlen,
             if( ( fd = socket( ptr->ai_family, ptr->ai_socktype, 
                                ptr->ai_protocol ) ) != -1 )
             {
-                struct sockaddr_in *inaddr = palloc( struct sockaddr_in );
-                
-                if( inaddr ){
-                    s->fd = fd;
-                    s->family = ptr->ai_family;
-                    s->type = ptr->ai_socktype;
-                    s->proto = ptr->ai_protocol;
-                    s->addrlen = ptr->ai_addrlen;
-                    s->addr = (void*)inaddr;
-                    // copy struct sockaddr
-                    memcpy( (void*)inaddr, (void*)ptr->ai_addr, 
-                            (size_t)ptr->ai_addrlen );
-                    // remove address-list
-                    freeaddrinfo( res );
+                // set FD_CLOEXEC
+                if( lls_set_cloexec( fd ) != -1 )
+                {
+                    struct sockaddr_in *inaddr = palloc( struct sockaddr_in );
                     
-                    return 0;
+                    if( inaddr ){
+                        s->fd = fd;
+                        s->family = ptr->ai_family;
+                        s->type = ptr->ai_socktype;
+                        s->proto = ptr->ai_protocol;
+                        s->addrlen = ptr->ai_addrlen;
+                        s->addr = (void*)inaddr;
+                        // copy struct sockaddr
+                        memcpy( (void*)inaddr, (void*)ptr->ai_addr, 
+                                (size_t)ptr->ai_addrlen );
+                        // remove address-list
+                        freeaddrinfo( res );
+                        
+                        return 0;
+                    }
                 }
+                close( fd );
                 break;
             }
 
