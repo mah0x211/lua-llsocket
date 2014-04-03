@@ -52,11 +52,16 @@ static int bind_lua( lua_State *L )
 static int listen_lua( lua_State *L )
 {
     llsocket_t *s = luaL_checkudata( L, 1, LLS_SERVER );
-    int backlog = (int)lua_tointeger( L, 2 );
-    
     // use default backlog size
-    if( !backlog ){
-        backlog = SOMAXCONN;
+    int backlog = SOMAXCONN;
+    
+    // check args
+    if( !lua_isnoneornil( L, 2 ) )
+    {
+        backlog = luaL_checkint( L, 2 );
+        if( backlog < 1 ){
+            return luaL_argerror( L, 1, "backlog must be larger than 0" );
+        }
     }
     
     // bind and listen
