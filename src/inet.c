@@ -33,20 +33,21 @@
 
 static int inet_lua( lua_State *L, const char *mt, int flags, int socktype )
 {
-    // afd_sock_t *as, int type, const char *addr, size_t len )
     size_t hlen, plen;
     const char *host = lua_tolstring( L, 1, &hlen );
     const char *port = lua_tolstring( L, 2, &plen );
-    llsocket_t *s = lua_newuserdata( L, sizeof( llsocket_t ) );
+    llsocket_t *s = NULL;
     
     // host and port undefined
     if( !hlen && !plen ){
         return luaL_error( L, "does not specified host or port" );
     }
-    else if( lls_inet_init( s, host, hlen, port, plen, flags, socktype ) == 0 ){
+    else if( ( s = lua_newuserdata( L, sizeof( llsocket_t ) ) ) &&
+             lls_inet_init( s, host, hlen, port, plen, flags, socktype ) == 0 ){
         lstate_setmetatable( L, mt );
         return 1;
     }
+    
     // got error
     lua_pushnil( L );
     lua_pushinteger( L, errno );
