@@ -45,6 +45,11 @@ static int close_lua( lua_State *L )
     return lls_close( L, MODULE_MT );
 }
 
+static int nonblock_lua( lua_State *L )
+{
+    return lls_nonblock( L, MODULE_MT );
+}
+
 static int connect_lua( lua_State *L )
 {
     return lls_connect( L, MODULE_MT );
@@ -72,6 +77,7 @@ LUALIB_API int luaopen_llsocket_inet_stream_client( lua_State *L )
     struct luaL_Reg method[] = {
         { "fd", fd_lua },
         { "close", close_lua },
+        { "nonblock", nonblock_lua },
         { "connect", connect_lua },
         { NULL, NULL }
     };
