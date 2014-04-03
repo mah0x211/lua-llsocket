@@ -52,9 +52,9 @@
 
 // memory alloc/dealloc
 #define palloc(t)       (t*)malloc( sizeof(t) )
-#define pnalloc(n,t)    (t*)malloc( n * sizeof(t) )
+#define pnalloc(n,t)    (t*)malloc( (n) * sizeof(t) )
 #define pcalloc(n,t)    (t*)calloc( n, sizeof(t) )
-#define prealloc(n,t,p) (t*)realloc( p, n * sizeof(t) )
+#define prealloc(n,t,p) (t*)realloc( p, (n) * sizeof(t) )
 #define pdealloc(p)     free((void*)p)
 
 // print function error log
