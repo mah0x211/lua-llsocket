@@ -35,8 +35,9 @@ static int bind_lua( lua_State *L )
 {
     llsocket_t *s = luaL_checkudata( L, 1, LLS_SERVER );
     
-    // bind and listen
-    if( bind( s->fd, (struct sockaddr*)s->addr, (socklen_t)s->addrlen ) == 0 ){
+    // reuseaddr and bind
+    if( lls_set_reuseaddr( s->fd ) != -1 &&
+        bind( s->fd, (struct sockaddr*)s->addr, (socklen_t)s->addrlen ) == 0 ){
         lua_pushboolean( L, 1 );
         return 1;
     }
