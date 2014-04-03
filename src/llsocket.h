@@ -117,9 +117,7 @@ static inline int lls_set_nonblock( int fd ){
 }
 
 
-static inline int lls_set_cloexec( int fd ){
-    return fcntl( fd, F_SETFD, FD_CLOEXEC );
-}
+#define lls_set_cloexec(fd) fcntl(fd, F_SETFD, FD_CLOEXEC)
 
 
 static inline int lls_set_nodelay( int fd ){
