@@ -37,6 +37,9 @@ LUALIB_API int luaopen_llsocket_inet_stream( lua_State *L );
 LUALIB_API int luaopen_llsocket_inet_stream_server( lua_State *L );
 LUALIB_API int luaopen_llsocket_inet_stream_client( lua_State *L );
 
+#define LLS_STREAM_PEER_MT  "llsocket.inet.stream.peer"
+LUALIB_API int luaopen_llsocket_inet_stream_peer( lua_State *L );
+
 
 static inline int lls_stream_listen( lua_State *L, const char *tname )
 {

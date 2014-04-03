@@ -20,10 +20,10 @@
  *  THE SOFTWARE.
  *
  *
- *  stream_server.c
+ *  stream_peer.c
  *  lua-llsocket
  *
- *  Created by Masatoshi Teruya on 14/03/29.
+ *  Created by Masatoshi Teruya on 14/04/04.
  *  Copyright 2014 Masatoshi Teruya. All rights reserved.
  *
  */
@@ -31,8 +31,8 @@
 #include "lls_inet.h"
 #include "lls_stream.h"
 
-#define MODULE_MT   "llsocket.inet.stream.server"
 
+#define MODULE_MT   LLS_STREAM_PEER_MT
 
 static int fd_lua( lua_State *L )
 {
@@ -54,20 +54,6 @@ static int nodelay_lua( lua_State *L )
     return lls_inet_stream_nodelay( L, MODULE_MT );
 }
 
-static int bind_lua( lua_State *L )
-{
-    return lls_bind( L, MODULE_MT );
-}
-
-static int listen_lua( lua_State *L )
-{
-    return lls_stream_listen( L, MODULE_MT );
-}
-
-static int islisten_lua( lua_State *L )
-{
-    return lls_stream_islisten( L, MODULE_MT );
-}
 
 /* metamethods */
 static int tostring_lua( lua_State *L )
@@ -75,13 +61,8 @@ static int tostring_lua( lua_State *L )
     return lls_tostring( L, MODULE_MT );
 }
 
-static int alloc_lua( lua_State *L )
-{
-    return lls_inet_alloc( L, MODULE_MT, AI_PASSIVE, SOCK_STREAM );
-}
 
-
-LUALIB_API int luaopen_llsocket_inet_stream_server( lua_State *L )
+LUALIB_API int luaopen_llsocket_inet_stream_peer( lua_State *L )
 {
     struct luaL_Reg mmethod[] = {
         { "__gc", lls_inet_gc },
@@ -93,19 +74,12 @@ LUALIB_API int luaopen_llsocket_inet_stream_server( lua_State *L )
         { "close", close_lua },
         { "nonblock", nonblock_lua },
         { "nodelay", nodelay_lua },
-        { "bind", bind_lua },
-        { "listen", listen_lua },
-        { "isListen", islisten_lua },
         { NULL, NULL }
     };
     
-    // define peer metatable
-    luaopen_llsocket_inet_stream_peer( L );
-    
     lls_define_mt( L, MODULE_MT, mmethod, method );
     lua_pop( L, 1 );
-    lua_pushcfunction( L, alloc_lua );
     
-    return 1;
+    return 0;
 }
 
