@@ -57,15 +57,26 @@
 #define prealloc(n,t,p) (t*)realloc( p, (n) * sizeof(t) )
 #define pdealloc(p)     free((void*)p)
 
-// print function error log
-#define _pfelog(f,fmt,...) \
-    printf( "failed to " #f "(): %s - " fmt "\n", \
-            ( errno ) ? strerror(errno) : "", ##__VA_ARGS__ )
-#define pfelog(f,...) _pfelog(f,__VA_ARGS__)
+// print message to stdout
+#define plog(fmt,...) \
+    printf( fmt "\n", ##__VA_ARGS__ )
 
-#define plog(fmt,...) printf( fmt "\n", ##__VA_ARGS__ )
+#define pflog(f,fmt,...) \
+    printf( #f "(): " fmt "\n", ##__VA_ARGS__ )
+
+// print message to stderr
 #define pelog(fmt,...) \
-    printf( fmt " : %s\n", ##__VA_ARGS__, ( errno ) ? strerror(errno) : "" )
+    fprintf( stderr, fmt "\n", ##__VA_ARGS__ )
+
+#define pfelog(f,fmt,...) \
+    fprintf( stderr, #f "(): " fmt "\n", ##__VA_ARGS__ )
+
+// print message to stderr with strerror
+#define pelogerr(fmt,...) \
+    fprintf( stderr, fmt " : %s\n", ##__VA_ARGS__, strerror(errno) )
+
+#define pfelogerr(f,fmt,...) \
+    fprintf( stderr, #f "(): " fmt " : %s\n", ##__VA_ARGS__, strerror(errno) )
 
 
 #define LLS_SERVER  "llsocket.server"
