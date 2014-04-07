@@ -66,8 +66,7 @@ static int listen_lua( lua_State *L )
 
 static int accept_lua( lua_State *L )
 {
-    return lls_stream_accept( L, MODULE_MT, LLS_STREAM_PEER_MT, 
-                              sizeof( lls_inet_t ) );
+    return lls_stream_accept( L, MODULE_MT );
 }
 
 static int islisten_lua( lua_State *L )

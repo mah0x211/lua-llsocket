@@ -89,28 +89,27 @@ static inline int lls_stream_islisten( lua_State *L, const char *tname )
 }
 
 
-static inline int lls_stream_accept( lua_State *L, const char *tname, 
-                                     const char *peerName, size_t peerSize )
+static inline int lls_stream_accept( lua_State *L, const char *tname )
 {
     llsocket_t *s = luaL_checkudata( L, 1, tname );
-    struct sockaddr addr;
-    socklen_t addrlen = 0;
-    int fd = accept( s->fd, &addr, &addrlen );
+    int nonblock = 1;
+    int fd = 0;
     
+    // check args
+    if( !lua_isnoneornil( L, 2 ) ){
+        luaL_checktype( L, 2, LUA_TBOOLEAN );
+        nonblock = lua_toboolean( L, 2 );
+    }
+    
+    fd = accept( s->fd, NULL, NULL );
     if( fd != -1 )
     {
-        if( lls_set_cloexec( fd ) != -1 )
-        {
-            llsocket_t *peer = lua_newuserdata( L, peerSize );
-            
-            if( peer ){
-                peer->fd = fd;
-                peer->addrlen = addrlen;
-                memcpy( (void*)&peer->addr, (void*)&addr, (size_t)addrlen );
-                lstate_setmetatable( L, peerName );
-                return 1;
-            }
+        if( lls_set_cloexec( fd ) == 0 && 
+            ( nonblock ? lls_set_nonblock( fd ) == 0 : 1 ) ){
+            lua_pushinteger( L, fd );
+            return 1;
         }
+        
         close( fd );
     }
     
