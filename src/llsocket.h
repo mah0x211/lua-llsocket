@@ -163,6 +163,17 @@ static inline int lls_set_reuseaddr( int fd ){
 }
 
 
+static inline int lls_set_nonblock( int fd ){
+    int flg = fcntl( fd, F_GETFL );
+    return fcntl( fd, F_SETFL, flg|O_NONBLOCK );
+}
+
+static inline int lls_unset_nonblock( int fd ){
+    int flg = fcntl( fd, F_GETFL );
+    return fcntl( fd, F_SETFL, flg & ~O_NONBLOCK );
+}
+
+
 // shared methods
 #define lls_tostring(L,meta) ({ \
     lua_pushfstring( L, meta ": %p", lua_touserdata( L, 1 ) ); \
@@ -200,18 +211,13 @@ static inline int lls_close( lua_State *L, const char *tname )
 static inline int lls_nonblock( lua_State *L, const char *tname )
 {
     llsocket_t *s = luaL_checkudata( L, 1, tname );
-    int flg = fcntl( s->fd, F_GETFL );
     
     // check args
     luaL_checktype( L, 2, LUA_TBOOLEAN );
-    if( lua_toboolean( L, 2 ) ){
-        flg |= O_NONBLOCK;
-    }
-    else {
-        flg &= ~O_NONBLOCK;
-    }
     
-    if( fcntl( s->fd, F_SETFL, flg ) == 0 ){
+    if( ( lua_toboolean( L, 2 ) ? 
+        lls_set_nonblock( s->fd ) : 
+        lls_unset_nonblock( s->fd ) ) == 0 ){
         lua_pushboolean( L, 1 );
         return 1;
     }
