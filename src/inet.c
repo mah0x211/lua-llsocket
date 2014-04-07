@@ -107,13 +107,13 @@ static int inet_init( lls_inet_t *s, const char *host, size_t hlen,
 int lls_inet_alloc( lua_State *L, const char *tname, int flags, int socktype )
 {
     size_t hlen, plen;
-    const char *host = lua_tolstring( L, 1, &hlen );
-    const char *port = lua_tolstring( L, 2, &plen );
+    const char *port = lua_tolstring( L, 1, &plen );
+    const char *host = lua_tolstring( L, 2, &hlen );
     lls_inet_t *s = NULL;
     
     // host and port undefined
     if( !hlen && !plen ){
-        return luaL_error( L, "does not specified host or port" );
+        return luaL_error( L, "must be specified host or port" );
     }
     else if( ( s = lua_newuserdata( L, sizeof( lls_inet_t ) ) ) &&
              inet_init( s, host, hlen, port, plen, flags, socktype ) == 0 ){
@@ -127,6 +127,7 @@ int lls_inet_alloc( lua_State *L, const char *tname, int flags, int socktype )
 
     return 2;
 }
+
 
 int lls_inet_gc( lua_State *L )
 {
