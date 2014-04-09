@@ -28,16 +28,20 @@
  *
  */
 
-#include "lls_stream.h"
+#include "llsocket.h"
 
 
-static int inet_init( lls_inet_t *s, const char *host, size_t hlen, 
-                          const char *port, size_t plen, int flags, 
-                          int socktype )
+typedef int(*connbind_t)( int, const struct sockaddr*, socklen_t );
+
+static int connbind_lua( lua_State *L, connbind_t proc, int passive )
 {
+    const char *host = lua_tostring( L, 1 );
+    const char *port = lua_tostring( L, 2 );
+    int socktype = luaL_checkint( L, 3 );
+    int nonblock = 0;
     const struct addrinfo hints = {
         // AI_PASSIVE:bind socket if node is null
-        .ai_flags = flags,
+        .ai_flags = passive,
         // AF_INET:ipv4 | AF_INET6:ipv6
         .ai_family = AF_UNSPEC,
         // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
@@ -50,105 +54,101 @@ static int inet_init( lls_inet_t *s, const char *host, size_t hlen,
         .ai_addr = NULL,
         .ai_next = NULL
     };
-    struct addrinfo *res = NULL;
-    int rc = 0;
+    struct addrinfo *list = NULL;
+    
+    // check arguments
+    // host, port
+    if( !host && !port ){
+        luaL_error( L, "must be specified either host, port or both" );
+    }
+    // nonblock
+    if( !lua_isnoneornil( L, 4 ) ){
+        luaL_checktype( L, 4, LUA_TBOOLEAN );
+        nonblock = lua_toboolean( L, 4 );
+    }
     
     // getaddrinfo is better than inet_pton.
     // i wonder that can be ignore an overhead of creating socket
     // descriptor when i simply want to confirm correct address?
     // wildcard ip-address
-    rc = getaddrinfo( host, port, &hints, &res );
-    if( rc == 0 )
+    if( getaddrinfo( host, port, &hints, &list ) != -1 )
     {
-        struct addrinfo *ptr = res;
+        struct addrinfo *ptr = list;
         int fd = 0;
         
-        errno = 0;
         do
         {
-            // try to create socket descriptor for find valid address
-            if( ( fd = socket( ptr->ai_family, ptr->ai_socktype, 
-                               ptr->ai_protocol ) ) != -1 )
+            // try to create socket
+            fd = socket( ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol );
+            if( fd != -1 )
             {
-                // set FD_CLOEXEC
-                if( lls_set_cloexec( fd ) != -1 )
-                {
-                    s->fd = fd;
-                    s->family = ptr->ai_family;
-                    s->type = ptr->ai_socktype;
-                    s->proto = ptr->ai_protocol;
-                    s->addrlen = ptr->ai_addrlen;
-                    // copy struct sockaddr
-                    memcpy( (void*)&s->addr, (void*)ptr->ai_addr, 
-                            (size_t)ptr->ai_addrlen );
-                    // remove address-list
-                    freeaddrinfo( res );
-                    
-                    return 0;
+                fcntl( fd, F_SETFD, FD_CLOEXEC );
+                if( nonblock ){
+                    int fl = fcntl( fd, F_GETFL );
+                    fcntl( fd, F_SETFL, fl|O_NONBLOCK );
+                }
+                
+                if( proc( fd, ptr->ai_addr, ptr->ai_addrlen ) == 0 ){
+                    plog( "port: %d", ntohs( ((struct sockaddr_in*)ptr->ai_addr)->sin_port ) );
+                    plog( "addr: %s", inet_ntoa( ((struct sockaddr_in*)ptr->ai_addr)->sin_addr ) );
+                    break;
+                }
+                // nonblocking connect
+                else if( proc == connect && errno == EINPROGRESS ){
+                    break;
                 }
                 close( fd );
-                break;
+                fd = -1;
             }
-
+            
         } while( ( ptr = ptr->ai_next ) );
         
         // remove address-list
-        freeaddrinfo( res );
-    }
-    else {
-        plog( "getaddrinfo: %s:%s -> %s", host, port, gai_strerror(rc) );
-    }
-
-    
-    return -1;
-}
-
-
-int lls_inet_alloc( lua_State *L, const char *tname, int flags, int socktype )
-{
-    size_t hlen, plen;
-    const char *port = lua_tolstring( L, 1, &plen );
-    const char *host = lua_tolstring( L, 2, &hlen );
-    lls_inet_t *s = NULL;
-    
-    // host and port undefined
-    if( !hlen && !plen ){
-        return luaL_error( L, "must be specified host or port" );
-    }
-    else if( ( s = lua_newuserdata( L, sizeof( lls_inet_t ) ) ) &&
-             inet_init( s, host, hlen, port, plen, flags, socktype ) == 0 ){
-        lstate_setmetatable( L, tname );
-        return 1;
+        freeaddrinfo( list );
+        
+        if( fd != -1 ){
+            lua_pushinteger( L, fd );
+            return 1;
+        }
     }
     
     // got error
     lua_pushnil( L );
     lua_pushinteger( L, errno );
-
+    
     return 2;
 }
 
 
-int lls_inet_gc( lua_State *L )
+// method
+static int connect_lua( lua_State *L )
 {
-    llsocket_t *s = lua_touserdata( L, 1 );
-    
-    if( s->fd ){
-        shutdown( s->fd, SHUT_RDWR );
-        close( s->fd );
-    }
-    
-    return 0;
+    return connbind_lua( L, connect, 0 );
 }
 
+static int bind_lua( lua_State *L )
+{
+    return connbind_lua( L, bind, AI_PASSIVE );
+}
 
 LUALIB_API int luaopen_llsocket_inet( lua_State *L )
 {
-    // add methods
+    struct luaL_Reg method[] = {
+        // create socket-fd
+        { "connect", connect_lua },
+        { "bind", bind_lua },
+        { NULL, NULL }
+    };
+    int i;
+    
+    // method
     lua_newtable( L );
-    // stream
-    luaopen_llsocket_inet_stream( L );
-    lua_setfield( L, -2, "stream" );
-
+    i = 0;
+    while( method[i].name ){
+        lstate_fn2tbl( L, method[i].name, method[i].func );
+        i++;
+    }
+    
     return 1;
 }
+

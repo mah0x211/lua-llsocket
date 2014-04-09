@@ -32,11 +32,14 @@
 #ifndef ___LLSOCKET_LUA___
 #define ___LLSOCKET_LUA___
 
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <math.h>
+#include <time.h>
 #include <stdint.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -94,177 +97,135 @@
 }while(0)
 
 
-
-// define data structures
-
-#define DECLARE_LLS_STRUCT_BASE \
-    /* socket descriptor */ \
-    int32_t fd; \
-    /* type of address family */ \
-    int family; \
-    /* socket type: SOCK_STREAM|SOCK_DGRAM|SOCK_SEQPACKET */ \
-    int type; \
-    /* type of protocol: AF_UNIX|AF_INET */ \
-    int proto; \
-    /* opaque address byte length */ \
-    size_t addrlen
-
-typedef struct {
-    DECLARE_LLS_STRUCT_BASE;
-    struct sockaddr addr;
-} llsocket_t;
-
-typedef struct {
-    DECLARE_LLS_STRUCT_BASE;
-    struct sockaddr_in addr;
-} lls_inet_t;
+#define lstate_str2tbl(L,k,v) do{ \
+    lua_pushstring(L,k); \
+    lua_pushstring(L,v); \
+    lua_rawset(L,-3); \
+}while(0)
 
 
-// modules
-LUALIB_API int luaopen_llsocket( lua_State *L );
+#define lstate_num2tbl(L,k,v) do{ \
+    lua_pushstring(L,k); \
+    lua_pushnumber(L,v); \
+    lua_rawset(L,-3); \
+}while(0)
 
 
-// module definition register
-static inline int lls_define_mt( lua_State *L, const char *tname, 
-                                 struct luaL_Reg mmethod[], 
-                                 struct luaL_Reg method[] )
+
+LUALIB_API int luaopen_llsocket_inet( lua_State *L );
+
+
+// fd option
+static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl, 
+                                 int fl )
 {
-    int i;
+    int flg = fcntl( fd, getfl );
     
-    // create table __metatable
-    luaL_newmetatable( L, tname );
-    // metamethods
-    i = 0;
-    while( mmethod[i].name ){
-        lstate_fn2tbl( L, mmethod[i].name, mmethod[i].func );
-        i++;
-    }
-    // methods
-    lua_pushstring( L, "__index" );
-    lua_newtable( L );
-    i = 0;
-    while( method[i].name ){
-        lstate_fn2tbl( L, method[i].name, method[i].func );
-        i++;
-    }
-    lua_rawset( L, -3 );
-    
-    return 1;
-}
-
-
-// fd helper
-#define lls_set_cloexec(fd) fcntl(fd, F_SETFD, FD_CLOEXEC)
-
-
-static inline int lls_set_reuseaddr( int fd ){
-    int flg = 1;
-    return setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, &flg, sizeof(int) );
-}
-
-
-static inline int lls_set_nonblock( int fd ){
-    int flg = fcntl( fd, F_GETFL );
-    return fcntl( fd, F_SETFL, flg|O_NONBLOCK );
-}
-
-static inline int lls_unset_nonblock( int fd ){
-    int flg = fcntl( fd, F_GETFL );
-    return fcntl( fd, F_SETFL, flg & ~O_NONBLOCK );
-}
-
-
-// shared methods
-#define lls_tostring(L,meta) ({ \
-    lua_pushfstring( L, meta ": %p", lua_touserdata( L, 1 ) ); \
-    1; \
-})
-
-
-static inline int lls_fd( lua_State *L, const char *tname )
-{
-    llsocket_t *s = luaL_checkudata( L, 1, tname );
-    
-    lua_pushinteger( L, s->fd );
-    
-    return 1;
-}
-
-
-static inline int lls_close( lua_State *L, const char *tname )
-{
-    llsocket_t *s = luaL_checkudata( L, 1, tname );
-    
-    if( s->fd ){
-        close( s->fd );
-        s->fd = 0;
-        lua_pushboolean( L, 1 );
-    }
-    else {
-        lua_pushboolean( L, 0 );
-    }
-    
-    return 1;
-}
-
-
-static inline int lls_nonblock( lua_State *L, const char *tname )
-{
-    llsocket_t *s = luaL_checkudata( L, 1, tname );
-    
-    // check args
-    luaL_checktype( L, 2, LUA_TBOOLEAN );
-    
-    if( ( lua_toboolean( L, 2 ) ? 
-        lls_set_nonblock( s->fd ) : 
-        lls_unset_nonblock( s->fd ) ) == 0 ){
-        lua_pushboolean( L, 1 );
-        return 1;
+    if( flg != -1 )
+    {
+        // no args
+        if( lua_isnoneornil( L, 2 ) ){
+            lua_pushboolean( L, flg & fl );
+            return 1;
+        }
+        
+        // type check
+        luaL_checktype( L, 2, LUA_TBOOLEAN );
+        // set flag
+        if( lua_toboolean( L, 2 ) ){
+            flg |= fl;
+        }
+        // unset flag
+        else {
+            flg &= ~fl;
+        }
+        
+        if( fcntl( fd, setfl, flg ) == 0 ){
+            lua_pushboolean( L, flg & fl );
+            return 1;
+        }
     }
     
     // got error
-    lua_pushboolean( L, 0 );
+    lua_pushnil( L );
+    lua_pushinteger( L, errno );
+    
+    return 2;
+}
+
+// socket option
+static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level, int opt, 
+                                       int type )
+{
+    int flg = 0;
+    socklen_t len = sizeof(int);
+    
+    if( getsockopt( fd, level, opt, (void*)&flg, &len ) == 0 )
+    {
+        // no args
+        if( lua_isnoneornil( L, 2 ) ){
+            goto SUCCESS;
+        }
+        
+        // type check
+        luaL_checktype( L, 2, type );
+        // set flag
+        flg = (int)lua_tointeger( L, 2 );
+        // set delay flag
+        if( setsockopt( fd, level, opt, (void*)&flg, len ) == 0 )
+        {
+SUCCESS:
+            switch( type ){
+                case LUA_TBOOLEAN:
+                    lua_pushboolean( L, flg );
+                break;
+                default:
+                    lua_pushinteger( L, flg );
+            }
+            return 1;
+        }
+    }
+    
+    // got error
+    lua_pushnil( L );
     lua_pushinteger( L, errno );
     
     return 2;
 }
 
 
-static inline int lls_connect( lua_State *L, const char *tname )
+static inline int lls_sockopt_timeval_lua( lua_State *L, int fd, int level, 
+                                           int opt )
 {
-    llsocket_t *s = luaL_checkudata( L, 1, tname );
-    int rc = connect( s->fd, &s->addr, (socklen_t)s->addrlen );
+    struct timeval tval = {0};
+    socklen_t len = sizeof( struct timeval );
     
-    if( rc == 0 ){
-        lua_pushboolean( L, 1 );
-        return 1;
-    }
-    else if( errno == EINPROGRESS ){
-        lua_pushboolean( L, 0 );
-        return 1;
+    if( getsockopt( fd, level, opt, (void*)&tval, &len ) == 0 )
+    {
+        double tnum, hi, lo;
+        
+        // no args
+        if( lua_isnoneornil( L, 2 ) ){
+            tnum = (double)tval.tv_sec + ((double)tval.tv_usec / 1000000);
+            goto SUCCESS;
+        }
+        
+        // type check
+        tnum = (double)luaL_checknumber( L, 2 );
+        lo = modf( tnum, &hi );
+        tval.tv_sec = (time_t)hi;
+        tval.tv_usec = (suseconds_t)(lo * 1000000);
+    
+        // set delay flag
+        if( setsockopt( fd, level, opt, (void*)&tval, len ) == 0 ){
+SUCCESS:
+            lua_pushnumber( L, tnum );
+            return 1;
+        }
     }
     
     // got error
-    lua_pushboolean( L, 0 );
-    lua_pushinteger( L, errno );
-    
-    return 2;
-}
-
-
-static inline int lls_bind( lua_State *L, const char *tname )
-{
-    llsocket_t *s = luaL_checkudata( L, 1, tname );
-    
-    // reuseaddr and bind
-    if( lls_set_reuseaddr( s->fd ) != -1 &&
-        bind( s->fd, &s->addr, (socklen_t)s->addrlen ) == 0 ){
-        lua_pushboolean( L, 1 );
-        return 1;
-    }
-    
-    // got error
-    lua_pushboolean( L, 0 );
+    lua_pushnil( L );
     lua_pushinteger( L, errno );
     
     return 2;
