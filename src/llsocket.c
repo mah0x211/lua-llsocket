@@ -340,6 +340,9 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
     lua_pushstring( L, "inet" );
     luaopen_llsocket_inet( L );
     lua_rawset( L, -3 );
+    lua_pushstring( L, "unix" );
+    luaopen_llsocket_unix( L );
+    lua_rawset( L, -3 );
 
     // method
     i = 0;

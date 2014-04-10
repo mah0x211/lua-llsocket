@@ -19,6 +19,7 @@ build = {
             sources = { 
                 "src/llsocket.c",
                 "src/inet.c",
+                "src/unix.c"
             },
         }
     }
