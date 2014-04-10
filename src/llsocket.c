@@ -100,16 +100,28 @@ static int close_lua( lua_State *L )
 {
     int fd = luaL_checkint( L, 1 );
     
-    if( fd == 0 || close( fd ) == 0 ){
-        lua_pushboolean( L, 1 );
-        return 1;
+    if( fd )
+    {
+        int rc = 0;
+
+        // check arguments
+        if( !lua_isnoneornil( L, 2 ) ){
+            int how = luaL_checkint( L, 2 );
+            rc = shutdown( fd, how );
+        }
+        
+        // got error
+        if( ( rc + close( fd ) ) ){
+            lua_pushnil( L );
+            lua_pushinteger( L, errno );
+            return 2;
+        }
     }
     
-    // got error
-    lua_pushnil( L );
-    lua_pushinteger( L, errno );
+    // success
+    lua_pushboolean( L, 1 );
     
-    return 2;
+    return 1;
 }
 
 
