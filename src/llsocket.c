@@ -78,6 +78,24 @@ PUSH_ERROR:
 }
 
 
+static int shutdown_lua( lua_State *L )
+{
+    int fd = luaL_checkint( L, 1 );
+    int how = luaL_checkint( L, 2 );
+    
+    if( shutdown( fd, how ) == 0 ){
+        lua_pushboolean( L, 1 );
+        return 1;
+    }
+    
+    // got error
+    lua_pushnil( L );
+    lua_pushinteger( L, errno );
+    
+    return 2;
+}
+
+
 static int close_lua( lua_State *L )
 {
     int fd = luaL_checkint( L, 1 );
@@ -274,6 +292,7 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         // with socket-fd
         // method
         { "sockname", sockname_lua },
+        { "shutdown", shutdown_lua },
         { "close", close_lua },
         { "listen", listen_lua },
         { "accept", accept_lua },
@@ -325,9 +344,14 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         i++;
     }
     // constants
+    // for connect and bind
     lstate_num2tbl( L, "SOCK_STREAM", SOCK_STREAM );
     lstate_num2tbl( L, "SOCK_DGRAM", SOCK_DGRAM );
     lstate_num2tbl( L, "SOCK_SEQPACKET", SOCK_SEQPACKET );
+    // for shutdown
+    lstate_num2tbl( L, "SHUT_RD", SHUT_RD );
+    lstate_num2tbl( L, "SHUT_WR", SHUT_WR );
+    lstate_num2tbl( L, "SHUT_RDWR", SHUT_RDWR );
     lua_rawset( L, -3 );
     
     return 1;
