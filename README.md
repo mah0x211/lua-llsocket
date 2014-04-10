@@ -11,6 +11,7 @@ these constants defined at the `llsocket.opt.*`
 - SOCK_DGRAM
 - SOCK_STREAM
 - SOCK_SEQPACKET
+- SOCK_RAW
 
 **for shutdown/close**
 
