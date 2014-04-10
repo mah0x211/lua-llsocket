@@ -240,7 +240,7 @@ static int debug_lua( lua_State *L )
 
 static int error_lua( lua_State *L )
 {
-    return sockopt_int_lua( L, SOL_SOCKET, SO_ERROR, LUA_TBOOLEAN );
+    return sockopt_int_lua( L, SOL_SOCKET, SO_ERROR, LUA_TNUMBER );
 }
 
 static int keepalive_lua( lua_State *L )
