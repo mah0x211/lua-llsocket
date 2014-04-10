@@ -213,14 +213,14 @@ static int sockopt_int_lua( lua_State *L, int level, int optname, int type )
     return lls_sockopt_int_lua( L, fd, level, optname, type );
 }
 
-static int type_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_TYPE, LUA_TNUMBER );
-}
-
 static int nodelay_lua( lua_State *L )
 {
     return sockopt_int_lua( L, IPPROTO_TCP, TCP_NODELAY, LUA_TBOOLEAN );
+}
+
+static int type_lua( lua_State *L )
+{
+    return sockopt_int_lua( L, SOL_SOCKET, SO_TYPE, LUA_TNUMBER );
 }
 
 static int reuseaddr_lua( lua_State *L )
