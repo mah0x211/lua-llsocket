@@ -21,7 +21,7 @@
  *
  *
  *  inet.c
- *  lua-socket
+ *  lua-llsocket
  *
  *  Created by Masatoshi Teruya on 14/03/29.
  *  Copyright 2014 Masatoshi Teruya. All rights reserved.
@@ -88,13 +88,9 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
                     fcntl( fd, F_SETFL, fl|O_NONBLOCK );
                 }
                 
-                if( proc( fd, ptr->ai_addr, ptr->ai_addrlen ) == 0 ){
-                    plog( "port: %d", ntohs( ((struct sockaddr_in*)ptr->ai_addr)->sin_port ) );
-                    plog( "addr: %s", inet_ntoa( ((struct sockaddr_in*)ptr->ai_addr)->sin_addr ) );
-                    break;
-                }
-                // nonblocking connect
-                else if( proc == connect && errno == EINPROGRESS ){
+                if( proc( fd, ptr->ai_addr, ptr->ai_addrlen ) == 0 ||
+                    // nonblocking connect
+                    ( proc == connect && errno == EINPROGRESS ) ){
                     break;
                 }
                 close( fd );
