@@ -23,7 +23,7 @@ these constants defined at the `llsocket.opt.*`
 
 ### connect/bind ( host, port, socktype, nonblock )
 
-create conncted/binded socket.
+create connected/bound socket.
 
 **Parameters**
 
