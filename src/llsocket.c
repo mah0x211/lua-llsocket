@@ -363,6 +363,7 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
     lstate_num2tbl( L, "SOCK_STREAM", SOCK_STREAM );
     lstate_num2tbl( L, "SOCK_DGRAM", SOCK_DGRAM );
     lstate_num2tbl( L, "SOCK_SEQPACKET", SOCK_SEQPACKET );
+    lstate_num2tbl( L, "SOCK_RAW", SOCK_RAW );
     // for shutdown
     lstate_num2tbl( L, "SHUT_RD", SHUT_RD );
     lstate_num2tbl( L, "SHUT_WR", SHUT_WR );
