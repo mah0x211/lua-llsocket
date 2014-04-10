@@ -147,7 +147,7 @@ static int listen_lua( lua_State *L )
     }
     
     // got error
-    lua_pushnil( L );
+    lua_pushboolean( L, 0 );
     lua_pushinteger( L, errno );
     
     return 2;
