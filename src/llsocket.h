@@ -165,17 +165,6 @@ static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level, int opt,
     {
         // no args
         if( lua_isnoneornil( L, 2 ) ){
-            goto SUCCESS;
-        }
-        
-        // type check
-        luaL_checktype( L, 2, type );
-        // set flag
-        flg = (int)lua_tointeger( L, 2 );
-        // set delay flag
-        if( setsockopt( fd, level, opt, (void*)&flg, len ) == 0 )
-        {
-SUCCESS:
             switch( type ){
                 case LUA_TBOOLEAN:
                     lua_pushboolean( L, flg );
@@ -184,6 +173,25 @@ SUCCESS:
                     lua_pushinteger( L, flg );
             }
             return 1;
+        }
+        
+        // type check
+        luaL_checktype( L, 2, type );
+        // set flag
+        switch( type ){
+            case LUA_TBOOLEAN:
+                flg = (int)lua_toboolean( L, 2 );
+                if( setsockopt( fd, level, opt, (void*)&flg, len ) == 0 ){
+                    lua_pushboolean( L, flg );
+                    return 1;
+                }
+            break;
+            default:
+                flg = (int)lua_tointeger( L, 2 );
+                if( setsockopt( fd, level, opt, (void*)&flg, len ) == 0 ){
+                    lua_pushinteger( L, flg );
+                    return 1;
+                }
         }
     }
     
