@@ -39,6 +39,7 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
     const char *port = lua_tostring( L, 2 );
     int socktype = luaL_checkint( L, 3 );
     int nonblock = 0;
+    int reuseaddr = 0;
     const struct addrinfo hints = {
         // AI_PASSIVE:bind socket if node is null
         .ai_flags = passive,
@@ -66,6 +67,11 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
         luaL_checktype( L, 4, LUA_TBOOLEAN );
         nonblock = lua_toboolean( L, 4 );
     }
+    // reuseaddr
+    if( !lua_isnoneornil( L, 5 ) ){
+        luaL_checktype( L, 5, LUA_TBOOLEAN );
+        reuseaddr = lua_toboolean( L, 5 );
+    }
     
     // getaddrinfo is better than inet_pton.
     // i wonder that can be ignore an overhead of creating socket
@@ -82,6 +88,9 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
             fd = socket( ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol );
             if( fd != -1 )
             {
+                setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, (void*)&reuseaddr, 
+                            sizeof(int) );
+                
                 fcntl( fd, F_SETFD, FD_CLOEXEC );
                 if( nonblock ){
                     int fl = fcntl( fd, F_GETFL );
