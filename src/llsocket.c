@@ -177,7 +177,7 @@ static int accept_lua( lua_State *L )
 }
 
 
-static int accept_inherit_lua( lua_State *L )
+static int accept_inherits_lua( lua_State *L )
 {
     int fd = luaL_checkint( L, 1 );
     int cfd = 0;
@@ -345,7 +345,7 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         { "close", close_lua },
         { "listen", listen_lua },
         { "accept", accept_lua },
-        { "acceptInherit", accept_inherit_lua },
+        { "acceptInherits", accept_inherits_lua },
         { NULL, NULL }
     };
     struct luaL_Reg opt_method[] = {
