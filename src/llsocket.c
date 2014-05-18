@@ -157,18 +157,11 @@ static int listen_lua( lua_State *L )
 static int accept_lua( lua_State *L )
 {
     int fd = luaL_checkint( L, 1 );
-    int cfd = 0;
+    int cfd = accept( fd, NULL, NULL );
     
-    // check args
-    if( !lua_isnoneornil( L, 2 ) ){
-        luaL_checktype( L, 2, LUA_TBOOLEAN );
-    }
-    
-    cfd = accept( fd, NULL, NULL );
     if( cfd != -1 )
     {
-        if( fcntl( cfd, F_SETFD, FD_CLOEXEC ) == 0 && 
-            ( lua_toboolean( L, 2 ) ? !fcntl( cfd, F_SETFL, O_NONBLOCK ) : 1 ) ){
+        if( fcntl( cfd, F_SETFD, FD_CLOEXEC ) != -1 ){
             lua_pushinteger( L, cfd );
             return 1;
         }
