@@ -117,14 +117,13 @@ listen for connections on a socket.
 2. errno: error number.
 
 
-### accept( fd [, nonblock] )
+### accept( fd )
 
 accept a connection on a socket.
 
 **Parameters**
 
 - fd: socket.
-- nonblock: set nonblock flag to connected socket if specified to true.
 
 **Returns**
 
