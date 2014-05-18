@@ -42,7 +42,7 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
     int nonblock = 0;
 #endif
     int reuseaddr = 0;
-    const struct addrinfo hints = {
+    struct addrinfo hints = {
         // AI_PASSIVE:bind socket if node is null
         .ai_flags = passive,
         // AF_INET:ipv4 | AF_INET6:ipv6
@@ -90,7 +90,7 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
     // i wonder that can be ignore an overhead of creating socket
     // descriptor when i simply want to confirm correct address?
     // wildcard ip-address
-    if( getaddrinfo( host, port, &hints, &list ) != -1 )
+    if( getaddrinfo( host, port, (const struct addrinfo*)&hints, &list ) != -1 )
     {
         struct addrinfo *ptr = list;
         int fd = 0;
