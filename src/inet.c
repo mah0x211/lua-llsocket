@@ -38,7 +38,9 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
     const char *host = lua_tostring( L, 1 );
     const char *port = lua_tostring( L, 2 );
     int socktype = luaL_checkint( L, 3 );
+#if !defined(LINUX_SOCKEXT)
     int nonblock = 0;
+#endif
     int reuseaddr = 0;
     const struct addrinfo hints = {
         // AI_PASSIVE:bind socket if node is null
@@ -46,7 +48,11 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
         // AF_INET:ipv4 | AF_INET6:ipv6
         .ai_family = AF_UNSPEC,
         // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
+#if defined(LINUX_SOCKEXT)
+        .ai_socktype = socktype|SOCK_CLOEXEC,
+#else
         .ai_socktype = socktype,
+#endif
         // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
         .ai_protocol = 0,
         // initialize
@@ -63,9 +69,16 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
         luaL_error( L, "must be specified either host, port or both" );
     }
     // nonblock
-    if( !lua_isnoneornil( L, 4 ) ){
+    if( !lua_isnoneornil( L, 4 ) )
+    {
         luaL_checktype( L, 4, LUA_TBOOLEAN );
+#if defined(LINUX_SOCKEXT)
+        if( lua_toboolean( L, 4 ) ){
+            hints.ai_socktype |= SOCK_NONBLOCK;
+        }
+#else
         nonblock = lua_toboolean( L, 4 );
+#endif
     }
     // reuseaddr
     if( !lua_isnoneornil( L, 5 ) ){
@@ -91,12 +104,13 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
                 setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, (void*)&reuseaddr, 
                             sizeof(int) );
                 
+#if !defined(LINUX_SOCKEXT)
                 fcntl( fd, F_SETFD, FD_CLOEXEC );
                 if( nonblock ){
                     int fl = fcntl( fd, F_GETFL );
                     fcntl( fd, F_SETFL, fl|O_NONBLOCK );
                 }
-                
+#endif
                 if( proc( fd, ptr->ai_addr, ptr->ai_addrlen ) == 0 ||
                     // nonblocking connect
                     ( proc == connect && errno == EINPROGRESS ) ){

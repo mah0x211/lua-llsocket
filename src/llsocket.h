@@ -53,6 +53,17 @@
 #include <lualib.h>
 
 
+// linux 2.6.27
+#if defined(SOCK_CLOEXEC)
+#define LINUX_SOCKEXT   1
+#endif
+
+// linux 2.6.28
+#if defined(SYS_ACCEPT4)
+#define LINUX_ACCEPT4   1
+#endif
+
+
 // memory alloc/dealloc
 #define palloc(t)       (t*)malloc( sizeof(t) )
 #define pnalloc(n,t)    (t*)malloc( (n) * sizeof(t) )
