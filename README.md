@@ -131,6 +131,21 @@ accept a connection on a socket.
 2. errno: error number.
 
 
+### acceptInherits( fd )
+
+accept a connection on a socket.
+this connection inherits file status from a socket.
+
+**Parameters**
+
+- fd: socket.
+
+**Returns**
+
+1. fd: connected socket.
+2. errno: error number.
+
+
 ## llsocket.opt.*
 
 ### cloexec( fd[, flag] )
