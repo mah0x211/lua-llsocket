@@ -177,6 +177,50 @@ static int accept_lua( lua_State *L )
 }
 
 
+static int accept_inherit_lua( lua_State *L )
+{
+    int fd = luaL_checkint( L, 1 );
+    int cfd = 0;
+
+#if defined(__linux__)
+    int flg = fcntl( cfd, F_GETFL );
+    
+    if( flg != -1 )
+    {
+#if defined(LINUX_ACCEPT4)
+        flg = SOCK_CLOEXEC | ( ( flg & O_NONBLOCK ) ? SOCK_NONBLOCK : 0 );
+        if( ( cfd = accept4( fd, NULL, NULL, flg ) ) != -1 ){
+            lua_pushinteger( L, cfd );
+            return 1;
+        }
+#else
+        if( ( cfd = accept( fd, NULL, NULL ) ) != -1 )
+        {
+            if( fcntl( cfd, F_SETFD, FD_CLOEXEC ) == 0 &&
+                fcntl( cfd, F_SETFL, flg ) == 0 ){
+                lua_pushinteger( L, cfd );
+                return 1;
+            }
+            close( cfd );
+        }
+#endif
+    }
+
+#else
+    if( ( cfd = accept( fd, NULL, NULL ) ) != -1 ){
+        lua_pushinteger( L, cfd );
+        return 1;
+    }
+#endif
+
+    // got error
+    lua_pushnil( L );
+    lua_pushinteger( L, errno );
+    
+    return 2;
+}
+
+
 // fd option
 static int fcntl_lua( lua_State *L, int getfl, int setfl, int fl )
 {
@@ -301,6 +345,7 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         { "close", close_lua },
         { "listen", listen_lua },
         { "accept", accept_lua },
+        { "acceptInherit", accept_inherit_lua },
         { NULL, NULL }
     };
     struct luaL_Reg opt_method[] = {
