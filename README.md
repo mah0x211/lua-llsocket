@@ -22,7 +22,7 @@ these constants defined at the `llsocket.opt.*`
 
 ## llsocket.inet.*
 
-### connect/bind ( host, port, socktype, nonblock )
+### connect/bind ( host, port, socktype, nonblock, reuseaddr )
 
 create connected/bound socket.
 
@@ -32,6 +32,7 @@ create connected/bound socket.
 - port: port number string.
 - socktype: SOCK_*.
 - nonblock: set nonblock flag to created socket if specified to true.
+- reuseaddr: set reuseaddr flag to created socket if specified to true.
 
 **Returns**
 
