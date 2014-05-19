@@ -101,8 +101,10 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
 #endif
             if( fd != -1 )
             {
-                setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, (void*)&reuseaddr, 
-                            sizeof(int) );
+                if( reuseaddr ){
+                    setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, 
+                                (void*)&reuseaddr, sizeof(int) );
+                }
                 
 #if !defined(LINUX_SOCKEXT)
                 fcntl( fd, F_SETFD, FD_CLOEXEC );
