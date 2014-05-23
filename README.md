@@ -84,8 +84,7 @@ shut down socket.
 
 **Returns**
 
-1. ok: boolean value.
-2. errno: error number.
+1. errno: error number.
 
 ### close( fd [, how] )
 
@@ -98,8 +97,7 @@ close socket.
 
 **Returns**
 
-1. ok: boolean value.
-2. errno: error number.
+1. errno: error number.
 
 
 ### listen( fd [, backlog] )
@@ -113,8 +111,7 @@ listen for connections on a socket.
 
 **Returns**
 
-1. ok: boolean value.
-2. errno: error number.
+1. errno: error number.
 
 
 ### accept( fd )
