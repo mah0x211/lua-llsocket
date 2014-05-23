@@ -60,7 +60,7 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
     // check arguments
     // host, port
     if( !host && !port ){
-        luaL_error( L, "must be specified either host, port or both" );
+        return luaL_error( L, "must be specified either host, port or both" );
     }
     // nonblock
     if( !lua_isnoneornil( L, 4 ) )

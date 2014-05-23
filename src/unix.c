@@ -44,9 +44,7 @@ static int connbind_lua( lua_State *L, connbind_t proc )
     int nonblock = 0;
     int fd = 0;
     
-    
     // check arguments
-    
     if( !lua_isnoneornil( L, 3 ) ){
         luaL_checktype( L, 3, LUA_TBOOLEAN );
         nonblock = lua_toboolean( L, 3 );

@@ -84,15 +84,12 @@ static int shutdown_lua( lua_State *L )
     int how = luaL_checkint( L, 2 );
     
     if( shutdown( fd, how ) == 0 ){
-        lua_pushboolean( L, 1 );
+        // got error
+        lua_pushinteger( L, errno );
         return 1;
     }
     
-    // got error
-    lua_pushboolean( L, 0 );
-    lua_pushinteger( L, errno );
-    
-    return 2;
+    return 0;
 }
 
 
@@ -112,16 +109,12 @@ static int close_lua( lua_State *L )
         
         // got error
         if( ( rc + close( fd ) ) ){
-            lua_pushboolean( L, 0 );
             lua_pushinteger( L, errno );
-            return 2;
+            return 1;
         }
     }
     
-    // success
-    lua_pushboolean( L, 1 );
-    
-    return 1;
+    return 0;
 }
 
 
@@ -141,16 +134,13 @@ static int listen_lua( lua_State *L )
     }
     
     // listen
-    if( listen( fd, (int)backlog ) == 0 ){
-        lua_pushboolean( L, 1 );
+    if( listen( fd, (int)backlog ) != 0 ){
+        // got error
+        lua_pushinteger( L, errno );
         return 1;
     }
     
-    // got error
-    lua_pushboolean( L, 0 );
-    lua_pushinteger( L, errno );
-    
-    return 2;
+    return 0;
 }
 
 
