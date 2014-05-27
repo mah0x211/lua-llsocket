@@ -35,8 +35,8 @@ typedef int(*connbind_t)( int, const struct sockaddr*, socklen_t );
 
 static int connbind_lua( lua_State *L, connbind_t proc, int passive )
 {
-    const char *host = lua_tostring( L, 1 );
-    const char *port = lua_tostring( L, 2 );
+    const char *host = NULL;
+    const char *port = NULL;
     int socktype = luaL_checkint( L, 3 );
     int nonblock = 0;
     int reuseaddr = 0;
@@ -58,6 +58,12 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
     struct addrinfo *list = NULL;
     
     // check arguments
+    if( !lua_isnoneornil( L, 1 ) ){
+        host = luaL_checkstring( L, 1 );
+    }
+    if( !lua_isnoneornil( L, 2 ) ){
+        port = luaL_checkstring( L, 2 );
+    }
     // host, port
     if( !host && !port ){
         return luaL_error( L, "must be specified either host, port or both" );
