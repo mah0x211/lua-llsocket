@@ -2,6 +2,21 @@
 
 low-level socket module.
 
+## Installation
+
+```sh
+luarocks install --from=http://mah0x211.github.io/rocks/ llsocket
+```
+
+or 
+
+```sh
+git clone https://github.com/mah0x211/lua-llsocket.git
+cd lua-llsocket
+luarocks make
+```
+
+
 ## Constants
 
 these constants defined at the `llsocket.opt.*`
