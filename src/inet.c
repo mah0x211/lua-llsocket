@@ -35,6 +35,7 @@ typedef int(*connbind_t)( int, const struct sockaddr*, socklen_t );
 
 static int connbind_lua( lua_State *L, connbind_t proc, int passive )
 {
+    int argc = lua_gettop( L );
     const char *host = NULL;
     const char *port = NULL;
     int socktype = luaL_checkint( L, 3 );
@@ -58,34 +59,47 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
     struct addrinfo *list = NULL;
     
     // check arguments
-    if( !lua_isnoneornil( L, 1 ) ){
-        host = luaL_checkstring( L, 1 );
+    if( argc > 5 ){
+        argc = 5;
     }
-    if( !lua_isnoneornil( L, 2 ) ){
-        port = luaL_checkstring( L, 2 );
+    switch( argc ){
+        // reuseaddr
+        case 5:
+            if( !lua_isnoneornil( L, 5 ) ){
+                luaL_checktype( L, 5, LUA_TBOOLEAN );
+                reuseaddr = lua_toboolean( L, 5 );
+            }
+        // nonblock
+        case 4:
+            if( !lua_isnoneornil( L, 4 ) )
+            {
+                luaL_checktype( L, 4, LUA_TBOOLEAN );
+#if defined(LINUX_SOCKEXT)
+                if( lua_toboolean( L, 4 ) ){
+                    nonblock = SOCK_NONBLOCK;
+                }
+#else
+                nonblock = lua_toboolean( L, 4 );
+#endif
+            }
+        // port
+        case 2:
+            if( !lua_isnoneornil( L, 2 ) ){
+                port = luaL_checkstring( L, 2 );
+            }
+        // host
+        case 1:
+            if( !lua_isnoneornil( L, 1 ) ){
+                host = luaL_checkstring( L, 1 );
+            }
+
     }
+
     // host, port
     if( !host && !port ){
         return luaL_error( L, "must be specified either host, port or both" );
     }
-    // nonblock
-    if( !lua_isnoneornil( L, 4 ) )
-    {
-        luaL_checktype( L, 4, LUA_TBOOLEAN );
-#if defined(LINUX_SOCKEXT)
-        if( lua_toboolean( L, 4 ) ){
-            nonblock = SOCK_NONBLOCK;
-        }
-#else
-        nonblock = lua_toboolean( L, 4 );
-#endif
-    }
-    // reuseaddr
-    if( !lua_isnoneornil( L, 5 ) ){
-        luaL_checktype( L, 5, LUA_TBOOLEAN );
-        reuseaddr = lua_toboolean( L, 5 );
-    }
-    
+
     // getaddrinfo is better than inet_pton.
     // i wonder that can be ignore an overhead of creating socket
     // descriptor when i simply want to confirm correct address?
