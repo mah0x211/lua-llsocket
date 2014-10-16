@@ -347,12 +347,26 @@ static int macaddrs_lua( lua_State *L )
                 if( ptr->ifa_addr->sa_family == AF_LINK )
                 {
                     sd = (struct sockaddr_dl*)ptr->ifa_addr;
-                    if( sd->sdl_alen ){
-                        mac = (unsigned char*)LLADDR( sd );
-                        snprintf( buf, INET6_ADDRSTRLEN, 
-                                  "%02x:%02x:%02x:%02x:%02x:%02x",
-                                  *mac, mac[1], mac[2], mac[3], mac[4], mac[5] );
-                        lstate_str2tbl( L, ptr->ifa_name, buf );
+                    switch( sd->sdl_alen ){
+                        case 6:
+                            mac = (unsigned char*)LLADDR( sd );
+                            snprintf( 
+                                buf, INET6_ADDRSTRLEN, 
+                                "%02x:%02x:%02x:%02x:%02x:%02x",
+                                *mac, mac[1], mac[2], mac[3], mac[4], mac[5] 
+                            );
+                            lstate_str2tbl( L, ptr->ifa_name, buf );
+                        break;
+                        case 8:
+                            mac = (unsigned char*)LLADDR( sd );
+                            snprintf( 
+                                buf, INET6_ADDRSTRLEN, 
+                                "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
+                                *mac, mac[1], mac[2], mac[3], mac[4], mac[5], 
+                                mac[6], mac[7]
+                            );
+                            lstate_str2tbl( L, ptr->ifa_name, buf );
+                        break;
                     }
                 }
                 
