@@ -360,7 +360,7 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         { "sndtimeo", sndtimeo_lua },
         { NULL, NULL }
     };
-    int i;
+    struct luaL_Reg *ptr = NULL;
     
     // create table
     lua_newtable( L );
@@ -373,19 +373,21 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
     lua_rawset( L, -3 );
 
     // method
-    i = 0;
-    while( method[i].name ){
-        lstate_fn2tbl( L, method[i].name, method[i].func );
-        i++;
-    }
+    ptr = method;
+    do {
+        lstate_fn2tbl( L, ptr->name, ptr->func );
+        ptr++;
+    } while( ptr->name );
+    
     // option method
     lua_pushstring( L, "opt" );
     lua_newtable( L );
-    i = 0;
-    while( opt_method[i].name ){
-        lstate_fn2tbl( L, opt_method[i].name, opt_method[i].func );
-        i++;
-    }
+    ptr = opt_method;
+    do {
+        lstate_fn2tbl( L, ptr->name, ptr->func );
+        ptr++;
+    } while( ptr->name );
+    
     // constants
     // for connect and bind
     lstate_num2tbl( L, "SOCK_STREAM", SOCK_STREAM );
