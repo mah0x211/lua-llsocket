@@ -29,7 +29,9 @@
  */
 
 #include "llsocket.h"
-
+#include <ifaddrs.h>
+#include <net/if_dl.h>
+#include <net/if.h>  
 
 // method
 static int sockname_lua( lua_State *L )
@@ -324,6 +326,51 @@ static int sndtimeo_lua( lua_State *L )
 }
 
 
+// device info
+static int macaddrs_lua( lua_State *L )
+{
+    struct ifaddrs *ifa;
+    
+    if( getifaddrs( &ifa ) == 0 )
+    {
+        lua_newtable( L );
+        
+        if( ifa )
+        {
+            struct ifaddrs *ptr = ifa;
+            char buf[INET6_ADDRSTRLEN];
+            unsigned char *mac = NULL;
+            struct sockaddr_dl *sd;
+            
+            do
+            {
+                if( ptr->ifa_addr->sa_family == AF_LINK )
+                {
+                    sd = (struct sockaddr_dl*)ptr->ifa_addr;
+                    if( sd->sdl_alen ){
+                        mac = (unsigned char*)LLADDR( sd );
+                        snprintf( buf, INET6_ADDRSTRLEN, 
+                                  "%02x:%02x:%02x:%02x:%02x:%02x",
+                                  *mac, mac[1], mac[2], mac[3], mac[4], mac[5] );
+                        lstate_str2tbl( L, ptr->ifa_name, buf );
+                    }
+                }
+                
+                ptr = ptr->ifa_next;
+            } while( ptr );
+        }
+        
+        freeifaddrs( ifa );
+        return 1;
+    }
+    
+    // got error
+    lua_pushnil( L );
+    lua_pushinteger( L, errno );
+    
+    return 0;
+}
+
 
 LUALIB_API int luaopen_llsocket( lua_State *L )
 {
@@ -360,6 +407,11 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         { "sndtimeo", sndtimeo_lua },
         { NULL, NULL }
     };
+    struct luaL_Reg device_method[] = {
+        // device info
+        { "macaddrs", macaddrs_lua },
+        { NULL, NULL }
+    };
     struct luaL_Reg *ptr = NULL;
     
     // create table
@@ -388,6 +440,15 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         ptr++;
     } while( ptr->name );
     
+    // device method
+    lua_pushstring( L, "device" );
+    lua_newtable( L );
+    ptr = device_method;
+    do {
+        lstate_fn2tbl( L, ptr->name, ptr->func );
+        ptr++;
+    } while( ptr->name );
+
     // constants
     // for connect and bind
     lstate_num2tbl( L, "SOCK_STREAM", SOCK_STREAM );
