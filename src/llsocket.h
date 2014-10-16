@@ -121,6 +121,12 @@
     lua_rawset(L,-3); \
 }while(0)
 
+#define lstate_bool2tbl(L,k,v) do{ \
+    lua_pushstring(L,k); \
+    lua_pushboolean(L,v); \
+    lua_rawset(L,-3); \
+}while(0)
+
 
 
 LUALIB_API int luaopen_llsocket_inet( lua_State *L );
