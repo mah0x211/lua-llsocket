@@ -236,6 +236,39 @@ static int send_lua( lua_State *L )
 }
 
 
+static int sendto_lua( lua_State *L )
+{
+    int fd = luaL_checkint( L, 1 );
+    size_t len = 0; 
+    const char *buf = luaL_checklstring( L, 2, &len );
+    int flg = luaL_optint( L, 3, 0 );
+    lls_addr_t *llsaddr = (lls_addr_t*)lls_checkudata( L, 4, LLS_ADDR_MT );
+    ssize_t rv = 0;
+    
+    if( llsaddr ){
+        rv = sendto( fd, buf, len, flg, (const struct sockaddr*)&llsaddr->addr,
+                     llsaddr->len );
+    }
+    else {
+        rv = send( fd, buf, len, flg );
+    }
+    
+    // got error
+    if( rv == -1 ){
+        lua_pushnil( L );
+        lua_pushinteger( L, errno );
+        lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
+        rv = 3;
+    }
+    else {
+        lua_pushinteger( L, rv );
+        rv = 1;
+    }
+    
+    return rv;
+}
+
+
 static int recv_lua( lua_State *L )
 {
     int fd = luaL_checkint( L, 1 );
@@ -519,6 +552,7 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         { "accept", accept_lua },
         { "acceptInherits", accept_inherits_lua },
         { "send", send_lua },
+        { "sendto", sendto_lua },
         { "recv", recv_lua },
         { "recvfrom", recvfrom_lua },
         { NULL, NULL }
