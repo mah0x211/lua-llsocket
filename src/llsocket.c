@@ -214,6 +214,29 @@ static int accept_inherits_lua( lua_State *L )
 
 
 // fd option
+static int send_lua( lua_State *L )
+{
+    int fd = luaL_checkint( L, 1 );
+    size_t len = 0; 
+    const char *buf = luaL_checklstring( L, 2, &len );
+    int flg = luaL_optint( L, 3, 0 );
+    ssize_t rv = send( fd, buf, len, flg );
+    
+    // got error
+    if( rv == -1 ){
+        lua_pushnil( L );
+        lua_pushinteger( L, errno );
+        lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
+        rv = 3;
+    }
+    else {
+        lua_pushlstring( L, buf, rv );
+        rv = 1;
+    }
+    
+    return rv;
+}
+
 static int fcntl_lua( lua_State *L, int getfl, int setfl, int fl )
 {
     int fd = luaL_checkint( L, 1 );
@@ -399,6 +422,7 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         { "listen", listen_lua },
         { "accept", accept_lua },
         { "acceptInherits", accept_inherits_lua },
+        { "send", send_lua },
         { NULL, NULL }
     };
     struct luaL_Reg opt_method[] = {
