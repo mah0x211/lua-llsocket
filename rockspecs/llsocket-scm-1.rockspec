@@ -18,6 +18,7 @@ build = {
         llsocket = {
             sources = { 
                 "src/llsocket.c",
+                "src/addr.c",
                 "src/inet.c",
                 "src/unix.c"
             },

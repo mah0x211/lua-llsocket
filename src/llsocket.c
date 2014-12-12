@@ -499,6 +499,8 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
     lua_pushstring( L, "unix" );
     luaopen_llsocket_unix( L );
     lua_rawset( L, -3 );
+    // no alloc interface
+    luaopen_llsocket_addr( L );
 
     // method
     ptr = method;

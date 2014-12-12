@@ -128,6 +128,8 @@
 }while(0)
 
 
+// socket.addr
+#include "llsocket_addr.h"
 
 LUALIB_API int luaopen_llsocket_inet( lua_State *L );
 LUALIB_API int luaopen_llsocket_unix( lua_State *L );
