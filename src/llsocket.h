@@ -165,6 +165,19 @@ static inline void *lls_checkudata( lua_State *L, int idx, const char *tname )
 }
 
 
+static inline int lls_optflags( lua_State *L, int idx )
+{
+    const int argc = lua_gettop( L );
+    int flg = 0;
+    
+    for(; idx <= argc; idx++ ){
+        flg |= luaL_optint( L, idx, 0 );
+    }
+    
+    return flg;
+}
+
+
 // fd option
 static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl, 
                                  int fl )
@@ -202,6 +215,7 @@ static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl,
     
     return 2;
 }
+
 
 // socket option
 static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level, int opt, 
