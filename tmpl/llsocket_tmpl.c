@@ -274,7 +274,7 @@ static int recv_lua( lua_State *L )
     int fd = luaL_checkint( L, 1 );
     lua_Integer len = luaL_optinteger( L, 2, DEFAULT_RECVSIZE );
     int flg = luaL_optint( L, 3, 0 );
-    char *buf = pnalloc( len, char );
+    char *buf = NULL;
     ssize_t rv = 0;
     
     // invalid length
@@ -311,10 +311,10 @@ static int recvfrom_lua( lua_State *L )
     int fd = luaL_checkint( L, 1 );
     lua_Integer len = luaL_optinteger( L, 2, DEFAULT_RECVSIZE );
     int flg = luaL_optint( L, 3, 0 );
-    char *buf = pnalloc( len, char );
     socklen_t slen = sizeof( struct sockaddr_storage );
     struct sockaddr_storage src;
     ssize_t rv = 0;
+    char *buf = NULL;
     
     memset( (void*)&src, 0, slen );
     // invalid length
