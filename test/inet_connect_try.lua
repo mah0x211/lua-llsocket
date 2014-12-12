@@ -4,6 +4,8 @@ local llsocket = require('llsocket');
 local STREAM = llsocket.opt.SOCK_STREAM;
 local DGRAM = llsocket.opt.SOCK_DGRAM;
 local RAW = llsocket.opt.SOCK_RAW;
+local MSG_WAITALL = llsocket.opt.MSG_WAITALL;
+local MSG_PEEK = llsocket.opt.MSG_PEEK;
 local inet = llsocket.inet;
 local HOST = '127.0.0.1';
 local PORT = 8080;
@@ -38,12 +40,22 @@ end
 
 
 local function replyEcho( fd, sendfn )
-    local msg, addr, err = llsocket.recvfrom( fd );
+    local msg, addr, err = llsocket.recvfrom( fd, 5, 
+                                              -- wait 5 bytes
+                                              MSG_WAITALL,
+                                              -- do not delete msg from queue
+                                              MSG_PEEK );
+    
+    if not err then
+        -- read again
+        msg, addr, err = llsocket.recvfrom( fd );
+        if not err then
+            sendfn( fd, msg, addr );
+        end
+    end
     
     if err then
         msg = strerror( err );
-    else
-        sendfn( fd, msg, addr );
     end
     
     return msg;
