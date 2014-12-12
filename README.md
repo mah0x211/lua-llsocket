@@ -197,11 +197,47 @@ accept a connection on a socket. this connection inherits a O_NONBLOCK flag from
 2. errno: error number.
 
 
+### send( fd, msg [, flag] )
+
+send a message from a socket.
+
+**Parameters**
+
+- fd: socket.
+- str: message string.
+- flag: send flag.
+
+
+**Returns**
+
+1. bytes: number of bytes sent..
+2. errno: error number.
+3. again: true if errno is EAGAIN or EWOULDBLOCK.
+
+
+### recv( fd [, len [, flag]] )
+
+receive a message from a socket.
+
+**Parameters**
+
+- fd: socket.
+- len: number of bytes to receive.
+- flag: recv flag.
+
+
+**Returns**
+
+1. str: received message.
+2. errno: error number.
+3. again: true if errno is EAGAIN or EWOULDBLOCK.
+
+
 ## llsocket.opt API
 
 the following API uses for getting or setting socket options.
 
-### cloexec( fd[, flag] )
+### cloexec( fd [, flag] )
 
 returns the current FD_CLOEXEC flag for socket.
 
@@ -215,7 +251,7 @@ returns the current FD_CLOEXEC flag for socket.
 1. flag: current flag state as a boolean value.
 2. errno: error number.
 
-### nonblock( fd[, flag] )
+### nonblock( fd [, flag] )
 
 returns the current O_NONBLOCK flag for socket.
 
@@ -229,7 +265,7 @@ returns the current O_NONBLOCK flag for socket.
 1. flag: current flag state as a boolean value.
 2. errno: error number.
 
-### nodelay( fd[, flag] )
+### nodelay( fd [, flag] )
 
 returns the TCP_NODELAY value of socket option.
 
@@ -244,7 +280,7 @@ returns the TCP_NODELAY value of socket option.
 2. errno: error number.
 
 
-### reuseaddr( fd[, flag] )
+### reuseaddr( fd [, flag] )
 
 returns the SO_REUSEADDR value of socket option.
 
@@ -258,7 +294,7 @@ returns the SO_REUSEADDR value of socket option.
 1. flag: current option state as a boolean value.
 2. errno: error number.
 
-### broadcast( fd[, flag] )
+### broadcast( fd [, flag] )
 
 returns the SO_BROADCAST value of socket option.
 
@@ -273,7 +309,7 @@ returns the SO_BROADCAST value of socket option.
 2. errno: error number.
 
 
-### debug( fd[, flag] )
+### debug( fd [, flag] )
 
 returns the SO_DEBUG value of socket option.
 
@@ -288,7 +324,7 @@ returns the SO_DEBUG value of socket option.
 2. errno: error number.
 
 
-### keepalive( fd[, flag] )
+### keepalive( fd [, flag] )
 
 returns the SO_KEEPALIVE value of socket option.
 
@@ -303,7 +339,7 @@ returns the SO_KEEPALIVE value of socket option.
 2. errno: error number.
 
 
-### oobinline( fd[, flag] )
+### oobinline( fd [, flag] )
 
 returns the SO_OOBINLINE value of socket option.
 
@@ -318,7 +354,7 @@ returns the SO_OOBINLINE value of socket option.
 2. errno: error number.
 
 
-### timestamp( fd[, flag] )
+### timestamp( fd [, flag] )
 
 returns the SO_TIMESTAMP value of socket option.
 
@@ -333,7 +369,7 @@ returns the SO_TIMESTAMP value of socket option.
 2. errno: error number.
 
 
-### rcvbuf( fd[, size] )
+### rcvbuf( fd [, size] )
 
 returns the SO_RCVBUF value of socket option.
 
@@ -347,7 +383,7 @@ returns the SO_RCVBUF value of socket option.
 1. size: current option state as a number value.
 2. errno: error number.
 
-### rcvlowat( fd[, size] )
+### rcvlowat( fd [, size] )
 
 returns the SO_RCVLOWAT value of socket option.
 
@@ -362,7 +398,7 @@ returns the SO_RCVLOWAT value of socket option.
 2. errno: error number.
 
 
-### sndbuf( fd[, size] )
+### sndbuf( fd [, size] )
 
 returns the SO_SNDBUF value of socket option.
 
@@ -376,7 +412,7 @@ returns the SO_SNDBUF value of socket option.
 1. size: current option state as a number value.
 2. errno: error number.
 
-### sndlowat( fd[, size] )
+### sndlowat( fd [, size] )
 
 returns the SO_SNDLOWAT value of socket option.
 
@@ -392,7 +428,7 @@ returns the SO_SNDLOWAT value of socket option.
 
 
 
-### rcvtimeo( fd[, sec] )
+### rcvtimeo( fd [, sec] )
 
 returns the SO_RCVTIMEO value of socket option.
 
@@ -406,7 +442,7 @@ returns the SO_RCVTIMEO value of socket option.
 1. sec: current option state as a number value.
 2. errno: error number.
 
-### sndtimeo( fd[, sec] )
+### sndtimeo( fd [, sec] )
 
 returns the SO_SNDTIMEO value of socket option.
 
