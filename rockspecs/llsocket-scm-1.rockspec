@@ -23,7 +23,6 @@ build = {
         WARNINGS        = "-Wall -Wno-trigraphs -Wmissing-field-initializers -Wreturn-type -Wmissing-braces -Wparentheses -Wno-switch -Wunused-function -Wunused-label -Wunused-parameter -Wunused-variable -Wunused-value -Wuninitialized -Wunknown-pragmas -Wshadow -Wsign-compare",
         CPPFLAGS        = "-I$(LUA_INCDIR)",
         LDFLAGS         = "$(LIBFLAG)",
-        LIBS            = "$(LIBS)",
         LIB_EXTENSION   = "$(LIB_EXTENSION)"
     },
     install_variables = {
