@@ -217,7 +217,7 @@ static int send_lua( lua_State *L )
     int fd = luaL_checkint( L, 1 );
     size_t len = 0; 
     const char *buf = luaL_checklstring( L, 2, &len );
-    int flg = luaL_optint( L, 3, 0 );
+    int flg = lls_optflags( L, 3 );
     ssize_t rv = send( fd, buf, len, flg );
     
     // got error
@@ -242,7 +242,7 @@ static int sendto_lua( lua_State *L )
     size_t len = 0; 
     const char *buf = luaL_checklstring( L, 2, &len );
     lls_addr_t *llsaddr = (lls_addr_t*)lls_checkudata( L, 3, LLS_ADDR_MT );
-    int flg = luaL_optint( L, 4, 0 );
+    int flg = lls_optflags( L, 4 );
     ssize_t rv = 0;
     
     if( llsaddr ){
@@ -273,7 +273,7 @@ static int recv_lua( lua_State *L )
 {
     int fd = luaL_checkint( L, 1 );
     lua_Integer len = luaL_optinteger( L, 2, DEFAULT_RECVSIZE );
-    int flg = luaL_optint( L, 3, 0 );
+    int flg = lls_optflags( L, 3 );
     char *buf = NULL;
     ssize_t rv = 0;
     
@@ -310,7 +310,7 @@ static int recvfrom_lua( lua_State *L )
 {
     int fd = luaL_checkint( L, 1 );
     lua_Integer len = luaL_optinteger( L, 2, DEFAULT_RECVSIZE );
-    int flg = luaL_optint( L, 3, 0 );
+    int flg = lls_optflags( L, 3 );
     socklen_t slen = sizeof( struct sockaddr_storage );
     struct sockaddr_storage src;
     ssize_t rv = 0;
