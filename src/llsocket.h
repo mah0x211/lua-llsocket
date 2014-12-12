@@ -20,7 +20,7 @@
  *  THE SOFTWARE.
  *
  *
- *  socket.h
+ *  llsocket.h
  *  lua-llsocket
  *
  *  Created by Masatoshi Teruya on 14/03/29.
@@ -131,6 +131,36 @@
 
 LUALIB_API int luaopen_llsocket_inet( lua_State *L );
 LUALIB_API int luaopen_llsocket_unix( lua_State *L );
+
+
+static inline void *lls_checkudata( lua_State *L, int idx, const char *tname )
+{
+    const int argc = lua_gettop( L );
+    
+    if( argc >= idx )
+    {
+        void *udata = NULL;
+        
+        switch( lua_type( L, idx ) ){
+            case LUA_TUSERDATA:
+                udata = lua_touserdata( L, idx );
+                // get metatable
+                if( !lua_getmetatable( L, -1 ) ){
+                    luaL_argerror( L, idx, "llsocket.addr expected" );
+                }
+                // verify metatable
+                luaL_getmetatable( L, tname );
+                if( !lua_rawequal( L, -1, -2 ) ){
+                    luaL_argerror( L, idx, "llsocket.addr expected" );
+                }
+                lua_settop( L, argc );
+                return udata;
+        }
+        luaL_argerror( L, idx, "llsocket.addr expected" );
+    }
+    
+    return NULL;
+}
 
 
 // fd option
