@@ -27,6 +27,10 @@ these constants defined at the `llsocket.opt.*`
 - SHUT_RDWR
 
 
+**Use for `send`, `sendto`, `recv` and `recvfrom` API**
+
+- MSG_*
+
 ## llsocket.inet API
 
 
@@ -197,7 +201,42 @@ accept a connection on a socket. this connection inherits a O_NONBLOCK flag from
 2. errno: error number.
 
 
-### send( fd, msg [, flag] )
+
+### recv( fd [, len [, flag, ...]] )
+
+receive a message from a socket.
+
+**Parameters**
+
+- fd: socket.
+- len: number of bytes to receive. default 4096 bytes.
+- flag: recv flag.
+
+
+**Returns**
+
+1. str: received message.
+2. errno: error number.
+3. again: true if errno is EAGAIN or EWOULDBLOCK.
+
+
+### recvfrom( fd [, len [, flag, ...]] )
+
+receive a message from a socket.
+
+**Parameters**
+
+same as `recv( fd [, len [, flag, ...]] )` API.
+
+**Returns**
+
+1. str: received message.
+2. addr: `llsocket.addr` userdata or nil.
+3. errno: error number.
+4. again: true if errno is EAGAIN or EWOULDBLOCK.
+
+
+### send( fd, msg [, flag, ...] )
 
 send a message from a socket.
 
@@ -215,22 +254,22 @@ send a message from a socket.
 3. again: true if errno is EAGAIN or EWOULDBLOCK.
 
 
-### recv( fd [, len [, flag]] )
+### sendto( fd, msg [, addr, [flag, ...]] )
 
-receive a message from a socket.
+send a message from a socket.
 
 **Parameters**
 
 - fd: socket.
-- len: number of bytes to receive.
-- flag: recv flag.
+- str: message string.
+- addr: `llsocket.addr` userdata or nil.
+- flag: send flag.
 
 
 **Returns**
 
-1. str: received message.
-2. errno: error number.
-3. again: true if errno is EAGAIN or EWOULDBLOCK.
+same as `send( fd, msg [, flag, ...] )` API.
+
 
 
 ## llsocket.opt API
@@ -455,5 +494,4 @@ returns the SO_SNDTIMEO value of socket option.
 
 1. sec: current option state as a number value.
 2. errno: error number.
-
 
