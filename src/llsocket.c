@@ -273,6 +273,65 @@ static int recv_lua( lua_State *L )
 }
 
 
+static int recvfrom_lua( lua_State *L )
+{
+    int fd = luaL_checkint( L, 1 );
+    lua_Integer len = luaL_optinteger( L, 2, DEFAULT_RECVSIZE );
+    int flg = luaL_optint( L, 3, 0 );
+    char *buf = pnalloc( len, char );
+    socklen_t slen = sizeof( struct sockaddr_storage );
+    struct sockaddr_storage src;
+    ssize_t rv = 0;
+    
+    memset( (void*)&src, 0, slen );
+    // invalid length
+    if( len <= 0 ){
+        lua_pushnil( L );
+        lua_pushnil( L );
+        lua_pushinteger( L, EINVAL );
+        return 3;
+    }
+    // mem-error
+    else if( !( buf = pnalloc( len, char ) ) ){
+        lua_pushnil( L );
+        lua_pushnil( L );
+        lua_pushinteger( L, errno );
+        return 3;
+    }
+    // got error
+    else if( ( rv = recvfrom( fd, buf, (size_t)len, flg, 
+             (struct sockaddr*)&src, &slen ) ) == -1 ){
+        lua_pushnil( L );
+        lua_pushnil( L );
+        lua_pushinteger( L, errno );
+        lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
+        rv = 4;
+    }
+    else
+    {
+        lua_pushlstring( L, buf, rv );
+        // no addrinfo
+        if( slen == 0 ){
+            rv = 1;
+        }
+        // push llsocket.addr udata
+        else if( llsocket_addr_alloc( L, &src, slen ) == 0 ){
+            rv = 2;
+        }
+        else {
+            lua_pop( L, 1 );
+            lua_pushnil( L );
+            lua_pushnil( L );
+            lua_pushinteger( L, errno );
+            rv = 3;
+        }
+    }
+    pdealloc( buf );
+    
+    return rv;
+}
+
+
 // MARK: fd option
 static int fcntl_lua( lua_State *L, int getfl, int setfl, int fl )
 {
@@ -461,6 +520,7 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         { "acceptInherits", accept_inherits_lua },
         { "send", send_lua },
         { "recv", recv_lua },
+        { "recvfrom", recvfrom_lua },
         { NULL, NULL }
     };
     struct luaL_Reg opt_method[] = {
