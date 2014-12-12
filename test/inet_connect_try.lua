@@ -43,7 +43,7 @@ local function replyEcho( fd, sendfn )
     if err then
         msg = strerror( err );
     else
-        sendfn( fd, msg, 0, addr );
+        sendfn( fd, msg, addr );
     end
     
     return msg;
