@@ -495,3 +495,13 @@ returns the SO_SNDTIMEO value of socket option.
 1. sec: current option state as a number value.
 2. errno: error number.
 
+
+
+## TODO
+
+- sockatmark
+- sendmsg
+- recvmsg
+- sendfile
+
+
