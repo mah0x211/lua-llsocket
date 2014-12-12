@@ -445,15 +445,6 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         ptr++;
     } while( ptr->name );
     
-    // option method
-    lua_pushstring( L, "opt" );
-    lua_newtable( L );
-    ptr = opt_method;
-    do {
-        lstate_fn2tbl( L, ptr->name, ptr->func );
-        ptr++;
-    } while( ptr->name );
-    
     // device method
     lua_pushstring( L, "device" );
     lua_newtable( L );
@@ -462,7 +453,16 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         lstate_fn2tbl( L, ptr->name, ptr->func );
         ptr++;
     } while( ptr->name );
-
+    lua_rawset( L, -3 );
+    
+    // option method
+    lua_pushstring( L, "opt" );
+    lua_newtable( L );
+    ptr = opt_method;
+    do {
+        lstate_fn2tbl( L, ptr->name, ptr->func );
+        ptr++;
+    } while( ptr->name );
     // constants
     // for connect and bind
     lstate_num2tbl( L, "SOCK_STREAM", SOCK_STREAM );
