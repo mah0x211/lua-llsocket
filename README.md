@@ -5,15 +5,7 @@ low-level socket module.
 ## Installation
 
 ```sh
-luarocks install --from=http://mah0x211.github.io/rocks/ llsocket
-```
-
-or 
-
-```sh
-git clone https://github.com/mah0x211/lua-llsocket.git
-cd lua-llsocket
-luarocks make
+luarocks install llsocket --from=http://mah0x211.github.io/rocks/
 ```
 
 
@@ -21,25 +13,26 @@ luarocks make
 
 these constants defined at the `llsocket.opt.*`
 
-**for connect/bind**
+**Use for `connect` and `bind` API**
 
 - SOCK_DGRAM
 - SOCK_STREAM
 - SOCK_SEQPACKET
 - SOCK_RAW
 
-**for shutdown/close**
+**Use for `shutdown` and `close` API**
 
 - SHUT_RD
 - SHUT_WR
 - SHUT_RDWR
 
 
-## llsocket.inet.*
+## llsocket.inet API
 
-### connect/bind ( host, port, socktype, nonblock, reuseaddr )
 
-create connected/bound socket.
+### bind( host, port, socktype, nonblock, reuseaddr )
+
+create bound socket.
 
 **Parameters**
 
@@ -54,11 +47,19 @@ create connected/bound socket.
 1. fd: socket.
 2. err: error number.
 
-## llsocket.unix.*
 
-### connect/bind ( path, socktype, nonblock )
+### connect( host, port, socktype, nonblock, reuseaddr )
 
-create connected/bound socket.
+create connected socket.
+
+**Parameters** and **Returnes** is same as `bind( host, port, socktype, nonblock, reuseaddr )` API.
+
+
+## llsocket.unix API
+
+### bind( path, socktype, nonblock )
+
+create bound unix domain socket.
 
 **Parameters**
 
@@ -72,7 +73,15 @@ create connected/bound socket.
 2. err: error number.
 
 
-## llsocket.*
+### connect( path, socktype, nonblock )
+
+create connected unix domain socket.
+
+**Parameters** and **Returnes** is same as `bind( path, socktype, nonblock )` API.
+
+
+
+## llsocket API
 
 ### sockname( fd )
 
@@ -88,6 +97,34 @@ returns the current address for socket.
 2. errno: error number.
 
 
+### type( fd )
+
+returns the SO_TYPE value of socket option.
+
+**Parameters**
+
+- fd: socket.
+
+**Returns**
+
+1. type: socket type as a number value.
+2. errno: error number.
+
+
+### error( fd )
+
+returns the SO_ERROR value of socket option. **read only**
+
+**Parameters**
+
+- fd: socket.
+
+**Returns**
+
+1. flag: current option state as a number value.
+2. errno: error number.
+
+
 ### shutdown( fd, how )
 
 shut down socket.
@@ -100,6 +137,7 @@ shut down socket.
 **Returns**
 
 1. errno: error number.
+
 
 ### close( fd [, how] )
 
@@ -145,8 +183,9 @@ accept a connection on a socket.
 
 ### acceptInherits( fd )
 
-accept a connection on a socket.
-this connection inherits file status from a socket.
+accept a connection on a socket. this connection inherits a O_NONBLOCK flag from the listening socket. 
+
+**NOTE: this behavior works only on linux.**
 
 **Parameters**
 
@@ -158,7 +197,9 @@ this connection inherits file status from a socket.
 2. errno: error number.
 
 
-## llsocket.opt.*
+## llsocket.opt API
+
+the following API uses for getting or setting socket options.
 
 ### cloexec( fd[, flag] )
 
@@ -203,20 +244,6 @@ returns the TCP_NODELAY value of socket option.
 2. errno: error number.
 
 
-### type( fd )
-
-returns the SO_TYPE value of socket option. **read only**
-
-**Parameters**
-
-- fd: socket.
-
-**Returns**
-
-1. type: socket type as a number value.
-2. errno: error number.
-
-
 ### reuseaddr( fd[, flag] )
 
 returns the SO_REUSEADDR value of socket option.
@@ -258,20 +285,6 @@ returns the SO_DEBUG value of socket option.
 **Returns**
 
 1. flag: current option state as a boolean value.
-2. errno: error number.
-
-
-### error( fd )
-
-returns the SO_ERROR value of socket option. **read only**
-
-**Parameters**
-
-- fd: socket.
-
-**Returns**
-
-1. flag: current option state as a number value.
 2. errno: error number.
 
 
@@ -406,4 +419,5 @@ returns the SO_SNDTIMEO value of socket option.
 
 1. sec: current option state as a number value.
 2. errno: error number.
+
 
