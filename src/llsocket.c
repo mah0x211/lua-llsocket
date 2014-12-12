@@ -241,8 +241,8 @@ static int sendto_lua( lua_State *L )
     int fd = luaL_checkint( L, 1 );
     size_t len = 0; 
     const char *buf = luaL_checklstring( L, 2, &len );
-    int flg = luaL_optint( L, 3, 0 );
-    lls_addr_t *llsaddr = (lls_addr_t*)lls_checkudata( L, 4, LLS_ADDR_MT );
+    lls_addr_t *llsaddr = (lls_addr_t*)lls_checkudata( L, 3, LLS_ADDR_MT );
+    int flg = luaL_optint( L, 4, 0 );
     ssize_t rv = 0;
     
     if( llsaddr ){
