@@ -82,6 +82,8 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
                 nonblock = lua_toboolean( L, 4 );
 #endif
             }
+        // socktype
+        case 3:
         // port
         case 2:
             if( !lua_isnoneornil( L, 2 ) ){
