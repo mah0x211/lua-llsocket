@@ -33,7 +33,11 @@
 #include <net/if_dl.h>
 #include <net/if.h>  
 
-// method
+
+#define DEFAULT_RECVSIZE    4096
+
+
+// MARK: method
 static int sockname_lua( lua_State *L )
 {
     int fd = luaL_checkint( L, 1 );
@@ -213,7 +217,6 @@ static int accept_inherits_lua( lua_State *L )
 }
 
 
-// fd option
 static int send_lua( lua_State *L )
 {
     int fd = luaL_checkint( L, 1 );
@@ -237,6 +240,45 @@ static int send_lua( lua_State *L )
     return rv;
 }
 
+
+static int recv_lua( lua_State *L )
+{
+    int fd = luaL_checkint( L, 1 );
+    lua_Integer len = luaL_optinteger( L, 2, DEFAULT_RECVSIZE );
+    int flg = luaL_optint( L, 3, 0 );
+    char *buf = pnalloc( len, char );
+    ssize_t rv = 0;
+    
+    // invalid length
+    if( len <= 0 ){
+        lua_pushnil( L );
+        lua_pushinteger( L, EINVAL );
+        return 2;
+    }
+    // mem-error
+    else if( !( buf = pnalloc( len, char ) ) ){
+        lua_pushnil( L );
+        lua_pushinteger( L, errno );
+        return 2;
+    }
+    // got error
+    else if( ( rv = recv( fd, buf, (size_t)len, flg ) ) == -1 ){
+        lua_pushnil( L );
+        lua_pushinteger( L, errno );
+        lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
+        rv = 3;
+    }
+    else {
+        lua_pushlstring( L, buf, rv );
+        rv = 1;
+    }
+    pdealloc( buf );
+    
+    return rv;
+}
+
+
+// MARK: fd option
 static int fcntl_lua( lua_State *L, int getfl, int setfl, int fl )
 {
     int fd = luaL_checkint( L, 1 );
@@ -257,7 +299,7 @@ static int nonblock_lua( lua_State *L )
 }
 
 
-// socket option
+// MARK: socket option
 static int sockopt_int_lua( lua_State *L, int level, int optname, int type )
 {
     int fd = luaL_checkint( L, 1 );
@@ -349,7 +391,7 @@ static int sndtimeo_lua( lua_State *L )
 }
 
 
-// device info
+// MARK: device info
 static int macaddrs_lua( lua_State *L )
 {
     struct ifaddrs *ifa;
@@ -423,6 +465,7 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         { "accept", accept_lua },
         { "acceptInherits", accept_inherits_lua },
         { "send", send_lua },
+        { "recv", recv_lua },
         { NULL, NULL }
     };
     struct luaL_Reg opt_method[] = {
