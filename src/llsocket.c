@@ -128,19 +128,14 @@ static int listen_lua( lua_State *L )
 {
     int fd = luaL_checkint( L, 1 );
     // default backlog size
-    lua_Integer backlog = SOMAXCONN;
+    lua_Integer backlog = luaL_optinteger( L, 2, SOMAXCONN );
     
     // check args
-    if( !lua_isnoneornil( L, 2 ) )
-    {
-        backlog = luaL_checkinteger( L, 2 );
-        if( backlog < 1 || backlog > INT_MAX ){
-            return luaL_error( L, "backlog range must be 1 to %d", INT_MAX );
-        }
+    if( backlog < 1 || backlog > INT_MAX ){
+        return luaL_error( L, "backlog range must be 1 to %d", INT_MAX );
     }
-    
     // listen
-    if( listen( fd, (int)backlog ) != 0 ){
+    else if( listen( fd, (int)backlog ) != 0 ){
         // got error
         lua_pushinteger( L, errno );
         return 1;
