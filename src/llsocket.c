@@ -233,7 +233,7 @@ static int send_lua( lua_State *L )
         rv = 3;
     }
     else {
-        lua_pushlstring( L, buf, rv );
+        lua_pushinteger( L, rv );
         rv = 1;
     }
     
