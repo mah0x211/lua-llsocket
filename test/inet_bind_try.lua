@@ -55,11 +55,6 @@ ifNotFalse( isolate( inet.bind, HOST, PORT, STREAM, nil, 'true' ) );
 
 -- stream socket
 fd = ifNil( isolate( inet.bind, HOST, PORT, STREAM, nil, REUSE ) );
--- invalid backlog
-ifNil( isolate( llsocket.listen, fd, 'test' ) );
-ifNil( isolate( llsocket.listen, fd, true ) );
-ifNil( isolate( llsocket.listen, fd, 9223372036854775808 ) );
-ifNotNil( llsocket.listen( fd ) );
 ifNotNil( llsocket.close( fd ) );
 -- w/o port
 fd = ifNil( isolate( inet.bind, HOST, nil, STREAM, nil, REUSE ) );
@@ -75,8 +70,6 @@ ifNotNil( llsocket.close( fd ) );
 
 -- dgram socket
 fd = ifNil( inet.bind( HOST, PORT, DGRAM, nil, REUSE ) );
--- dgram socket cannot listen
-ifNil( llsocket.listen( fd ) );
 ifNotNil( llsocket.close( fd ) );
 -- w/o port
 fd = ifNil( inet.bind( HOST, nil, DGRAM, nil, REUSE ) );
@@ -92,8 +85,6 @@ ifNotNil( llsocket.close( fd ) );
 
 -- raw socket
 fd = ifNil( inet.bind( HOST, PORT, RAW, nil, REUSE ) );
--- raw socket cannot listen
-ifNil( llsocket.listen( fd ) );
 ifNotNil( llsocket.close( fd ) );
 -- w/o port
 fd = ifNil( inet.bind( HOST, nil, RAW, nil, REUSE ) );
