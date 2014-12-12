@@ -392,6 +392,8 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         // with socket-fd
         // method
         { "sockname", sockname_lua },
+        { "type", type_lua },
+        { "error", error_lua },
         { "shutdown", shutdown_lua },
         { "close", close_lua },
         { "listen", listen_lua },
@@ -404,12 +406,10 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         { "cloexec", cloexec_lua },
         { "nonblock", nonblock_lua },
         // socket option
-        { "type", type_lua },
         { "nodelay", nodelay_lua },
         { "reuseaddr", reuseaddr_lua },
         { "broadcast", broadcast_lua },
         { "debug", debug_lua },
-        { "error", error_lua },
         { "keepalive", keepalive_lua },
         { "oobinline", oobinline_lua },
         { "timestamp", timestamp_lua },
