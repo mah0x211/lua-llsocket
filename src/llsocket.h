@@ -255,7 +255,7 @@ static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level, int opt,
 static inline int lls_sockopt_timeval_lua( lua_State *L, int fd, int level, 
                                            int opt )
 {
-    struct timeval tval = {0};
+    struct timeval tval = {0,0};
     socklen_t len = sizeof( struct timeval );
     
     if( getsockopt( fd, level, opt, (void*)&tval, &len ) == 0 )
