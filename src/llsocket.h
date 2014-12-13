@@ -218,8 +218,14 @@ static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl,
 
 
 // socket option
-static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level, int opt, 
-                                       int type )
+typedef enum {
+    LLS_SOCKOPT_READ = 0,
+    LLS_SOCKOPT_WRITE
+} lls_sockopt_rw_e;
+
+static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level, 
+                                       int opt, int type, 
+                                       lls_sockopt_rw_e optrw )
 {
     int flg = 0;
     socklen_t len = sizeof(int);
@@ -227,7 +233,7 @@ static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level, int opt,
     if( getsockopt( fd, level, opt, (void*)&flg, &len ) == 0 )
     {
         // no args
-        if( lua_isnoneornil( L, 2 ) ){
+        if( optrw == LLS_SOCKOPT_READ || lua_isnoneornil( L, 2 ) ){
             switch( type ){
                 case LUA_TBOOLEAN:
                     lua_pushboolean( L, flg );

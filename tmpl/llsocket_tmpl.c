@@ -407,21 +407,32 @@ static int nonblock_lua( lua_State *L )
 
 
 // MARK: socket option
-static int sockopt_int_lua( lua_State *L, int level, int optname, int type )
+#define sockopt_int(L,level,optname,type,optrw) ({ \
+    int fd = luaL_checkint( L, 1 ); \
+    lls_sockopt_int_lua( L, fd, level, optname, type, optrw ); \
+});
+#define sockopt_int_lua(L,level,optname,type) \
+    sockopt_int(L,level,optname,type,LLS_SOCKOPT_WRITE)
+
+#define sockopt_readint_lua(L,level,optname,type) \
+    sockopt_int(L,level,optname,type,LLS_SOCKOPT_READ)
+
+// readonly
+static int type_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
-    
-    return lls_sockopt_int_lua( L, fd, level, optname, type );
+    return sockopt_readint_lua( L, SOL_SOCKET, SO_TYPE, LUA_TNUMBER );
 }
 
+static int error_lua( lua_State *L )
+{
+    return sockopt_int_lua( L, SOL_SOCKET, SO_ERROR, LUA_TNUMBER );
+}
+
+
+// writable
 static int nodelay_lua( lua_State *L )
 {
     return sockopt_int_lua( L, IPPROTO_TCP, TCP_NODELAY, LUA_TBOOLEAN );
-}
-
-static int type_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_TYPE, LUA_TNUMBER );
 }
 
 static int reuseaddr_lua( lua_State *L )
@@ -437,11 +448,6 @@ static int broadcast_lua( lua_State *L )
 static int debug_lua( lua_State *L )
 {
     return sockopt_int_lua( L, SOL_SOCKET, SO_DEBUG, LUA_TBOOLEAN );
-}
-
-static int error_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_ERROR, LUA_TNUMBER );
 }
 
 static int keepalive_lua( lua_State *L )
