@@ -84,6 +84,26 @@ PUSH_ERROR:
 }
 
 
+static int peername_lua( lua_State *L )
+{
+    int fd = luaL_checkint( L, 1 );
+    socklen_t len = sizeof( struct sockaddr_storage );
+    struct sockaddr_storage addr;
+    
+    memset( (void*)&addr, 0, len );
+    if( getpeername( fd, (struct sockaddr*)&addr, &len ) == 0 &&
+        // push llsocket.addr udata
+        llsocket_addr_alloc( L, &addr, len ) == 0 ){
+        return 1;
+    }
+    // got error
+    lua_pushnil( L );
+    lua_pushinteger( L, errno );
+    
+    return 2;
+}
+
+
 static int shutdown_lua( lua_State *L )
 {
     int fd = luaL_checkint( L, 1 );
@@ -544,6 +564,7 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         // with socket-fd
         // method
         { "sockname", sockname_lua },
+        { "peername", peername_lua },
         { "type", type_lua },
         { "error", error_lua },
         { "shutdown", shutdown_lua },
