@@ -115,6 +115,20 @@ get address of connected peer.
 2. errno: error number.
 
 
+### atmark( fd )
+
+determine whether socket is at out-of-band mark.
+
+**Parameters**
+
+- fd: socket.
+
+**Returns**
+
+1. boolean: a true on marked, or false on unmarked.
+2. errno: error number.
+
+
 ### type( fd )
 
 returns the SO_TYPE value of socket option.
@@ -513,7 +527,6 @@ returns the SO_SNDTIMEO value of socket option.
 
 ## TODO
 
-- sockatmark
 - sendmsg
 - recvmsg
 - sendfile
