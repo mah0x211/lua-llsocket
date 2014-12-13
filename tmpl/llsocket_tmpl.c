@@ -104,6 +104,24 @@ static int peername_lua( lua_State *L )
 }
 
 
+static int atmark_lua( lua_State *L )
+{
+    int fd = luaL_checkint( L, 1 );
+    int rc = sockatmark( fd );
+    
+    if( rc != -1 ){
+        lua_pushboolean( L, rc );
+        return 1;
+    }
+    
+    // got error
+    lua_pushnil( L );
+    lua_pushinteger( L, errno );
+    
+    return 2;
+}
+
+
 static int shutdown_lua( lua_State *L )
 {
     int fd = luaL_checkint( L, 1 );
@@ -571,6 +589,7 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         // method
         { "sockname", sockname_lua },
         { "peername", peername_lua },
+        { "atmark", atmark_lua },
         { "type", type_lua },
         { "error", error_lua },
         { "shutdown", shutdown_lua },
