@@ -129,6 +129,7 @@ ifNotFalse( isolate( inet.connect, HOST, PORT, STREAM, nil, 'true' ) );
 -- stream socket
 runServer( HOST, PORT, STREAM );
 fd = ifNil( isolate( inet.connect, HOST, PORT, STREAM, nil, REUSE ) );
+ifNil( llsocket.peername( fd ) );
 msg = sendEcho( fd, 'hello' );
 ifNotNil( llsocket.close( fd ) );
 ifNotEqual( msg, 'hello' );
