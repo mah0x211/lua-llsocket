@@ -101,6 +101,20 @@ returns the current address for socket.
 2. errno: error number.
 
 
+### peername( fd )
+
+get address of connected peer.
+
+**Parameters**
+
+- fd: socket.
+
+**Returns**
+
+1. address: `llsocket.addr` userdata.
+2. errno: error number.
+
+
 ### type( fd )
 
 returns the SO_TYPE value of socket option.
