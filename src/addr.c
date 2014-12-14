@@ -22,7 +22,7 @@
  *  addr.c
  *  lua-llsocket
  *
- *  Created by Masatoshi Teruya on 14/10/27.
+ *  Created by Masatoshi Teruya on 14/12/12.
  *
  */
 
