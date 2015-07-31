@@ -580,7 +580,7 @@ static int macaddrs_lua( lua_State *L )
     lua_pushnil( L );
     lua_pushinteger( L, errno );
     
-    return 0;
+    return 2;
 }
 
 
@@ -640,7 +640,7 @@ static int macaddrs_lua( lua_State *L )
     lua_pushnil( L );
     lua_pushinteger( L, errno );
     
-    return 0;
+    return 2;
 }
 #endif
 
