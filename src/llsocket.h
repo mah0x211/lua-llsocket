@@ -211,7 +211,7 @@ static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl,
     
     // got error
     lua_pushnil( L );
-    lua_pushinteger( L, errno );
+    lua_pushstring( L, strerror( errno ) );
     
     return 2;
 }
@@ -266,7 +266,7 @@ static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level,
     
     // got error
     lua_pushnil( L );
-    lua_pushinteger( L, errno );
+    lua_pushstring( L, strerror( errno ) );
     
     return 2;
 }
@@ -304,7 +304,7 @@ SUCCESS:
     
     // got error
     lua_pushnil( L );
-    lua_pushinteger( L, errno );
+    lua_pushstring( L, strerror( errno ) );
     
     return 2;
 }

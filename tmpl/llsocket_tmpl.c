@@ -81,7 +81,7 @@ PUSH_UNIX_ADDR:
 PUSH_ERROR:
     // got error
     lua_pushnil( L );
-    lua_pushinteger( L, errno );
+    lua_pushstring( L, strerror( errno ) );
     
     return 2;
 }
@@ -101,7 +101,7 @@ static int peername_lua( lua_State *L )
     }
     // got error
     lua_pushnil( L );
-    lua_pushinteger( L, errno );
+    lua_pushstring( L, strerror( errno ) );
     
     return 2;
 }
@@ -119,7 +119,7 @@ static int atmark_lua( lua_State *L )
     
     // got error
     lua_pushnil( L );
-    lua_pushinteger( L, errno );
+    lua_pushstring( L, strerror( errno ) );
     
     return 2;
 }
@@ -132,7 +132,7 @@ static int shutdown_lua( lua_State *L )
     
     if( shutdown( fd, how ) == 0 ){
         // got error
-        lua_pushinteger( L, errno );
+        lua_pushstring( L, strerror( errno ) );
         return 1;
     }
     
@@ -156,7 +156,7 @@ static int close_lua( lua_State *L )
         
         // got error
         if( ( rc + close( fd ) ) ){
-            lua_pushinteger( L, errno );
+            lua_pushstring( L, strerror( errno ) );
             return 1;
         }
     }
@@ -178,7 +178,7 @@ static int listen_lua( lua_State *L )
     // listen
     else if( listen( fd, (int)backlog ) != 0 ){
         // got error
-        lua_pushinteger( L, errno );
+        lua_pushstring( L, strerror( errno ) );
         return 1;
     }
     
@@ -203,9 +203,10 @@ static int accept_lua( lua_State *L )
     
     // got error
     lua_pushnil( L );
-    lua_pushinteger( L, errno );
+    lua_pushstring( L, strerror( errno ) );
+    lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
     
-    return 2;
+    return 3;
 }
 
 
@@ -247,9 +248,10 @@ static int accept_inherits_lua( lua_State *L )
 
     // got error
     lua_pushnil( L );
-    lua_pushinteger( L, errno );
+    lua_pushstring( L, strerror( errno ) );
+    lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
     
-    return 2;
+    return 3;
 }
 
 
@@ -264,7 +266,7 @@ static int send_lua( lua_State *L )
     // got error
     if( rv == -1 ){
         lua_pushnil( L );
-        lua_pushinteger( L, errno );
+        lua_pushstring( L, strerror( errno ) );
         lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
         rv = 3;
     }
@@ -297,7 +299,7 @@ static int sendto_lua( lua_State *L )
     // got error
     if( rv == -1 ){
         lua_pushnil( L );
-        lua_pushinteger( L, errno );
+        lua_pushstring( L, strerror( errno ) );
         lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
         rv = 3;
     }
@@ -327,13 +329,13 @@ static int recv_lua( lua_State *L )
     // mem-error
     else if( !( buf = pnalloc( len, char ) ) ){
         lua_pushnil( L );
-        lua_pushinteger( L, errno );
+        lua_pushstring( L, strerror( errno ) );
         return 2;
     }
     // got error
     else if( ( rv = recv( fd, buf, (size_t)len, flg ) ) == -1 ){
         lua_pushnil( L );
-        lua_pushinteger( L, errno );
+        lua_pushstring( L, strerror( errno ) );
         lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
         rv = 3;
     }
@@ -369,7 +371,7 @@ static int recvfrom_lua( lua_State *L )
     else if( !( buf = pnalloc( len, char ) ) ){
         lua_pushnil( L );
         lua_pushnil( L );
-        lua_pushinteger( L, errno );
+        lua_pushstring( L, strerror( errno ) );
         return 3;
     }
     // got error
@@ -377,7 +379,7 @@ static int recvfrom_lua( lua_State *L )
              (struct sockaddr*)&src, &slen ) ) == -1 ){
         lua_pushnil( L );
         lua_pushnil( L );
-        lua_pushinteger( L, errno );
+        lua_pushstring( L, strerror( errno ) );
         lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
         rv = 4;
     }
@@ -396,7 +398,7 @@ static int recvfrom_lua( lua_State *L )
             lua_pop( L, 1 );
             lua_pushnil( L );
             lua_pushnil( L );
-            lua_pushinteger( L, errno );
+            lua_pushstring( L, strerror( errno ) );
             rv = 3;
         }
     }
@@ -578,7 +580,7 @@ static int macaddrs_lua( lua_State *L )
 
     // got error
     lua_pushnil( L );
-    lua_pushinteger( L, errno );
+    lua_pushstring( L, strerror( errno ) );
     
     return 2;
 }
@@ -638,7 +640,7 @@ static int macaddrs_lua( lua_State *L )
     
     // got error
     lua_pushnil( L );
-    lua_pushinteger( L, errno );
+    lua_pushstring( L, strerror( errno ) );
     
     return 2;
 }

@@ -82,7 +82,7 @@ static int connbind_lua( lua_State *L, connbind_t proc )
     
     // got error
     lua_pushnil( L );
-    lua_pushinteger( L, errno );
+    lua_pushstring( L, strerror( errno ) );
     
     return 2;
 }
