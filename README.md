@@ -98,7 +98,7 @@ returns the current address for socket.
 **Returns**
 
 1. address: address.
-2. errno: error number.
+2. err: error sttring.
 
 
 ### peername( fd )
@@ -112,7 +112,7 @@ get address of connected peer.
 **Returns**
 
 1. address: `llsocket.addr` userdata.
-2. errno: error number.
+2. err: error string.
 
 
 ### atmark( fd )
@@ -126,7 +126,7 @@ determine whether socket is at out-of-band mark.
 **Returns**
 
 1. boolean: a true on marked, or false on unmarked.
-2. errno: error number.
+2. err: error string.
 
 
 ### type( fd )
@@ -140,7 +140,7 @@ returns the SO_TYPE value of socket option.
 **Returns**
 
 1. type: socket type as a number value.
-2. errno: error number.
+2. err: error string.
 
 
 ### error( fd )
@@ -154,7 +154,7 @@ returns the SO_ERROR value of socket option. **read only**
 **Returns**
 
 1. flag: current option state as a number value.
-2. errno: error number.
+2. err: error string.
 
 
 ### shutdown( fd, how )
@@ -168,7 +168,7 @@ shut down socket.
 
 **Returns**
 
-1. errno: error number.
+1. err: error string.
 
 
 ### close( fd [, how] )
@@ -182,7 +182,7 @@ close socket.
 
 **Returns**
 
-1. errno: error number.
+1. err: error string.
 
 
 ### listen( fd [, backlog] )
@@ -196,7 +196,7 @@ listen for connections on a socket.
 
 **Returns**
 
-1. errno: error number.
+1. err: error string.
 
 
 ### accept( fd )
@@ -210,8 +210,8 @@ accept a connection on a socket.
 **Returns**
 
 1. fd: connected socket.
-2. errno: error number.
-
+2. err: error string.
+3. again: true if errno is EAGAIN or EWOULDBLOCK.
 
 ### acceptInherits( fd )
 
@@ -226,8 +226,8 @@ accept a connection on a socket. this connection inherits a O_NONBLOCK flag from
 **Returns**
 
 1. fd: connected socket.
-2. errno: error number.
-
+2. err: error string.
+3. again: true if errno is EAGAIN or EWOULDBLOCK.
 
 
 ### recv( fd [, len [, flag, ...]] )
@@ -244,7 +244,7 @@ receive a message from a socket.
 **Returns**
 
 1. str: received message.
-2. errno: error number.
+2. err: error string.
 3. again: true if errno is EAGAIN or EWOULDBLOCK.
 
 
@@ -260,7 +260,7 @@ same as `recv( fd [, len [, flag, ...]] )` API.
 
 1. str: received message.
 2. addr: `llsocket.addr` userdata or nil.
-3. errno: error number.
+3. err: error string.
 4. again: true if errno is EAGAIN or EWOULDBLOCK.
 
 
@@ -278,7 +278,7 @@ send a message from a socket.
 **Returns**
 
 1. bytes: number of bytes sent..
-2. errno: error number.
+2. err: error string.
 3. again: true if errno is EAGAIN or EWOULDBLOCK.
 
 
@@ -316,7 +316,7 @@ returns the current FD_CLOEXEC flag for socket.
 **Returns**
 
 1. flag: current flag state as a boolean value.
-2. errno: error number.
+2. err: error string.
 
 ### nonblock( fd [, flag] )
 
@@ -330,7 +330,7 @@ returns the current O_NONBLOCK flag for socket.
 **Returns**
 
 1. flag: current flag state as a boolean value.
-2. errno: error number.
+2. err: error string.
 
 ### nodelay( fd [, flag] )
 
@@ -344,7 +344,7 @@ returns the TCP_NODELAY value of socket option.
 **Returns**
 
 1. flag: current option state as a boolean value.
-2. errno: error number.
+2. err: error string.
 
 
 ### reuseaddr( fd [, flag] )
@@ -359,7 +359,7 @@ returns the SO_REUSEADDR value of socket option.
 **Returns**
 
 1. flag: current option state as a boolean value.
-2. errno: error number.
+2. err: error string.
 
 ### broadcast( fd [, flag] )
 
@@ -373,7 +373,7 @@ returns the SO_BROADCAST value of socket option.
 **Returns**
 
 1. flag: current option state as a boolean value.
-2. errno: error number.
+2. err: error string.
 
 
 ### debug( fd [, flag] )
@@ -388,7 +388,7 @@ returns the SO_DEBUG value of socket option.
 **Returns**
 
 1. flag: current option state as a boolean value.
-2. errno: error number.
+2. err: error string.
 
 
 ### keepalive( fd [, flag] )
@@ -403,7 +403,7 @@ returns the SO_KEEPALIVE value of socket option.
 **Returns**
 
 1. flag: current option state as a boolean value.
-2. errno: error number.
+2. err: error string.
 
 
 ### oobinline( fd [, flag] )
@@ -418,7 +418,7 @@ returns the SO_OOBINLINE value of socket option.
 **Returns**
 
 1. flag: current option state as a boolean value.
-2. errno: error number.
+2. err: error string.
 
 
 ### timestamp( fd [, flag] )
@@ -433,7 +433,7 @@ returns the SO_TIMESTAMP value of socket option.
 **Returns**
 
 1. flag: current option state as a boolean value.
-2. errno: error number.
+2. err: error string.
 
 
 ### rcvbuf( fd [, size] )
@@ -448,7 +448,7 @@ returns the SO_RCVBUF value of socket option.
 **Returns**
 
 1. size: current option state as a number value.
-2. errno: error number.
+2. err: error string.
 
 ### rcvlowat( fd [, size] )
 
@@ -462,7 +462,7 @@ returns the SO_RCVLOWAT value of socket option.
 **Returns**
 
 1. size: current option state as a number value.
-2. errno: error number.
+2. err: error string.
 
 
 ### sndbuf( fd [, size] )
@@ -477,7 +477,7 @@ returns the SO_SNDBUF value of socket option.
 **Returns**
 
 1. size: current option state as a number value.
-2. errno: error number.
+2. err: error string.
 
 ### sndlowat( fd [, size] )
 
@@ -491,7 +491,7 @@ returns the SO_SNDLOWAT value of socket option.
 **Returns**
 
 1. size: current option state as a number value.
-2. errno: error number.
+2. err: error string.
 
 
 
@@ -507,7 +507,7 @@ returns the SO_RCVTIMEO value of socket option.
 **Returns**
 
 1. sec: current option state as a number value.
-2. errno: error number.
+2. err: error string.
 
 ### sndtimeo( fd [, sec] )
 
@@ -521,7 +521,7 @@ returns the SO_SNDTIMEO value of socket option.
 **Returns**
 
 1. sec: current option state as a number value.
-2. errno: error number.
+2. err: error string.
 
 
 
