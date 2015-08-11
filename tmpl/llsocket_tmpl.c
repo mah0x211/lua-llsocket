@@ -343,7 +343,9 @@ static int recv_lua( lua_State *L )
         case -1:
             lua_pushnil( L );
             lua_pushstring( L, strerror( errno ) );
-            lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
+            lua_pushboolean(
+                L, errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR
+            );
             rv = 3;
         break;
         
@@ -395,7 +397,9 @@ static int recvfrom_lua( lua_State *L )
             lua_pushnil( L );
             lua_pushnil( L );
             lua_pushstring( L, strerror( errno ) );
-            lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
+            lua_pushboolean(
+                L, errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR
+            );
             rv = 4;
         break;
         
