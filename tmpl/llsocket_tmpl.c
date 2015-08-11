@@ -323,7 +323,7 @@ static int recv_lua( lua_State *L )
     // invalid length
     if( len <= 0 ){
         lua_pushnil( L );
-        lua_pushinteger( L, EINVAL );
+        lua_pushstring( L, strerror( EINVAL ) );
         return 2;
     }
     // mem-error
@@ -364,7 +364,7 @@ static int recvfrom_lua( lua_State *L )
     if( len <= 0 ){
         lua_pushnil( L );
         lua_pushnil( L );
-        lua_pushinteger( L, EINVAL );
+        lua_pushstring( L, strerror( EINVAL ) );
         return 3;
     }
     // mem-error
