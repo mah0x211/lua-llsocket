@@ -243,9 +243,9 @@ receive a message from a socket.
 
 **Returns**
 
-1. str: received message.
+1. str: received message on success, or nil if closed by peer or got an error.
 2. err: error string.
-3. again: true if errno is EAGAIN or EWOULDBLOCK.
+3. again: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 
 ### recvfrom( fd [, len [, flag, ...]] )
@@ -258,10 +258,10 @@ same as `recv( fd [, len [, flag, ...]] )` API.
 
 **Returns**
 
-1. str: received message.
+1. str: received message on success, or nil if closed by peer or got an error.
 2. addr: `llsocket.addr` userdata or nil.
 3. err: error string.
-4. again: true if errno is EAGAIN or EWOULDBLOCK.
+4. again: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 
 ### send( fd, msg [, flag, ...] )
@@ -277,9 +277,9 @@ send a message from a socket.
 
 **Returns**
 
-1. bytes: number of bytes sent..
+1. bytes: number of bytes sent on success, or nil if closed by peer or got an error.
 2. err: error string.
-3. again: true if errno is EAGAIN or EWOULDBLOCK.
+3. again: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 
 ### sendto( fd, msg [, addr, [flag, ...]] )
