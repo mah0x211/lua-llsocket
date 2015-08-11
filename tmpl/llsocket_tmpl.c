@@ -261,21 +261,33 @@ static int send_lua( lua_State *L )
     size_t len = 0; 
     const char *buf = luaL_checklstring( L, 2, &len );
     int flg = lls_optflags( L, 3 );
-    ssize_t rv = send( fd, buf, len, flg );
+    ssize_t rv = 0;
+    
+    // invalid length
+    if( !len ){
+        lua_pushnil( L );
+        lua_pushstring( L, strerror( EINVAL ) );
+        return 2;
+    }
+    
+    rv = send( fd, buf, len, flg );
+    if( rv != -1 ){
+        lua_pushinteger( L, rv );
+        return 1;
+    }
+    // close by peer
+    else if( errno == ECONNRESET ){
+        return 0;
+    }
     
     // got error
-    if( rv == -1 ){
-        lua_pushnil( L );
-        lua_pushstring( L, strerror( errno ) );
-        lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
-        rv = 3;
-    }
-    else {
-        lua_pushinteger( L, rv );
-        rv = 1;
-    }
+    lua_pushnil( L );
+    lua_pushstring( L, strerror( errno ) );
+    lua_pushboolean(
+        L, errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR
+    );
     
-    return rv;
+    return 3;
 }
 
 
@@ -288,27 +300,32 @@ static int sendto_lua( lua_State *L )
     int flg = lls_optflags( L, 4 );
     ssize_t rv = 0;
     
-    if( llsaddr ){
-        rv = sendto( fd, buf, len, flg, (const struct sockaddr*)&llsaddr->addr,
-                     llsaddr->len );
+    // invalid length
+    if( !len ){
+        lua_pushnil( L );
+        lua_pushstring( L, strerror( EINVAL ) );
+        return 2;
     }
-    else {
-        rv = send( fd, buf, len, flg );
+    
+    rv = sendto( fd, buf, len, flg, (const struct sockaddr*)&llsaddr->addr, 
+                 llsaddr->len );
+    if( rv != -1 ){
+        lua_pushinteger( L, rv );
+        return 1;
+    }
+    // close by peer
+    else if( errno == ECONNRESET ){
+        return 0;
     }
     
     // got error
-    if( rv == -1 ){
-        lua_pushnil( L );
-        lua_pushstring( L, strerror( errno ) );
-        lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
-        rv = 3;
-    }
-    else {
-        lua_pushinteger( L, rv );
-        rv = 1;
-    }
+    lua_pushnil( L );
+    lua_pushstring( L, strerror( errno ) );
+    lua_pushboolean(
+        L, errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR
+    );
     
-    return rv;
+    return 3;
 }
 
 
