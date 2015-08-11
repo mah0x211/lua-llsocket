@@ -332,17 +332,26 @@ static int recv_lua( lua_State *L )
         lua_pushstring( L, strerror( errno ) );
         return 2;
     }
-    // got error
-    else if( ( rv = recv( fd, buf, (size_t)len, flg ) ) == -1 ){
-        lua_pushnil( L );
-        lua_pushstring( L, strerror( errno ) );
-        lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
-        rv = 3;
+    
+    rv = recv( fd, buf, (size_t)len, flg );
+    switch( rv ){
+        // close by peer
+        case 0:
+        break;
+        
+        // got error
+        case -1:
+            lua_pushnil( L );
+            lua_pushstring( L, strerror( errno ) );
+            lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
+            rv = 3;
+        break;
+        
+        default:
+            lua_pushlstring( L, buf, rv );
+            rv = 1;
     }
-    else {
-        lua_pushlstring( L, buf, rv );
-        rv = 1;
-    }
+    
     pdealloc( buf );
     
     return rv;
@@ -374,34 +383,42 @@ static int recvfrom_lua( lua_State *L )
         lua_pushstring( L, strerror( errno ) );
         return 3;
     }
-    // got error
-    else if( ( rv = recvfrom( fd, buf, (size_t)len, flg, 
-             (struct sockaddr*)&src, &slen ) ) == -1 ){
-        lua_pushnil( L );
-        lua_pushnil( L );
-        lua_pushstring( L, strerror( errno ) );
-        lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
-        rv = 4;
-    }
-    else
-    {
-        lua_pushlstring( L, buf, rv );
-        // no addrinfo
-        if( slen == 0 ){
-            rv = 1;
-        }
-        // push llsocket.addr udata
-        else if( llsocket_addr_alloc( L, &src, slen ) == 0 ){
-            rv = 2;
-        }
-        else {
-            lua_pop( L, 1 );
+    
+    rv = recvfrom( fd, buf, (size_t)len, flg, (struct sockaddr*)&src, &slen );
+    switch( rv ){
+        // close by peer
+        case 0:
+        break;
+        
+        // got error
+        case -1:
             lua_pushnil( L );
             lua_pushnil( L );
             lua_pushstring( L, strerror( errno ) );
-            rv = 3;
-        }
+            lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
+            rv = 4;
+        break;
+        
+        default:
+            lua_pushlstring( L, buf, rv );
+            // no addrinfo
+            if( slen == 0 ){
+                rv = 1;
+            }
+            // push llsocket.addr udata
+            else if( llsocket_addr_alloc( L, &src, slen ) == 0 ){
+                rv = 2;
+            }
+            // alloc error
+            else {
+                lua_pop( L, 1 );
+                lua_pushnil( L );
+                lua_pushnil( L );
+                lua_pushstring( L, strerror( errno ) );
+                rv = 3;
+            }
     }
+    
     pdealloc( buf );
     
     return rv;
