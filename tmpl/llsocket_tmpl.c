@@ -29,14 +29,6 @@
  */
 
 #include "llsocket.h"
-#include <ifaddrs.h>
-#include <net/if.h>
-#if defined(__linux__)
-    #include <sys/ioctl.h>
-#else
-    #include <net/if_dl.h>
-#endif
-
 #define DEFAULT_RECVSIZE    4096
 
 
@@ -565,126 +557,6 @@ static int sndtimeo_lua( lua_State *L )
 }
 
 
-// MARK: device info
-#if defined(__linux__)
-static int macaddrs_lua( lua_State *L )
-{
-    int fd = socket( AF_INET, SOCK_DGRAM, 0 );
-
-    if( fd )
-    {
-        char buf[INET6_ADDRSTRLEN];
-        struct ifreq ifrbuf[16];
-        struct ifconf ifc = {
-            .ifc_len = sizeof( ifrbuf ),
-            .ifc_req = ifrbuf
-        };
-
-        // get if-conf
-        if( ioctl( fd, SIOCGIFCONF, &ifc ) != -1 )
-        {
-            struct ifreq* it = ifc.ifc_req;
-            struct ifreq* end = it + ( ifc.ifc_len / sizeof( struct ifreq ) );
-            unsigned char *mac = NULL;
-
-            lua_newtable( L );
-            for(; it != end; it++ )
-            {
-                    // inet only
-                if( it->ifr_addr.sa_family == AF_INET &&
-                    // running only and ignore loopback
-                    ioctl( fd, SIOCGIFFLAGS, it ) != -1 &&
-                    it->ifr_flags & IFF_RUNNING &&
-                    !( it->ifr_flags & IFF_LOOPBACK ) &&
-                    // get flags and hardware address
-                    ioctl( fd, SIOCGIFHWADDR, it ) != -1 ){
-                    mac = (unsigned char*)it->ifr_hwaddr.sa_data;
-
-                    snprintf( buf, INET6_ADDRSTRLEN,
-                        "%02x:%02x:%02x:%02x:%02x:%02x",
-                        *mac, mac[1], mac[2], mac[3], mac[4], mac[5]
-                    );
-                    lstate_str2tbl( L, it->ifr_name, buf );
-                }
-            }
-
-            close( fd );
-            return 1;
-
-        }
-
-        close( fd );
-    }
-
-    // got error
-    lua_pushnil( L );
-    lua_pushstring( L, strerror( errno ) );
-    
-    return 2;
-}
-
-
-#else
-static int macaddrs_lua( lua_State *L )
-{
-    struct ifaddrs *ifa;
-    
-    if( getifaddrs( &ifa ) == 0 )
-    {
-        lua_newtable( L );
-        
-        if( ifa )
-        {
-            struct ifaddrs *ptr = ifa;
-            char buf[INET6_ADDRSTRLEN];
-            unsigned char *mac = NULL;
-            struct sockaddr_dl *sd;
-            
-            do
-            {
-                if( ptr->ifa_addr->sa_family == AF_LINK )
-                {
-                    sd = (struct sockaddr_dl*)ptr->ifa_addr;
-                    switch( sd->sdl_alen ){
-                        case 6:
-                            mac = (unsigned char*)LLADDR( sd );
-                            snprintf( 
-                                buf, INET6_ADDRSTRLEN, 
-                                "%02x:%02x:%02x:%02x:%02x:%02x",
-                                *mac, mac[1], mac[2], mac[3], mac[4], mac[5] 
-                            );
-                            lstate_str2tbl( L, ptr->ifa_name, buf );
-                        break;
-                        case 8:
-                            mac = (unsigned char*)LLADDR( sd );
-                            snprintf( 
-                                buf, INET6_ADDRSTRLEN, 
-                                "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
-                                *mac, mac[1], mac[2], mac[3], mac[4], mac[5], 
-                                mac[6], mac[7]
-                            );
-                            lstate_str2tbl( L, ptr->ifa_name, buf );
-                        break;
-                    }
-                }
-                
-                ptr = ptr->ifa_next;
-            } while( ptr );
-        }
-        
-        freeifaddrs( ifa );
-        return 1;
-    }
-    
-    // got error
-    lua_pushnil( L );
-    lua_pushstring( L, strerror( errno ) );
-    
-    return 2;
-}
-#endif
-
-
 LUALIB_API int luaopen_llsocket( lua_State *L )
 {
     struct luaL_Reg method[] = {
@@ -726,11 +598,6 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         { "sndtimeo", sndtimeo_lua },
         { NULL, NULL }
     };
-    struct luaL_Reg device_method[] = {
-        // device info
-        { "macaddrs", macaddrs_lua },
-        { NULL, NULL }
-    };
     struct luaL_Reg *ptr = NULL;
     
     // create table
@@ -742,6 +609,9 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
     lua_pushstring( L, "unix" );
     luaopen_llsocket_unix( L );
     lua_rawset( L, -3 );
+    lua_pushstring( L, "device" );
+    luaopen_llsocket_device( L );
+    lua_rawset( L, -3 );
     // no alloc interface
     luaopen_llsocket_addr( L );
 
@@ -751,16 +621,6 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         lstate_fn2tbl( L, ptr->name, ptr->func );
         ptr++;
     } while( ptr->name );
-    
-    // device method
-    lua_pushstring( L, "device" );
-    lua_newtable( L );
-    ptr = device_method;
-    do {
-        lstate_fn2tbl( L, ptr->name, ptr->func );
-        ptr++;
-    } while( ptr->name );
-    lua_rawset( L, -3 );
     
     // option method
     lua_pushstring( L, "opt" );

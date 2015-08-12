@@ -133,6 +133,7 @@
 
 LUALIB_API int luaopen_llsocket_inet( lua_State *L );
 LUALIB_API int luaopen_llsocket_unix( lua_State *L );
+LUALIB_API int luaopen_llsocket_device( lua_State *L );
 
 
 static inline void *lls_checkudata( lua_State *L, int idx, const char *tname )
