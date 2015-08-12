@@ -438,125 +438,6 @@ static int recvfrom_lua( lua_State *L )
 }
 
 
-// MARK: fd option
-static int fcntl_lua( lua_State *L, int getfl, int setfl, int fl )
-{
-    int fd = luaL_checkint( L, 1 );
-    
-    return lls_fcntl_lua( L, fd, getfl, setfl, fl );
-}
-
-
-static int cloexec_lua( lua_State *L )
-{
-    return fcntl_lua( L, F_GETFD, F_SETFD, FD_CLOEXEC );
-}
-
-
-static int nonblock_lua( lua_State *L )
-{
-    return fcntl_lua( L, F_GETFL, F_SETFL, O_NONBLOCK );
-}
-
-
-// MARK: socket option
-#define sockopt_int(L,level,optname,type,optrw) ({ \
-    int fd = luaL_checkint( L, 1 ); \
-    lls_sockopt_int_lua( L, fd, level, optname, type, optrw ); \
-});
-#define sockopt_int_lua(L,level,optname,type) \
-    sockopt_int(L,level,optname,type,LLS_SOCKOPT_WRITE)
-
-#define sockopt_readint_lua(L,level,optname,type) \
-    sockopt_int(L,level,optname,type,LLS_SOCKOPT_READ)
-
-// readonly
-static int type_lua( lua_State *L )
-{
-    return sockopt_readint_lua( L, SOL_SOCKET, SO_TYPE, LUA_TNUMBER );
-}
-
-static int error_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_ERROR, LUA_TNUMBER );
-}
-
-
-// writable
-static int nodelay_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, IPPROTO_TCP, TCP_NODELAY, LUA_TBOOLEAN );
-}
-
-static int reuseaddr_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_REUSEADDR, LUA_TBOOLEAN );
-}
-
-static int broadcast_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_BROADCAST, LUA_TBOOLEAN );
-}
-
-static int debug_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_DEBUG, LUA_TBOOLEAN );
-}
-
-static int keepalive_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_KEEPALIVE, LUA_TBOOLEAN );
-}
-
-static int oobinline_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_OOBINLINE, LUA_TBOOLEAN );
-}
-
-static int timestamp_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_TIMESTAMP, LUA_TBOOLEAN );
-}
-
-static int rcvbuf_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_RCVBUF, LUA_TNUMBER );
-}
-
-static int rcvlowat_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_RCVLOWAT, LUA_TNUMBER );
-}
-
-static int sndbuf_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_SNDBUF, LUA_TNUMBER );
-}
-
-static int sndlowat_lua( lua_State *L )
-{
-    return sockopt_int_lua( L, SOL_SOCKET, SO_SNDLOWAT, LUA_TNUMBER );
-}
-
-
-static int sockopt_timeval_lua( lua_State *L, int level, int opt )
-{
-    int fd = luaL_checkint( L, 1 );
-    
-    return lls_sockopt_timeval_lua( L, fd, level, opt );
-}
-
-static int rcvtimeo_lua( lua_State *L )
-{
-    return sockopt_timeval_lua( L, SOL_SOCKET, SO_RCVTIMEO );
-}
-
-static int sndtimeo_lua( lua_State *L )
-{
-    return sockopt_timeval_lua( L, SOL_SOCKET, SO_SNDTIMEO );
-}
-
-
 LUALIB_API int luaopen_llsocket( lua_State *L )
 {
     struct luaL_Reg method[] = {
@@ -565,8 +446,6 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         { "sockname", sockname_lua },
         { "peername", peername_lua },
         { "atmark", atmark_lua },
-        { "type", type_lua },
-        { "error", error_lua },
         { "shutdown", shutdown_lua },
         { "close", close_lua },
         { "listen", listen_lua },
@@ -576,26 +455,6 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         { "sendto", sendto_lua },
         { "recv", recv_lua },
         { "recvfrom", recvfrom_lua },
-        { NULL, NULL }
-    };
-    struct luaL_Reg opt_method[] = {
-        // fd option
-        { "cloexec", cloexec_lua },
-        { "nonblock", nonblock_lua },
-        // socket option
-        { "nodelay", nodelay_lua },
-        { "reuseaddr", reuseaddr_lua },
-        { "broadcast", broadcast_lua },
-        { "debug", debug_lua },
-        { "keepalive", keepalive_lua },
-        { "oobinline", oobinline_lua },
-        { "timestamp", timestamp_lua },
-        { "rcvbuf", rcvbuf_lua },
-        { "rcvlowat", rcvlowat_lua },
-        { "sndbuf", sndbuf_lua },
-        { "sndlowat", sndlowat_lua },
-        { "rcvtimeo", rcvtimeo_lua },
-        { "sndtimeo", sndtimeo_lua },
         { NULL, NULL }
     };
     struct luaL_Reg *ptr = NULL;
@@ -612,6 +471,9 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
     lua_pushstring( L, "device" );
     luaopen_llsocket_device( L );
     lua_rawset( L, -3 );
+    lua_pushstring( L, "opt" );
+    luaopen_llsocket_opt( L );
+    lua_rawset( L, -3 );
     // no alloc interface
     luaopen_llsocket_addr( L );
 
@@ -622,14 +484,6 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         ptr++;
     } while( ptr->name );
     
-    // option method
-    lua_pushstring( L, "opt" );
-    lua_newtable( L );
-    ptr = opt_method;
-    do {
-        lstate_fn2tbl( L, ptr->name, ptr->func );
-        ptr++;
-    } while( ptr->name );
     // constants
     // for connect and bind
     lstate_num2tbl( L, "SOCK_STREAM", SOCK_STREAM );
