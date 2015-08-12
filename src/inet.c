@@ -182,15 +182,14 @@ LUALIB_API int luaopen_llsocket_inet( lua_State *L )
         { "bind", bind_lua },
         { NULL, NULL }
     };
-    int i;
+    struct luaL_Reg *ptr = method;
     
     // method
     lua_newtable( L );
-    i = 0;
-    while( method[i].name ){
-        lstate_fn2tbl( L, method[i].name, method[i].func );
-        i++;
-    }
+    do {
+        lstate_fn2tbl( L, ptr->name, ptr->func );
+        ptr++;
+    } while( ptr->name );
     
     return 1;
 }
