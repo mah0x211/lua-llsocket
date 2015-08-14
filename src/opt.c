@@ -30,12 +30,10 @@
 
 
 // MARK: fd option
-static int fcntl_lua( lua_State *L, int getfl, int setfl, int fl )
-{
-    int fd = luaL_checkint( L, 1 );
-    
-    return lls_fcntl_lua( L, fd, getfl, setfl, fl );
-}
+#define fcntl_lua(L,getfl,setfl,fl) ({ \
+    int fd = luaL_checkint( L, 1 ); \
+    lls_fcntl_lua( L, fd, getfl, setfl, fl ); \
+})
 
 
 static int cloexec_lua( lua_State *L )
@@ -51,20 +49,16 @@ static int nonblock_lua( lua_State *L )
 
 
 // MARK: socket option
-#define sockopt_int(L,level,optname,type,optrw) ({ \
+#define sockopt_int_lua(L,level,optname,type) ({ \
     int fd = luaL_checkint( L, 1 ); \
-    lls_sockopt_int_lua( L, fd, level, optname, type, optrw ); \
-});
-#define sockopt_int_lua(L,level,optname,type) \
-    sockopt_int(L,level,optname,type,LLS_SOCKOPT_WRITE)
+    lls_sockopt_int_lua( L, fd, level, optname, type ); \
+})
 
-#define sockopt_readint_lua(L,level,optname,type) \
-    sockopt_int(L,level,optname,type,LLS_SOCKOPT_READ)
 
 // readonly
 static int type_lua( lua_State *L )
 {
-    return sockopt_readint_lua( L, SOL_SOCKET, SO_TYPE, LUA_TNUMBER );
+    return sockopt_int_lua( L, SOL_SOCKET, SO_TYPE, LUA_TNUMBER );
 }
 
 static int error_lua( lua_State *L )
@@ -130,12 +124,10 @@ static int sndlowat_lua( lua_State *L )
 }
 
 
-static int sockopt_timeval_lua( lua_State *L, int level, int opt )
-{
-    int fd = luaL_checkint( L, 1 );
-    
-    return lls_sockopt_timeval_lua( L, fd, level, opt );
-}
+#define sockopt_timeval_lua(L,level,opt) ({ \
+    int fd = luaL_checkint( L, 1 ); \
+    lls_sockopt_timeval_lua( L, fd, level, opt ); \
+})
 
 static int rcvtimeo_lua( lua_State *L )
 {

@@ -48,29 +48,23 @@ static int sockname_lua( lua_State *L )
         switch( addr.ss_family ){
             case AF_INET:
                 lstate_str2tbl( L, "family", "inet" );
-                goto PUSH_INET_ADDR;
+                iaddr = (struct sockaddr_in*)&addr;
+                lstate_num2tbl( L, "port", ntohs( iaddr->sin_port ) );
+                lstate_str2tbl( L, "addr", inet_ntoa( iaddr->sin_addr ) );
+                return 1;
+            
             case AF_UNIX:
                 lstate_str2tbl( L, "family", "unix" );
-                goto PUSH_UNIX_ADDR;
+                uaddr = (struct sockaddr_un*)&addr;
+                lstate_str2tbl( L, "path", uaddr->sun_path ); 
+                return 1;
+            
             default:
                 lua_pop( L, 1 );
                 errno = ENOTSUP;
-                goto PUSH_ERROR;
         }
-
-PUSH_INET_ADDR:
-        iaddr = (struct sockaddr_in*)&addr;
-        lstate_num2tbl( L, "port", ntohs( iaddr->sin_port ) );
-        lstate_str2tbl( L, "addr", inet_ntoa( iaddr->sin_addr ) );
-        return 1;
-        
-PUSH_UNIX_ADDR:
-        uaddr = (struct sockaddr_un*)&addr;
-        lstate_str2tbl( L, "path", uaddr->sun_path ); 
-        return 1;
     }
 
-PUSH_ERROR:
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );

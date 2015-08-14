@@ -189,7 +189,7 @@ static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl,
     if( flg != -1 )
     {
         // no args
-        if( lua_isnoneornil( L, 2 ) ){
+        if( lua_gettop( L ) == 1 ){
             lua_pushboolean( L, flg & fl );
             return 1;
         }
@@ -220,32 +220,15 @@ static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl,
 
 
 // socket option
-typedef enum {
-    LLS_SOCKOPT_READ = 0,
-    LLS_SOCKOPT_WRITE
-} lls_sockopt_rw_e;
 
 static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level, 
-                                       int opt, int type, 
-                                       lls_sockopt_rw_e optrw )
+                                       int opt, int type )
 {
     int flg = 0;
     socklen_t len = sizeof(int);
-    
-    if( getsockopt( fd, level, opt, (void*)&flg, &len ) == 0 )
+
+    if( lua_gettop( L ) > 1 )
     {
-        // no args
-        if( optrw == LLS_SOCKOPT_READ || lua_isnoneornil( L, 2 ) ){
-            switch( type ){
-                case LUA_TBOOLEAN:
-                    lua_pushboolean( L, flg );
-                break;
-                default:
-                    lua_pushinteger( L, flg );
-            }
-            return 1;
-        }
-        
         // type check
         luaL_checktype( L, 2, type );
         // set flag
@@ -265,6 +248,17 @@ static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level,
                 }
         }
     }
+    else if( getsockopt( fd, level, opt, (void*)&flg, &len ) == 0 )
+    {
+        switch( type ){
+            case LUA_TBOOLEAN:
+                lua_pushboolean( L, flg );
+            break;
+            default:
+                lua_pushinteger( L, flg );
+        }
+        return 1;
+    }
     
     // got error
     lua_pushnil( L );
@@ -280,28 +274,26 @@ static inline int lls_sockopt_timeval_lua( lua_State *L, int fd, int level,
     struct timeval tval = {0,0};
     socklen_t len = sizeof( struct timeval );
     
-    if( getsockopt( fd, level, opt, (void*)&tval, &len ) == 0 )
+    if( lua_gettop( L ) > 1 )
     {
-        double tnum, hi, lo;
+        double tnum = (double)luaL_checknumber( L, 2 );
+        double hi = 0;
+        double lo = modf( tnum, &hi );
         
-        // no args
-        if( lua_isnoneornil( L, 2 ) ){
-            tnum = (double)tval.tv_sec + ((double)tval.tv_usec / 1000000);
-            goto SUCCESS;
-        }
-        
-        // type check
-        tnum = (double)luaL_checknumber( L, 2 );
-        lo = modf( tnum, &hi );
         tval.tv_sec = (time_t)hi;
         tval.tv_usec = (suseconds_t)(lo * 1000000);
     
         // set delay flag
         if( setsockopt( fd, level, opt, (void*)&tval, len ) == 0 ){
-SUCCESS:
             lua_pushnumber( L, tnum );
             return 1;
         }
+    }
+    else if( getsockopt( fd, level, opt, (void*)&tval, &len ) == 0 ){
+        lua_pushnumber(
+            L, (double)tval.tv_sec + ((double)tval.tv_usec / 1000000)
+        );
+        return 1;
     }
     
     // got error
