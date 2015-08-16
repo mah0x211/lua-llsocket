@@ -1,9 +1,9 @@
 local strerror = require('process').strerror;
 local llsocket = require('llsocket');
-local STREAM = llsocket.opt.SOCK_STREAM;
-local DGRAM = llsocket.opt.SOCK_DGRAM;
-local SEQPACKET = llsocket.opt.SOCK_SEQPACKET;
-local RAW = llsocket.opt.SOCK_RAW;
+local STREAM = llsocket.SOCK_STREAM;
+local DGRAM = llsocket.SOCK_DGRAM;
+local SEQPACKET = llsocket.SOCK_SEQPACKET;
+local RAW = llsocket.SOCK_RAW;
 local inet = llsocket.inet;
 local HOST = '127.0.0.1';
 local PORT = 8080;
@@ -54,7 +54,7 @@ ifNotFalse( isolate( inet.bind, HOST, PORT, STREAM, nil, 'true' ) );
 
 
 -- stream socket
-fd = ifNil( isolate( inet.bind, HOST, PORT, STREAM, nil, REUSE ) );
+fd = ifFalse( isolate( inet.bind, HOST, PORT, STREAM, nil, REUSE ) );
 ifNotNil( llsocket.close( fd ) );
 -- w/o port
 fd = ifNil( isolate( inet.bind, HOST, nil, STREAM, nil, REUSE ) );
