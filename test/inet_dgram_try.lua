@@ -87,6 +87,7 @@ ifNotNil( llsocket.close( fd ) );
 
 
 -- raw socket
+--[[
 fd = ifNil( isolate( inet.bind, HOST, PORT, RAW, nil, REUSE ) );
 -- raw socket cannot listen
 ifNil( llsocket.listen( fd ) );
@@ -101,4 +102,4 @@ ifNotNil( llsocket.close( fd ) );
 fd = ifNil( isolate( inet.bind, HOST, nil, RAW, NONBLOCK, REUSE ) );
 ifNotTrue( llsocket.opt.nonblock( fd ) );
 ifNotNil( llsocket.close( fd ) );
-
+--]]

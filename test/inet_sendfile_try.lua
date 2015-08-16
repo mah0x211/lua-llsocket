@@ -134,6 +134,6 @@ trySendfile( STREAM );
 -- dgram socket
 trySendfile( DGRAM );
 -- raw socket
-trySendfile( RAW );
+--trySendfile( RAW );
 
 
