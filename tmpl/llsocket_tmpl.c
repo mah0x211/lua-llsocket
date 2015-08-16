@@ -315,6 +315,95 @@ static int sendto_lua( lua_State *L )
 }
 
 
+#if defined(__linux__)
+#include <sys/sendfile.h>
+#define HAVE_SENDFILE_LUA   1
+
+static int sendfile_lua( lua_State *L )
+{
+    int fd = luaL_checkint( L, 1 );
+    int ifd = luaL_checkint( L, 2 );
+    size_t len = luaL_checkinteger( L, 3 );
+    off_t offset = luaL_optinteger( L, 4, 0 );
+    ssize_t rv = sendfile( fd, ifd, &offset, len );
+    
+    if( rv != -1 ){
+        lua_pushinteger( L, rv );
+        return 1;
+    }
+    
+    // got error
+    lua_pushinteger( L, 0 );
+    lua_pushstring( L, strerror( errno ) );
+    lua_pushboolean( L, errno == EAGAIN );
+    
+    return 3;
+}
+
+
+#elif defined(__APPLE__)
+#define HAVE_SENDFILE_LUA   1
+
+static int sendfile_lua( lua_State *L )
+{
+    int fd = luaL_checkint( L, 1 );
+    int ifd = luaL_checkint( L, 2 );
+    off_t len = luaL_checkinteger( L, 3 );
+    off_t offset = luaL_optinteger( L, 4, 0 );
+    int eagain = 0;
+    
+    if( sendfile( ifd, fd, offset, &len, NULL, 0 ) == 0 ){
+        lua_pushinteger( L, len );
+        return 1;
+    }
+    // got error
+    else if( ( eagain = errno == EAGAIN || errno == EINTR ) ){
+        lua_pushinteger( L, len );
+    }
+    else {
+        lua_pushinteger( L, 0 );
+    }
+    
+    lua_pushstring( L, strerror( errno ) );
+    lua_pushboolean( L, eagain );
+    
+    return 3;
+}
+
+
+#elif defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#define HAVE_SENDFILE_LUA   1
+
+static int sendfile_lua( lua_State *L )
+{
+    int fd = luaL_checkint( L, 1 );
+    int ifd = luaL_checkint( L, 2 );
+    size_t len = luaL_checkinteger( L, 3 );
+    off_t offset = luaL_optinteger( L, 4, 0 );
+    off_t nbytes = 0;
+    int eagain = 0;
+    
+    if( sendfile( ifd, fd, offset, len, NULL, &nbytes, 0 ) == 0 ){
+        lua_pushinteger( L, nbytes );
+        return 1;
+    }
+    // got error
+    else if( ( eagain = errno == EAGAIN || errno == EINTR ) ){
+        lua_pushinteger( L, nbytes );
+    }
+    else {
+        lua_pushinteger( L, 0 );
+    }
+    
+    lua_pushstring( L, strerror( errno ) );
+    lua_pushboolean( L, eagain );
+    
+    return 3;
+}
+
+#endif
+
+
 static int recv_lua( lua_State *L )
 {
     int fd = luaL_checkint( L, 1 );
@@ -447,6 +536,12 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         { "acceptInherits", accept_inherits_lua },
         { "send", send_lua },
         { "sendto", sendto_lua },
+#if HAVE_SENDFILE_LUA
+        { "sendfile", sendfile_lua },
+#else
+#warning "sendfile does not implmeneted in this platform."
+
+#endif
         { "recv", recv_lua },
         { "recvfrom", recvfrom_lua },
         { NULL, NULL }
@@ -459,15 +554,19 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
     lua_pushstring( L, "inet" );
     luaopen_llsocket_inet( L );
     lua_rawset( L, -3 );
+    
     lua_pushstring( L, "unix" );
     luaopen_llsocket_unix( L );
     lua_rawset( L, -3 );
+    
     lua_pushstring( L, "device" );
     luaopen_llsocket_device( L );
     lua_rawset( L, -3 );
+    
     lua_pushstring( L, "opt" );
     luaopen_llsocket_opt( L );
     lua_rawset( L, -3 );
+
     // no alloc interface
     luaopen_llsocket_addr( L );
 
@@ -477,6 +576,7 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
         lstate_fn2tbl( L, ptr->name, ptr->func );
         ptr++;
     } while( ptr->name );
+    
     
     // constants
     // for connect and bind
