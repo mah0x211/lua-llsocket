@@ -299,6 +299,25 @@ send a message from a socket.
 same as `send( fd, msg [, flag, ...] )` API.
 
 
+### sendfile( fd, filFd, len [, offset] )
+
+send a file to a socket.
+
+**Parameters**
+
+- fd: socket.
+- fileFd: file descriptor.
+- len: how many bytes of the file should be sent.
+- offset: where to begin in the file. default 0.
+
+
+**Returns**
+
+1. bytes: number of bytes sent.
+2. err: error string.
+3. again: true if errno is EAGAIN(or EINTR on osx/*bsd platform).
+
+
 
 ## llsocket.opt API
 
@@ -529,6 +548,5 @@ returns the SO_SNDTIMEO value of socket option.
 
 - sendmsg
 - recvmsg
-- sendfile
-
+- raw socket
 
