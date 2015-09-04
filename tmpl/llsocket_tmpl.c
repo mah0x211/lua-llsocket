@@ -341,15 +341,20 @@ static int sendfile_lua( lua_State *L )
         lua_pushinteger( L, rv );
         return 1;
     }
-    
-    // got error
-    lua_pushinteger( L, 0 );
-    if( errno == EAGAIN ){
+    // again
+    else if( errno == EAGAIN ){
         lua_pushnil( L );
         lua_pushboolean( L, 1 );
         return 3;
     }
+    // closed by peer
+    else if( errno == EPIPE ){
+        lua_pushinteger( L, 0 );
+        return 1;
+    }
     
+    // got error
+    lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
     
     return 2;
