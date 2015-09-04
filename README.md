@@ -244,7 +244,7 @@ receive a message from a socket.
 **Returns**
 
 1. str: received message on success, or nil if closed by peer or got an error.
-2. err: error string.
+2. err: an error string on failure, or a nil if a again is a true.
 3. again: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 
@@ -260,7 +260,7 @@ same as `recv( fd [, len [, flag, ...]] )` API.
 
 1. str: received message on success, or nil if closed by peer or got an error.
 2. addr: `llsocket.addr` userdata or nil.
-3. err: error string.
+2. err: an error string on failure, or a nil if a again is a true.
 4. again: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 
@@ -277,8 +277,8 @@ send a message from a socket.
 
 **Returns**
 
-1. bytes: number of bytes sent on success, or nil if closed by peer or got an error.
-2. err: error string.
+1. bytes: number of bytes sent on success, or 0 if closed by peer.
+2. err: an error string on failure, or a nil if a again is a true.
 3. again: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 
@@ -313,9 +313,7 @@ send a file to a socket.
 
 **Returns**
 
-1. bytes: number of bytes sent.
-2. err: error string.
-3. again: true if errno is EAGAIN(or EINTR on osx/*bsd platform).
+same as `send( fd, msg [, flag, ...] )` API.
 
 
 
