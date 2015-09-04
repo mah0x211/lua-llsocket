@@ -119,7 +119,9 @@ local function trySendfile( stype )
         sendfileNonBlocking( fdCli, fdRcv );
     else
         outByte, err, eagain = sendfile( fdCli, imgSmall.fd, outByte, imgSmall.size - outByte );
-        ifTrue( outByte ~= 0, 'incorrect implementation' );
+        ifNotNil( outByte, 'incorrect implementation' );
+        ifNotNil( eagain, 'incorrect implementation' );
+        ifNil( err, 'incorrect implementation' );
     end
     
     if fdRcv ~= fdSvr then
