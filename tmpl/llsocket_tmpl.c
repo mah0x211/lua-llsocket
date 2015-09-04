@@ -35,7 +35,7 @@
 // MARK: method
 static int sockname_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
+    int fd = (int)luaL_checkinteger( L, 1 );
     struct sockaddr_un *uaddr = NULL;
     struct sockaddr_in *iaddr = NULL;
     socklen_t len = sizeof( struct sockaddr_storage );
@@ -75,7 +75,7 @@ static int sockname_lua( lua_State *L )
 
 static int peername_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
+    int fd = (int)luaL_checkinteger( L, 1 );
     socklen_t len = sizeof( struct sockaddr_storage );
     struct sockaddr_storage addr;
     
@@ -95,7 +95,7 @@ static int peername_lua( lua_State *L )
 
 static int atmark_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
+    int fd = (int)luaL_checkinteger( L, 1 );
     int rc = sockatmark( fd );
     
     if( rc != -1 ){
@@ -113,8 +113,8 @@ static int atmark_lua( lua_State *L )
 
 static int shutdown_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
-    int how = luaL_checkint( L, 2 );
+    int fd = (int)luaL_checkinteger( L, 1 );
+    int how = (int)luaL_checkinteger( L, 2 );
     
     if( shutdown( fd, how ) == 0 ){
         // got error
@@ -128,7 +128,7 @@ static int shutdown_lua( lua_State *L )
 
 static int close_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
+    int fd = (int)luaL_checkinteger( L, 1 );
     
     if( fd )
     {
@@ -136,7 +136,7 @@ static int close_lua( lua_State *L )
 
         // check arguments
         if( !lua_isnoneornil( L, 2 ) ){
-            int how = luaL_checkint( L, 2 );
+            int how = (int)luaL_checkinteger( L, 2 );
             rc = shutdown( fd, how );
         }
         
@@ -153,7 +153,7 @@ static int close_lua( lua_State *L )
 
 static int listen_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
+    int fd = (int)luaL_checkinteger( L, 1 );
     // default backlog size
     lua_Integer backlog = luaL_optinteger( L, 2, SOMAXCONN );
     
@@ -174,7 +174,7 @@ static int listen_lua( lua_State *L )
 
 static int accept_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
+    int fd = (int)luaL_checkinteger( L, 1 );
     int cfd = accept( fd, NULL, NULL );
     
     if( cfd != -1 )
@@ -198,7 +198,7 @@ static int accept_lua( lua_State *L )
 
 static int accept_inherits_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
+    int fd = (int)luaL_checkinteger( L, 1 );
     int cfd = 0;
 
 #if defined(__linux__)
@@ -243,7 +243,7 @@ static int accept_inherits_lua( lua_State *L )
 
 static int send_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
+    int fd = (int)luaL_checkinteger( L, 1 );
     size_t len = 0; 
     const char *buf = luaL_checklstring( L, 2, &len );
     int flg = lls_optflags( L, 3 );
@@ -279,7 +279,7 @@ static int send_lua( lua_State *L )
 
 static int sendto_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
+    int fd = (int)luaL_checkinteger( L, 1 );
     size_t len = 0; 
     const char *buf = luaL_checklstring( L, 2, &len );
     lls_addr_t *llsaddr = (lls_addr_t*)lls_checkudata( L, 3, LLS_ADDR_MT );
@@ -321,10 +321,10 @@ static int sendto_lua( lua_State *L )
 
 static int sendfile_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
-    int ifd = luaL_checkint( L, 2 );
-    size_t len = luaL_checkinteger( L, 3 );
-    off_t offset = luaL_optinteger( L, 4, 0 );
+    int fd = (int)luaL_checkinteger( L, 1 );
+    int ifd = (int)luaL_checkinteger( L, 2 );
+    size_t len = (size_t)luaL_checkinteger( L, 3 );
+    off_t offset = (off_t)luaL_optinteger( L, 4, 0 );
     ssize_t rv = sendfile( fd, ifd, &offset, len );
     
     if( rv != -1 ){
@@ -346,10 +346,10 @@ static int sendfile_lua( lua_State *L )
 
 static int sendfile_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
-    int ifd = luaL_checkint( L, 2 );
-    off_t len = luaL_checkinteger( L, 3 );
-    off_t offset = luaL_optinteger( L, 4, 0 );
+    int fd = (int)luaL_checkinteger( L, 1 );
+    int ifd = (int)luaL_checkinteger( L, 2 );
+    off_t len = (off_t)luaL_checkinteger( L, 3 );
+    off_t offset = (off_t)luaL_optinteger( L, 4, 0 );
     int eagain = 0;
     
     if( sendfile( ifd, fd, offset, &len, NULL, 0 ) == 0 ){
@@ -376,10 +376,10 @@ static int sendfile_lua( lua_State *L )
 
 static int sendfile_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
-    int ifd = luaL_checkint( L, 2 );
-    size_t len = luaL_checkinteger( L, 3 );
-    off_t offset = luaL_optinteger( L, 4, 0 );
+    int fd = (int)luaL_checkinteger( L, 1 );
+    int ifd = (int)luaL_checkinteger( L, 2 );
+    size_t len = (size_t)luaL_checkinteger( L, 3 );
+    off_t offset = (off_t)luaL_optinteger( L, 4, 0 );
     off_t nbytes = 0;
     int eagain = 0;
     
@@ -406,7 +406,7 @@ static int sendfile_lua( lua_State *L )
 
 static int recv_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
+    int fd = (int)luaL_checkinteger( L, 1 );
     lua_Integer len = luaL_optinteger( L, 2, DEFAULT_RECVSIZE );
     int flg = lls_optflags( L, 3 );
     char *buf = NULL;
@@ -454,7 +454,7 @@ static int recv_lua( lua_State *L )
 
 static int recvfrom_lua( lua_State *L )
 {
-    int fd = luaL_checkint( L, 1 );
+    int fd = (int)luaL_checkinteger( L, 1 );
     lua_Integer len = luaL_optinteger( L, 2, DEFAULT_RECVSIZE );
     int flg = lls_optflags( L, 3 );
     socklen_t slen = sizeof( struct sockaddr_storage );

@@ -40,7 +40,7 @@ static int connbind_lua( lua_State *L, connbind_t proc )
 {
     size_t len = 0;
     const char *path = luaL_checklstring( L, 1, &len );
-    int socktype = luaL_checkint( L, 2 );
+    int socktype = (int)luaL_checkinteger( L, 2 );
     int nonblock = 0;
     int fd = 0;
     

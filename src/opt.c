@@ -31,7 +31,7 @@
 
 // MARK: fd option
 #define fcntl_lua(L,getfl,setfl,fl) ({ \
-    int fd = luaL_checkint( L, 1 ); \
+    int fd = (int)luaL_checkinteger( L, 1 ); \
     lls_fcntl_lua( L, fd, getfl, setfl, fl ); \
 })
 
@@ -50,7 +50,7 @@ static int nonblock_lua( lua_State *L )
 
 // MARK: socket option
 #define sockopt_int_lua(L,level,optname,type) ({ \
-    int fd = luaL_checkint( L, 1 ); \
+    int fd = (int)luaL_checkinteger( L, 1 ); \
     lls_sockopt_int_lua( L, fd, level, optname, type ); \
 })
 
@@ -125,7 +125,7 @@ static int sndlowat_lua( lua_State *L )
 
 
 #define sockopt_timeval_lua(L,level,opt) ({ \
-    int fd = luaL_checkint( L, 1 ); \
+    int fd = (int)luaL_checkinteger( L, 1 ); \
     lls_sockopt_timeval_lua( L, fd, level, opt ); \
 })
 

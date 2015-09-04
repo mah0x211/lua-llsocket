@@ -173,7 +173,7 @@ static inline int lls_optflags( lua_State *L, int idx )
     int flg = 0;
     
     for(; idx <= argc; idx++ ){
-        flg |= luaL_optint( L, idx, 0 );
+        flg |= (int)luaL_optinteger( L, idx, 0 );
     }
     
     return flg;

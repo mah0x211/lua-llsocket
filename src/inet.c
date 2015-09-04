@@ -38,7 +38,7 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
     int argc = lua_gettop( L );
     const char *host = NULL;
     const char *port = NULL;
-    int socktype = luaL_checkint( L, 3 );
+    int socktype = (int)luaL_checkinteger( L, 3 );
     int nonblock = 0;
     int reuseaddr = 0;
     const struct addrinfo hints = {
