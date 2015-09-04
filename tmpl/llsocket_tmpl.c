@@ -261,19 +261,24 @@ static int send_lua( lua_State *L )
         lua_pushinteger( L, rv );
         return 1;
     }
-    // close by peer
+    // again
+    else if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+        lua_pushnil( L );
+        lua_pushnil( L );
+        lua_pushboolean( L, 1 );
+        return 3;
+    }
+    // closed by peer
     else if( errno == ECONNRESET ){
-        return 0;
+        lua_pushinteger( L, 0 );
+        return 1;
     }
     
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    lua_pushboolean(
-        L, errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR
-    );
-    
-    return 3;
+
+    return 2;
 }
 
 
@@ -299,19 +304,24 @@ static int sendto_lua( lua_State *L )
         lua_pushinteger( L, rv );
         return 1;
     }
+    // again
+    else if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+        lua_pushnil( L );
+        lua_pushnil( L );
+        lua_pushboolean( L, 1 );
+        return 3;
+    }
     // close by peer
     else if( errno == ECONNRESET ){
-        return 0;
+        lua_pushinteger( L, 0 );
+        return 1;
     }
     
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    lua_pushboolean(
-        L, errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR
-    );
     
-    return 3;
+    return 2;
 }
 
 
@@ -334,10 +344,15 @@ static int sendfile_lua( lua_State *L )
     
     // got error
     lua_pushinteger( L, 0 );
-    lua_pushstring( L, strerror( errno ) );
-    lua_pushboolean( L, errno == EAGAIN );
+    if( errno == EAGAIN ){
+        lua_pushnil( L );
+        lua_pushboolean( L, 1 );
+        return 3;
+    }
     
-    return 3;
+    lua_pushstring( L, strerror( errno ) );
+    
+    return 2;
 }
 
 
@@ -350,24 +365,29 @@ static int sendfile_lua( lua_State *L )
     int ifd = (int)luaL_checkinteger( L, 2 );
     off_t len = (off_t)luaL_checkinteger( L, 3 );
     off_t offset = (off_t)luaL_optinteger( L, 4, 0 );
-    int eagain = 0;
     
     if( sendfile( ifd, fd, offset, &len, NULL, 0 ) == 0 ){
         lua_pushinteger( L, len );
         return 1;
     }
-    // got error
-    else if( ( eagain = errno == EAGAIN || errno == EINTR ) ){
+    // again
+    else if( errno == EAGAIN || errno == EINTR ){
         lua_pushinteger( L, len );
+        lua_pushnil( L );
+        lua_pushboolean( L, 1 );
+        return 3;
     }
-    else {
+    // closed by peer
+    else if( errno == EPIPE ){
         lua_pushinteger( L, 0 );
+        return 1;
     }
     
+    // got error
+    lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    lua_pushboolean( L, eagain );
     
-    return 3;
+    return 2;
 }
 
 
@@ -381,24 +401,29 @@ static int sendfile_lua( lua_State *L )
     size_t len = (size_t)luaL_checkinteger( L, 3 );
     off_t offset = (off_t)luaL_optinteger( L, 4, 0 );
     off_t nbytes = 0;
-    int eagain = 0;
     
     if( sendfile( ifd, fd, offset, len, NULL, &nbytes, 0 ) == 0 ){
         lua_pushinteger( L, nbytes );
         return 1;
     }
-    // got error
-    else if( ( eagain = errno == EAGAIN || errno == EINTR ) ){
+    // again
+    else if( errno == EAGAIN || errno == EINTR ){
         lua_pushinteger( L, nbytes );
+        lua_pushnil( L );
+        lua_pushboolean( L, 1 );
+        return 3;
     }
-    else {
+    // closed by peer
+    else if( errno == EPIPE ){
         lua_pushinteger( L, 0 );
+        return 1;
     }
     
+    // got error
+    lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    lua_pushboolean( L, eagain );
     
-    return 3;
+    return 2;
 }
 
 #endif
@@ -434,11 +459,17 @@ static int recv_lua( lua_State *L )
         // got error
         case -1:
             lua_pushnil( L );
-            lua_pushstring( L, strerror( errno ) );
-            lua_pushboolean(
-                L, errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR
-            );
-            rv = 3;
+            // again
+            if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+                lua_pushnil( L );
+                lua_pushboolean( L, 1 );
+                rv = 3;
+            }
+            // got error
+            else {
+                lua_pushstring( L, strerror( errno ) );
+                rv = 2;
+            }
         break;
         
         default:
@@ -488,11 +519,17 @@ static int recvfrom_lua( lua_State *L )
         case -1:
             lua_pushnil( L );
             lua_pushnil( L );
-            lua_pushstring( L, strerror( errno ) );
-            lua_pushboolean(
-                L, errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR
-            );
-            rv = 4;
+            // again
+            if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+                lua_pushnil( L );
+                lua_pushboolean( L, 1 );
+                rv = 4;
+            }
+            // got error
+            else {
+                lua_pushstring( L, strerror( errno ) );
+                rv = 3;
+            }
         break;
         
         default:
