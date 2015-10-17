@@ -211,7 +211,8 @@ accept a connection on a socket.
 
 1. fd: connected socket.
 2. err: error string.
-3. again: true if errno is EAGAIN or EWOULDBLOCK.
+3. again: true if errno is EAGAIN, EWOULDBLOCK, EINTR or ECONNABORTED.
+
 
 ### acceptInherits( fd )
 
@@ -227,7 +228,7 @@ accept a connection on a socket. this connection inherits a O_NONBLOCK flag from
 
 1. fd: connected socket.
 2. err: error string.
-3. again: true if errno is EAGAIN or EWOULDBLOCK.
+3. true if errno is EAGAIN, EWOULDBLOCK, EINTR or ECONNABORTED.
 
 
 ### recv( fd [, len [, flag, ...]] )
