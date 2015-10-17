@@ -186,13 +186,20 @@ static int accept_lua( lua_State *L )
         
         close( cfd );
     }
-    
+    // check errno
+    else if( errno == EAGAIN || errno == EWOULDBLOCK ||
+             errno == EINTR || errno == ECONNABORTED ){
+        lua_pushnil( L );
+        lua_pushnil( L );
+        lua_pushboolean( L, 1 );
+        return 3;
+    }
+
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
-    
-    return 3;
+
+    return 2;
 }
 
 
@@ -223,6 +230,14 @@ static int accept_inherits_lua( lua_State *L )
             close( cfd );
         }
 #endif
+        // check errno
+        else if( errno == EAGAIN || errno == EWOULDBLOCK ||
+                 errno == EINTR || errno == ECONNABORTED ){
+            lua_pushnil( L );
+            lua_pushnil( L );
+            lua_pushboolean( L, 1 );
+            return 3;
+        }
     }
 
 #else
@@ -230,14 +245,22 @@ static int accept_inherits_lua( lua_State *L )
         lua_pushinteger( L, cfd );
         return 1;
     }
+    // check errno
+    else if( errno == EAGAIN || errno == EWOULDBLOCK ||
+             errno == EINTR || errno == ECONNABORTED ){
+        lua_pushnil( L );
+        lua_pushnil( L );
+        lua_pushboolean( L, 1 );
+        return 3;
+    }
+
 #endif
 
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    lua_pushboolean( L, errno == EAGAIN || errno == EWOULDBLOCK );
-    
-    return 3;
+
+    return 2;
 }
 
 
