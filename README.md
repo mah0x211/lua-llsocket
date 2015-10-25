@@ -278,7 +278,7 @@ send a message from a socket.
 
 **Returns**
 
-1. bytes: number of bytes sent on success, or 0 if closed by peer.
+1. bytes: number of bytes sent on success, or nil if closed by peer.
 2. err: an error string on failure, or a nil if a again is a true.
 3. again: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
 
