@@ -363,7 +363,7 @@ static int sendfile_lua( lua_State *L )
         return 1;
     }
     // again
-    else if( errno == EAGAIN ){
+    else if( errno == EAGAIN || errno = EINTR ){
         lua_pushnil( L );
         lua_pushboolean( L, 1 );
         return 3;
