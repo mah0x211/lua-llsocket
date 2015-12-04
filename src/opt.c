@@ -73,6 +73,23 @@ static int nodelay_lua( lua_State *L )
     return sockopt_int_lua( L, IPPROTO_TCP, TCP_NODELAY, LUA_TBOOLEAN );
 }
 
+
+#if defined(TCP_CORK) || defined(TCP_NOPUSH)
+#define HAVE_TCP_CORK 1
+
+static int tcpcork_lua( lua_State *L )
+{
+#if defined(TCP_CORK)
+    return sockopt_int_lua( L, IPPROTO_TCP, TCP_CORK, LUA_TBOOLEAN );
+#else
+    return sockopt_int_lua( L, IPPROTO_TCP, TCP_NOPUSH, LUA_TBOOLEAN );
+#endif
+}
+
+#endif
+
+
+
 static int reuseaddr_lua( lua_State *L )
 {
     return sockopt_int_lua( L, SOL_SOCKET, SO_REUSEADDR, LUA_TBOOLEAN );
@@ -151,6 +168,12 @@ LUALIB_API int luaopen_llsocket_opt( lua_State *L )
         { "error", error_lua },
         // socket option
         { "nodelay", nodelay_lua },
+#if defined(HAVE_TCP_CORK)
+        { "tcpcork", tcpcork_lua },
+#else
+#warning "tcpcork does not implmeneted in this platform."
+
+#endif
         { "reuseaddr", reuseaddr_lua },
         { "broadcast", broadcast_lua },
         { "debug", debug_lua },
