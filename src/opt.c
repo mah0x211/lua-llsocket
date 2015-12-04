@@ -68,7 +68,7 @@ static int error_lua( lua_State *L )
 
 
 // writable
-static int nodelay_lua( lua_State *L )
+static int tcpnodelay_lua( lua_State *L )
 {
     return sockopt_int_lua( L, IPPROTO_TCP, TCP_NODELAY, LUA_TBOOLEAN );
 }
@@ -167,7 +167,7 @@ LUALIB_API int luaopen_llsocket_opt( lua_State *L )
         { "type", type_lua },
         { "error", error_lua },
         // socket option
-        { "nodelay", nodelay_lua },
+        { "tcpnodelay", tcpnodelay_lua },
 #if defined(HAVE_TCP_CORK)
         { "tcpcork", tcpcork_lua },
 #else
