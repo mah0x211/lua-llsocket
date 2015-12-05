@@ -350,9 +350,25 @@ returns the current O_NONBLOCK flag for socket.
 1. flag: current flag state as a boolean value.
 2. err: error string.
 
-### nodelay( fd [, flag] )
+
+### tcpnodelay( fd [, flag] )
 
 returns the TCP_NODELAY value of socket option.
+
+**Parameters**
+
+- fd: socket.
+- flag: to enabled on true, or to disabled on false.
+
+**Returns**
+
+1. flag: current option state as a boolean value.
+2. err: error string.
+
+
+### tcpcork( fd [, flag] )
+
+returns the TCP_CORK or TCP_NOPUSH value of socket option.
 
 **Parameters**
 
