@@ -11,14 +11,119 @@ luarocks install llsocket --from=http://mah0x211.github.io/rocks/
 
 ## Constants
 
-these constants defined at the `llsocket.opt.*`
+these constants defined at the `llsocket.*`
 
-**Use for `connect` and `bind` API**
+**Use for `connect` and `bind`, `socketpair` API**
 
 - SOCK_DGRAM
 - SOCK_STREAM
 - SOCK_SEQPACKET
 - SOCK_RAW
+- IPPROTO_IP
+- IPPROTO_HOPOPTS
+- IPPROTO_ICMP
+- IPPROTO_IGMP
+- IPPROTO_GGP
+- IPPROTO_IPV4
+- IPPROTO_IPIP
+- IPPROTO_TCP
+- IPPROTO_ST
+- IPPROTO_EGP
+- IPPROTO_PIGP
+- IPPROTO_RCCMON
+- IPPROTO_NVPII
+- IPPROTO_PUP
+- IPPROTO_ARGUS
+- IPPROTO_EMCON
+- IPPROTO_XNET
+- IPPROTO_CHAOS
+- IPPROTO_UDP
+- IPPROTO_MUX
+- IPPROTO_MEAS
+- IPPROTO_HMP
+- IPPROTO_PRM
+- IPPROTO_IDP
+- IPPROTO_TRUNK1
+- IPPROTO_TRUNK2
+- IPPROTO_LEAF1
+- IPPROTO_LEAF2
+- IPPROTO_RDP
+- IPPROTO_IRTP
+- IPPROTO_TP
+- IPPROTO_BLT
+- IPPROTO_NSP
+- IPPROTO_INP
+- IPPROTO_SEP
+- IPPROTO_3PC
+- IPPROTO_IDPR
+- IPPROTO_XTP
+- IPPROTO_DDP
+- IPPROTO_CMTP
+- IPPROTO_TPXX
+- IPPROTO_IL
+- IPPROTO_IPV6
+- IPPROTO_SDRP
+- IPPROTO_ROUTING
+- IPPROTO_FRAGMENT
+- IPPROTO_IDRP
+- IPPROTO_RSVP
+- IPPROTO_GRE
+- IPPROTO_MHRP
+- IPPROTO_BHA
+- IPPROTO_ESP
+- IPPROTO_AH
+- IPPROTO_INLSP
+- IPPROTO_SWIPE
+- IPPROTO_NHRP
+- IPPROTO_ICMPV6
+- IPPROTO_NONE
+- IPPROTO_DSTOPTS
+- IPPROTO_AHIP
+- IPPROTO_CFTP
+- IPPROTO_HELLO
+- IPPROTO_SATEXPAK
+- IPPROTO_KRYPTOLAN
+- IPPROTO_RVD
+- IPPROTO_IPPC
+- IPPROTO_ADFS
+- IPPROTO_SATMON
+- IPPROTO_VISA
+- IPPROTO_IPCV
+- IPPROTO_CPNX
+- IPPROTO_CPHB
+- IPPROTO_WSN
+- IPPROTO_PVP
+- IPPROTO_BRSATMON
+- IPPROTO_ND
+- IPPROTO_WBMON
+- IPPROTO_WBEXPAK
+- IPPROTO_EON
+- IPPROTO_VMTP
+- IPPROTO_SVMTP
+- IPPROTO_VINES
+- IPPROTO_TTP
+- IPPROTO_IGP
+- IPPROTO_DGP
+- IPPROTO_TCF
+- IPPROTO_IGRP
+- IPPROTO_OSPFIGP
+- IPPROTO_SRPC
+- IPPROTO_LARP
+- IPPROTO_MTP
+- IPPROTO_AX25
+- IPPROTO_IPEIP
+- IPPROTO_MICP
+- IPPROTO_SCCSP
+- IPPROTO_ETHERIP
+- IPPROTO_ENCAP
+- IPPROTO_APES
+- IPPROTO_GMTP
+- IPPROTO_PIM
+- IPPROTO_IPCOMP
+- IPPROTO_PGM
+- IPPROTO_SCTP
+- IPPROTO_DIVERT
+- IPPROTO_RAW
 
 **Use for `shutdown` and `close` API**
 
@@ -34,7 +139,7 @@ these constants defined at the `llsocket.opt.*`
 ## llsocket.inet API
 
 
-### bind( host, port, socktype, nonblock, reuseaddr )
+### bind( host, port, socktype [, nonblock [, reuseaddr [, protocol]]] )
 
 create bound socket.
 
@@ -45,14 +150,15 @@ create bound socket.
 - socktype: SOCK_*.
 - nonblock: set nonblock flag to created socket if specified to true.
 - reuseaddr: set reuseaddr flag to created socket if specified to true.
-
+- protocol: IPROTO_*
+ 
 **Returns**
 
 1. fd: socket.
 2. err: error number.
 
 
-### connect( host, port, socktype, nonblock, reuseaddr )
+### connect( host, port, socktype[, nonblock [, reuseaddr [, protocol]]] )
 
 create connected socket.
 
@@ -61,7 +167,7 @@ create connected socket.
 
 ## llsocket.unix API
 
-### bind( path, socktype, nonblock )
+### bind( path, socktype [, nonblock [, protocol]] )
 
 create bound unix domain socket.
 
@@ -70,6 +176,7 @@ create bound unix domain socket.
 - path: string.
 - socktype: SOCK_*.
 - nonblock: set nonblock flag to created socket if specified to true.
+- protocol: IPROTO_*
 
 **Returns**
 
@@ -77,12 +184,28 @@ create bound unix domain socket.
 2. err: error number.
 
 
-### connect( path, socktype, nonblock )
+### connect( path, socktype [, nonblock [, protocol]] )
 
 create connected unix domain socket.
 
 **Parameters** and **Returnes** is same as `bind( path, socktype, nonblock )` API.
 
+
+### socketpair( socktype [, nonblock [, protocol] ] )
+
+create a pair of connected sockets
+
+**Parameters**
+
+- socktype: SOCK_*.
+- nonblock: set nonblock flag to created socket if specified to true.
+- protocol: IPPROTO_*.
+
+**Returns**
+
+1. fd: socket[0].
+2. fd: socket[1].
+3. err: error number.
 
 
 ## llsocket API
