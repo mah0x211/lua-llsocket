@@ -648,7 +648,10 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
     lstate_num2tbl( L, "SHUT_RD", SHUT_RD );
     lstate_num2tbl( L, "SHUT_WR", SHUT_WR );
     lstate_num2tbl( L, "SHUT_RDWR", SHUT_RDWR );
-    
+
+    // for socket protocol
+#define GEN_SOCKET_PROTOCOLS_DECL
+
     // for send/recv flags
 #define GEN_SENDRECV_FLAGS_DECL
     

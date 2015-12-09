@@ -41,7 +41,7 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
     int socktype = (int)luaL_checkinteger( L, 3 );
     int nonblock = 0;
     int reuseaddr = 0;
-    const struct addrinfo hints = {
+    struct addrinfo hints = {
         // AI_PASSIVE:bind socket if node is null
         .ai_flags = passive,
         // AF_INET:ipv4 | AF_INET6:ipv6
@@ -59,10 +59,15 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
     struct addrinfo *list = NULL;
     
     // check arguments
-    if( argc > 5 ){
-        argc = 5;
+    if( argc > 6 ){
+        argc = 6;
     }
     switch( argc ){
+        // protocol
+        case 6:
+            if( !lua_isnoneornil( L, 6 ) ){
+                hints.ai_protocol = (int)luaL_checkinteger( L, 6 );
+            }
         // reuseaddr
         case 5:
             if( !lua_isnoneornil( L, 5 ) ){

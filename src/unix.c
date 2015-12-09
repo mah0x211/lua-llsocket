@@ -38,23 +38,37 @@ typedef int(*connbind_t)( int, const struct sockaddr*, socklen_t );
 
 static int connbind_lua( lua_State *L, connbind_t proc )
 {
+    int argc = lua_gettop( L );
     size_t len = 0;
     const char *path = luaL_checklstring( L, 1, &len );
     int socktype = (int)luaL_checkinteger( L, 2 );
+    int protocol = 0;
     int nonblock = 0;
     int fd = 0;
     
     // check arguments
-    if( !lua_isnoneornil( L, 3 ) ){
-        luaL_checktype( L, 3, LUA_TBOOLEAN );
-        nonblock = lua_toboolean( L, 3 );
+    if( argc > 4 ){
+        argc = 4;
+    }
+    switch( argc ){
+        // protocol
+        case 4:
+            if( !lua_isnoneornil( L, 4 ) ){
+                protocol = luaL_checkinteger( L, 4 );
+            }
+        // nonblock
+        case 3:
+            if( !lua_isnoneornil( L, 3 ) ){
+                luaL_checktype( L, 3, LUA_TBOOLEAN );
+                nonblock = lua_toboolean( L, 3 );
+            }
     }
     // length too large
     if( len > UNIXPATH_MAX ){
         errno = ENAMETOOLONG;
     }
     // create socket descriptor
-    else if( ( fd = socket( AF_UNIX, socktype, 0 ) ) != -1 )
+    else if( ( fd = socket( AF_UNIX, socktype, protocol ) ) != -1 )
     {
         struct sockaddr_un addr;
         
