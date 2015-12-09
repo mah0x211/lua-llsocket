@@ -155,7 +155,7 @@ create bound socket.
 **Returns**
 
 1. fd: socket.
-2. err: error number.
+2. err: error string.
 
 
 ### connect( host, port, socktype[, nonblock [, reuseaddr [, protocol]]] )
@@ -181,7 +181,7 @@ create bound unix domain socket.
 **Returns**
 
 1. fd: socket.
-2. err: error number.
+2. err: error string.
 
 
 ### connect( path, socktype [, nonblock [, protocol]] )
@@ -205,7 +205,7 @@ create a pair of connected sockets
 
 1. fd: socket[0].
 2. fd: socket[1].
-3. err: error number.
+3. err: error string.
 
 
 ## llsocket API
