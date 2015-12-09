@@ -113,6 +113,45 @@ static int bind_lua( lua_State *L )
     return connbind_lua( L, bind );
 }
 
+static int socketpair_lua( lua_State *L )
+{
+    int socktype = (int)luaL_checkinteger( L, 1 );
+    int protocol = (int)luaL_optinteger( L, 3, 0 );
+    int nonblock = 0;
+    int fds[2];
+
+    // nonblock
+    if( !lua_isnoneornil( L, 2 ) ){
+        luaL_checktype( L, 2, LUA_TBOOLEAN );
+        nonblock = lua_toboolean( L, 2 );
+    }
+
+    if( socketpair( AF_UNIX, socktype, protocol, fds ) == 0 )
+    {
+        // set flags
+        fcntl( fds[0], F_SETFD, FD_CLOEXEC );
+        fcntl( fds[1], F_SETFD, FD_CLOEXEC );
+        if( nonblock ){
+            int fl = fcntl( fds[0], F_GETFL );
+            fcntl( fds[0], F_SETFL, fl|O_NONBLOCK );
+            fl = fcntl( fds[1], F_GETFL );
+            fcntl( fds[1], F_SETFL, fl|O_NONBLOCK );
+        }
+
+        lua_pushinteger( L, fds[0] );
+        lua_pushinteger( L, fds[1] );
+        return 2;
+    }
+
+    // got error
+    lua_pushnil( L );
+    lua_pushnil( L );
+    lua_pushstring( L, strerror( errno ) );
+
+    return 2;
+}
+
+
 
 LUALIB_API int luaopen_llsocket_unix( lua_State *L )
 {
@@ -120,6 +159,7 @@ LUALIB_API int luaopen_llsocket_unix( lua_State *L )
         // create socket-fd
         { "connect", connect_lua },
         { "bind", bind_lua },
+        { "socketpair", socketpair_lua },
         { NULL, NULL }
     };
     struct luaL_Reg *ptr = method;
