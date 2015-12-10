@@ -114,9 +114,12 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
     if( getaddrinfo( host, port, (const struct addrinfo*)&hints, &list ) != -1 )
     {
         struct addrinfo *ptr = list;
-        int fd = 0;
-        
-        do
+        int fd = -1;
+
+        if( !ptr ){
+            errno = EINVAL;
+        }
+        while( ptr )
         {
             // try to create socket
 #if defined(LINUX_SOCKEXT)
@@ -148,9 +151,11 @@ static int connbind_lua( lua_State *L, connbind_t proc, int passive )
                 close( fd );
                 fd = -1;
             }
-            
-        } while( ( ptr = ptr->ai_next ) );
-        
+
+            // check next
+            ptr = ptr->ai_next;
+        }
+
         // remove address-list
         freeaddrinfo( list );
         
