@@ -1,5 +1,5 @@
 /*
- *  Copyright 2014 Masatoshi Teruya. All rights reserved.
+ *  Copyright 2015 Masatoshi Teruya. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a 
  *  copy of this software and associated documentation files (the "Software"), 
@@ -19,26 +19,54 @@
  *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  *  DEALINGS IN THE SOFTWARE.
  *
- *  addr.c
+ *  addrinfo.c
  *  lua-llsocket
  *
- *  Created by Masatoshi Teruya on 14/12/12.
+ *  Created by Masatoshi Teruya on 15/12/14.
  *
  */
 
-#include "llsocket_addr.h"
 
-#define MODULE_MT   LLS_ADDR_MT
+#include "llsocket.h"
 
-static int info_lua( lua_State *L )
+/*
+    if( getsockname( s->fd, (void*)&addr, &len ) == 0 )
+    {
+        struct sockaddr_un *uaddr = NULL;
+        struct sockaddr_in *iaddr = NULL;
+
+        lua_newtable( L );
+        switch( addr.ss_family ){
+            case AF_INET:
+                lstate_str2tbl( L, "family", "inet" );
+                iaddr = (struct sockaddr_in*)&addr;
+                lstate_num2tbl( L, "port", ntohs( iaddr->sin_port ) );
+                lstate_str2tbl( L, "addr", inet_ntoa( iaddr->sin_addr ) );
+                return 1;
+            
+            case AF_UNIX:
+                lstate_str2tbl( L, "family", "unix" );
+                uaddr = (struct sockaddr_un*)&addr;
+                lstate_str2tbl( L, "path", uaddr->sun_path ); 
+                return 1;
+            
+            default:
+                lua_pop( L, 1 );
+                errno = ENOTSUP;
+        }
+    }
+*/
+
+
+static int nameinfo_lua( lua_State *L )
 {
-    lls_addr_t *llsa = luaL_checkudata( L, 1, MODULE_MT );
-    int flag = 0;
+    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
+    int flag = lls_optflags( L, 2 );
     char host[NI_MAXHOST];
     char serv[NI_MAXSERV];
-    int rc = getnameinfo( (struct sockaddr*)&llsa->addr, llsa->len, host, 
-                          NI_MAXHOST, serv, NI_MAXSERV, flag );
-    
+    int rc = getnameinfo( info->ai_addr, info->ai_addrlen, host, NI_MAXHOST,
+                          serv, NI_MAXSERV, flag );
+
     if( rc == 0 ){
         lua_createtable( L, 0, 2 );
         lstate_str2tbl( L, "host", host );
@@ -56,24 +84,38 @@ static int info_lua( lua_State *L )
 
 static int tostring_lua( lua_State *L )
 {
-    lua_pushfstring( L, MODULE_MT ": %p", lua_touserdata( L, 1 ) );
+    lua_pushfstring( L, ADDRINFO_MT ": %p", lua_touserdata( L, 1 ) );
     return 1;
 }
 
 
-LUALIB_API int luaopen_llsocket_addr( lua_State *L )
+static int gc_lua( lua_State *L )
+{
+    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
+
+    if( info->ai_canonname ){
+        pdealloc( info->ai_canonname );
+    }
+    pdealloc( info->ai_addr );
+
+    return 0;
+}
+
+
+LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L )
 {
     struct luaL_Reg mmethod[] = {
+        { "__gc", gc_lua },
         { "__tostring", tostring_lua },
         { NULL, NULL }
     };
     struct luaL_Reg method[] = {
-        { "info", info_lua },
+        { "nameinfo", nameinfo_lua },
         { NULL, NULL }
     };
     struct luaL_Reg *ptr = mmethod;
     
-    luaL_newmetatable( L, MODULE_MT );
+    luaL_newmetatable( L, ADDRINFO_MT );
     // metamethods
     do {
         lstate_fn2tbl( L, ptr->name, ptr->func );
@@ -89,7 +131,7 @@ LUALIB_API int luaopen_llsocket_addr( lua_State *L )
     } while( ptr->name );
     lua_rawset( L, -3 );
     lua_pop( L, 1 );
-    
+
     return 0;
 }
 

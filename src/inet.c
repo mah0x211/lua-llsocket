@@ -31,176 +31,85 @@
 #include "llsocket.h"
 
 
-typedef int(*connbind_t)( int, const struct sockaddr*, socklen_t );
-
-static int connbind_lua( lua_State *L, connbind_t proc, int passive )
+static int getaddrinfo_lua( lua_State *L, int ai_family )
 {
-    int argc = lua_gettop( L );
-    const char *host = NULL;
-    const char *port = NULL;
-    int socktype = (int)luaL_checkinteger( L, 3 );
-    int nonblock = 0;
-    int reuseaddr = 0;
+    const char *node = lls_optstring( L, 1, NULL );
+    const char *service = lls_optstring( L, 2, NULL );
     struct addrinfo hints = {
-        // AI_PASSIVE:bind socket if node is null
-        .ai_flags = passive,
         // AF_INET:ipv4 | AF_INET6:ipv6
-        .ai_family = AF_UNSPEC,
+        .ai_family = ai_family,
         // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
-        .ai_socktype = socktype,
+        .ai_socktype = (int)lls_optinteger( L, 3, 0 ),
         // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
-        .ai_protocol = 0,
+        .ai_protocol = (int)lls_optinteger( L, 4, 0 ),
+        // AI_PASSIVE:bind socket if node is null
+        .ai_flags = lls_optflags( L, 5 ),
         // initialize
         .ai_addrlen = 0,
-        .ai_canonname = NULL,
         .ai_addr = NULL,
+        .ai_canonname = NULL,
         .ai_next = NULL
     };
     struct addrinfo *list = NULL;
-    
-    // check arguments
-    if( argc > 6 ){
-        argc = 6;
-    }
-    switch( argc ){
-        // protocol
-        case 6:
-            if( !lua_isnoneornil( L, 6 ) ){
-                hints.ai_protocol = (int)luaL_checkinteger( L, 6 );
-            }
-        // reuseaddr
-        case 5:
-            if( !lua_isnoneornil( L, 5 ) ){
-                luaL_checktype( L, 5, LUA_TBOOLEAN );
-                reuseaddr = lua_toboolean( L, 5 );
-            }
-        // nonblock
-        case 4:
-            if( !lua_isnoneornil( L, 4 ) )
-            {
-                luaL_checktype( L, 4, LUA_TBOOLEAN );
-#if defined(LINUX_SOCKEXT)
-                if( lua_toboolean( L, 4 ) ){
-                    nonblock = SOCK_NONBLOCK;
-                }
-#else
-                nonblock = lua_toboolean( L, 4 );
-#endif
-            }
-        // socktype
-        case 3:
-        // port
-        case 2:
-            if( !lua_isnoneornil( L, 2 ) ){
-                port = luaL_checkstring( L, 2 );
-            }
-        // host
-        case 1:
-            if( !lua_isnoneornil( L, 1 ) ){
-                host = luaL_checkstring( L, 1 );
-            }
-
-    }
-
-    // host, port
-    if( !host && !port ){
-        return luaL_error( L, "must be specified either host, port or both" );
-    }
+    struct addrinfo *ptr = NULL;
+    int idx = 1;
+    int rc = 0;
 
     // getaddrinfo is better than inet_pton.
     // i wonder that can be ignore an overhead of creating socket
     // descriptor when i simply want to confirm correct address?
     // wildcard ip-address
-    if( getaddrinfo( host, port, (const struct addrinfo*)&hints, &list ) != -1 )
+    if( ( rc = getaddrinfo( node, service, &hints, &list ) ) != 0 ){
+        lua_pushnil( L );
+        lua_pushstring( L, gai_strerror( rc ) );
+        return 2;
+    }
+
+    // create address table
+    rc = 1;
+    lua_newtable( L );
+    ptr = list;
+    while( ptr )
     {
-        struct addrinfo *ptr = list;
-        int fd = -1;
-
-        if( !ptr ){
-            errno = EINVAL;
-        }
-        while( ptr )
-        {
-            // try to create socket
-#if defined(LINUX_SOCKEXT)
-            fd = socket( ptr->ai_family, 
-                         ptr->ai_socktype|SOCK_CLOEXEC|nonblock, 
-                         ptr->ai_protocol );
-#else
-            fd = socket( ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol );
-#endif
-            if( fd != -1 )
-            {
-                if( reuseaddr ){
-                    setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, 
-                                (void*)&reuseaddr, sizeof(int) );
-                }
-                
-#if !defined(LINUX_SOCKEXT)
-                fcntl( fd, F_SETFD, FD_CLOEXEC );
-                if( nonblock ){
-                    int fl = fcntl( fd, F_GETFL );
-                    fcntl( fd, F_SETFL, fl|O_NONBLOCK );
-                }
-#endif
-                if( proc( fd, ptr->ai_addr, ptr->ai_addrlen ) == 0 ||
-                    // nonblocking connect
-                    ( proc == connect && errno == EINPROGRESS ) ){
-                    break;
-                }
-                close( fd );
-                fd = -1;
-            }
-
+        if( lls_addrinfo_alloc( L, ptr ) ){
+            lua_rawseti( L, -2, idx++ );
             // check next
             ptr = ptr->ai_next;
+            continue;
         }
 
-        // remove address-list
-        freeaddrinfo( list );
-        
-        if( fd != -1 ){
-            lua_pushinteger( L, fd );
-            return 1;
-        }
+        // mem-error
+        lua_pushnil( L );
+        lua_pushstring( L, strerror( errno ) );
+        rc = 2;
+        break;
     }
-    
-    // got error
-    lua_pushnil( L );
-    lua_pushstring( L, strerror( errno ) );
-    
-    return 2;
+
+    // remove address-list
+    freeaddrinfo( list );
+
+    return rc;
 }
 
 
-// method
-static int connect_lua( lua_State *L )
+static int getaddrinfo4_lua( lua_State *L )
 {
-    return connbind_lua( L, connect, 0 );
+    return getaddrinfo_lua( L, AF_INET );
 }
 
-static int bind_lua( lua_State *L )
+
+static int getaddrinfo6_lua( lua_State *L )
 {
-    return connbind_lua( L, bind, AI_PASSIVE );
+    return getaddrinfo_lua( L, AF_INET6 );
 }
+
 
 LUALIB_API int luaopen_llsocket_inet( lua_State *L )
 {
-    struct luaL_Reg method[] = {
-        // create socket-fd
-        { "connect", connect_lua },
-        { "bind", bind_lua },
-        { NULL, NULL }
-    };
-    struct luaL_Reg *ptr = method;
-    
-    // method
     lua_newtable( L );
-    do {
-        lstate_fn2tbl( L, ptr->name, ptr->func );
-        ptr++;
-    } while( ptr->name );
-    
+    lstate_fn2tbl( L, "getaddrinfo", getaddrinfo4_lua );
+    lstate_fn2tbl( L, "getaddrinfo6", getaddrinfo6_lua );
+
     return 1;
 }
 

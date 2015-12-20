@@ -72,34 +72,26 @@
 #define pdealloc(p)     free((void*)p)
 
 
-// print message to stdout
-#define plog(fmt,...) \
-    printf( fmt "\n", ##__VA_ARGS__ )
-
-#define pflog(f,fmt,...) \
-    printf( #f "(): " fmt "\n", ##__VA_ARGS__ )
-
-// print message to stderr
-#define pelog(fmt,...) \
-    fprintf( stderr, fmt "\n", ##__VA_ARGS__ )
-
-#define pfelog(f,fmt,...) \
-    fprintf( stderr, #f "(): " fmt "\n", ##__VA_ARGS__ )
-
-// print message to stderr with strerror
-#define pelogerr(fmt,...) \
-    fprintf( stderr, fmt " : %s\n", ##__VA_ARGS__, strerror(errno) )
-
-#define pfelogerr(f,fmt,...) \
-    fprintf( stderr, #f "(): " fmt " : %s\n", ##__VA_ARGS__, strerror(errno) )
-
-
 // helper macros
+#define lstate_isref(ref) \
+    ((ref) >= 0)
+
+#define lstate_ref(L) \
+    luaL_ref(L,LUA_REGISTRYINDEX)
+
+#define lstate_refat(L,idx) \
+    (lua_pushvalue(L,idx),luaL_ref(L,LUA_REGISTRYINDEX))
+
+#define lstate_pushref(L,ref) \
+    lua_rawgeti( L, LUA_REGISTRYINDEX, ref )
+
+#define lstate_unref(L,ref) \
+    (luaL_unref( L, LUA_REGISTRYINDEX, ref ),LUA_NOREF)
+
 #define lstate_setmetatable(L,label) do { \
     luaL_getmetatable( L, label ); \
     lua_setmetatable( L, -2 ); \
 }while(0)
-
 
 #define lstate_fn2tbl(L,k,v) do{ \
     lua_pushstring(L,k); \
@@ -107,13 +99,11 @@
     lua_rawset(L,-3); \
 }while(0)
 
-
 #define lstate_str2tbl(L,k,v) do{ \
     lua_pushstring(L,k); \
     lua_pushstring(L,v); \
     lua_rawset(L,-3); \
 }while(0)
-
 
 #define lstate_num2tbl(L,k,v) do{ \
     lua_pushstring(L,k); \
@@ -128,13 +118,47 @@
 }while(0)
 
 
-// socket.addr
-#include "llsocket_addr.h"
+
+#define SOCKET_MT   "llsocket.socket"
+#define ADDRINFO_MT "llsocket.addrinfo"
+
 
 LUALIB_API int luaopen_llsocket_inet( lua_State *L );
 LUALIB_API int luaopen_llsocket_unix( lua_State *L );
 LUALIB_API int luaopen_llsocket_device( lua_State *L );
-LUALIB_API int luaopen_llsocket_opt( lua_State *L );
+LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L );
+LUALIB_API int luaopen_llsocket_socket( lua_State *L );
+
+
+static inline struct addrinfo *lls_addrinfo_alloc( lua_State *L,
+                                                   struct addrinfo *src )
+{
+    struct addrinfo *info = lua_newuserdata( L, sizeof( struct addrinfo ) );
+
+    if( info )
+    {
+        memcpy( (void*)info, (void*)src, sizeof( struct addrinfo ) );
+        info->ai_canonname = NULL;
+        // copy member fields
+        if( ( !src->ai_canonname ||
+            ( info->ai_canonname = strdup( src->ai_canonname ) ) ) &&
+            ( info->ai_addr = malloc( src->ai_addrlen ) ) ){
+            info->ai_addrlen = src->ai_addrlen;
+            memcpy( (void*)info->ai_addr, (void*)src->ai_addr,
+                    src->ai_addrlen );
+            // set metatable
+            lstate_setmetatable( L, ADDRINFO_MT );
+            return info;
+        }
+        else if( info->ai_canonname ){
+            pdealloc( info->ai_canonname );
+        }
+
+        info = NULL;
+    }
+
+    return info;
+}
 
 
 static inline void *lls_checkudata( lua_State *L, int idx, const char *tname )
@@ -167,13 +191,67 @@ static inline void *lls_checkudata( lua_State *L, int idx, const char *tname )
 }
 
 
+static inline const char *lls_checklstring( lua_State *L, int idx, size_t *len )
+{
+    luaL_checktype( L, idx, LUA_TSTRING );
+
+    return lua_tolstring( L, idx, len );
+}
+
+
+static inline const char *lls_optstring( lua_State *L, int idx,
+                                         const char *def )
+{
+    if( lua_isnoneornil( L, idx ) ){
+        return def;
+    }
+
+    luaL_checktype( L, idx, LUA_TSTRING );
+
+    return lua_tostring( L, idx );
+}
+
+
+static inline lua_Integer lls_checkinteger( lua_State *L, int idx )
+{
+    luaL_checktype( L, idx, LUA_TNUMBER );
+
+    return lua_tointeger( L, idx );
+}
+
+
+static inline lua_Integer lls_optinteger( lua_State *L, int idx,
+                                          lua_Integer def )
+{
+    if( lua_isnoneornil( L, idx ) ){
+        return def;
+    }
+
+    luaL_checktype( L, idx, LUA_TNUMBER );
+
+    return lua_tointeger( L, idx );
+}
+
+
+static inline int lls_optboolean( lua_State *L, int idx, int def )
+{
+    if( lua_isnoneornil( L, idx ) ){
+        return def > 0;
+    }
+
+    luaL_checktype( L, idx, LUA_TBOOLEAN );
+
+    return lua_toboolean( L, idx );
+}
+
+
 static inline int lls_optflags( lua_State *L, int idx )
 {
     const int argc = lua_gettop( L );
     int flg = 0;
     
     for(; idx <= argc; idx++ ){
-        flg |= (int)luaL_optinteger( L, idx, 0 );
+        flg |= (int)lls_optinteger( L, idx, 0 );
     }
     
     return flg;

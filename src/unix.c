@@ -34,64 +34,42 @@
 #define UNIXPATH_MAX    (sizeof(((struct sockaddr_un*)0)->sun_path))
 
 
-typedef int(*connbind_t)( int, const struct sockaddr*, socklen_t );
-
-static int connbind_lua( lua_State *L, connbind_t proc )
+static int getaddrinfo_lua( lua_State *L )
 {
-    int argc = lua_gettop( L );
     size_t len = 0;
-    const char *path = luaL_checklstring( L, 1, &len );
-    int socktype = (int)luaL_checkinteger( L, 2 );
-    int protocol = 0;
-    int nonblock = 0;
-    int fd = 0;
-    
-    // check arguments
-    if( argc > 4 ){
-        argc = 4;
-    }
-    switch( argc ){
-        // protocol
-        case 4:
-            if( !lua_isnoneornil( L, 4 ) ){
-                protocol = luaL_checkinteger( L, 4 );
-            }
-        // nonblock
-        case 3:
-            if( !lua_isnoneornil( L, 3 ) ){
-                luaL_checktype( L, 3, LUA_TBOOLEAN );
-                nonblock = lua_toboolean( L, 3 );
-            }
-    }
+    const char *path = lls_checklstring( L, 1, &len );
+    struct addrinfo tmpl = {
+        // AF_INET:ipv4 | AF_INET6:ipv6
+        .ai_family = AF_UNIX,
+        // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
+        .ai_socktype = (int)lls_optinteger( L, 2, 0 ),
+        // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
+        .ai_protocol = (int)lls_optinteger( L, 3, 0 ),
+        // AI_PASSIVE:bind socket if node is null
+        .ai_flags = lls_optflags( L, 4 ),
+        // initialize
+        .ai_addrlen = sizeof( struct sockaddr_un ),
+        .ai_addr = NULL,
+        .ai_canonname = NULL,
+        .ai_next = NULL
+    };
+    struct sockaddr_un addr = {
+        .sun_family = AF_UNIX,
+        .sun_path = {0}
+    };
+
     // length too large
     if( len > UNIXPATH_MAX ){
         errno = ENAMETOOLONG;
     }
-    // create socket descriptor
-    else if( ( fd = socket( AF_UNIX, socktype, protocol ) ) != -1 )
+    else
     {
-        struct sockaddr_un addr;
-        
-        addr.sun_family = AF_UNIX,
         memcpy( (void*)&addr.sun_path, (void*)path, len );
         addr.sun_path[len] = 0;
-        len = sizeof( struct sockaddr_un );
-        
-        // set flags
-        fcntl( fd, F_SETFD, FD_CLOEXEC );
-        if( nonblock ){
-            int fl = fcntl( fd, F_GETFL );
-            fcntl( fd, F_SETFL, fl|O_NONBLOCK );
-        }
-        
-        if( proc( fd, (struct sockaddr*)&addr, (socklen_t)len ) == 0 || 
-            // nonblocking connect
-            ( proc == connect && errno == EINPROGRESS ) ){
-            lua_pushinteger( L, fd );
+        tmpl.ai_addr = (struct sockaddr*)&addr;
+        if( lls_addrinfo_alloc( L, &tmpl ) ){
             return 1;
         }
-        
-        close( fd );
     }
     
     // got error
@@ -100,77 +78,14 @@ static int connbind_lua( lua_State *L, connbind_t proc )
     
     return 2;
 }
-
-
-// method
-static int connect_lua( lua_State *L )
-{
-    return connbind_lua( L, connect );
-}
-
-static int bind_lua( lua_State *L )
-{
-    return connbind_lua( L, bind );
-}
-
-static int socketpair_lua( lua_State *L )
-{
-    int socktype = (int)luaL_checkinteger( L, 1 );
-    int protocol = (int)luaL_optinteger( L, 3, 0 );
-    int nonblock = 0;
-    int fds[2];
-
-    // nonblock
-    if( !lua_isnoneornil( L, 2 ) ){
-        luaL_checktype( L, 2, LUA_TBOOLEAN );
-        nonblock = lua_toboolean( L, 2 );
-    }
-
-    if( socketpair( AF_UNIX, socktype, protocol, fds ) == 0 )
-    {
-        // set flags
-        fcntl( fds[0], F_SETFD, FD_CLOEXEC );
-        fcntl( fds[1], F_SETFD, FD_CLOEXEC );
-        if( nonblock ){
-            int fl = fcntl( fds[0], F_GETFL );
-            fcntl( fds[0], F_SETFL, fl|O_NONBLOCK );
-            fl = fcntl( fds[1], F_GETFL );
-            fcntl( fds[1], F_SETFL, fl|O_NONBLOCK );
-        }
-
-        lua_pushinteger( L, fds[0] );
-        lua_pushinteger( L, fds[1] );
-        return 2;
-    }
-
-    // got error
-    lua_pushnil( L );
-    lua_pushnil( L );
-    lua_pushstring( L, strerror( errno ) );
-
-    return 2;
-}
-
 
 
 LUALIB_API int luaopen_llsocket_unix( lua_State *L )
 {
-    struct luaL_Reg method[] = {
-        // create socket-fd
-        { "connect", connect_lua },
-        { "bind", bind_lua },
-        { "socketpair", socketpair_lua },
-        { NULL, NULL }
-    };
-    struct luaL_Reg *ptr = method;
-    
-    // method
+    // add functions
     lua_newtable( L );
-    do {
-        lstate_fn2tbl( L, ptr->name, ptr->func );
-        ptr++;
-    } while( ptr->name );
-    
+    lstate_fn2tbl( L, "getaddrinfo", getaddrinfo_lua );
+
     return 1;
 }
 
