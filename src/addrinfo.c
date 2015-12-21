@@ -29,34 +29,6 @@
 
 #include "llsocket.h"
 
-/*
-    if( getsockname( s->fd, (void*)&addr, &len ) == 0 )
-    {
-        struct sockaddr_un *uaddr = NULL;
-        struct sockaddr_in *iaddr = NULL;
-
-        lua_newtable( L );
-        switch( addr.ss_family ){
-            case AF_INET:
-                lstate_str2tbl( L, "family", "inet" );
-                iaddr = (struct sockaddr_in*)&addr;
-                lstate_num2tbl( L, "port", ntohs( iaddr->sin_port ) );
-                lstate_str2tbl( L, "addr", inet_ntoa( iaddr->sin_addr ) );
-                return 1;
-            
-            case AF_UNIX:
-                lstate_str2tbl( L, "family", "unix" );
-                uaddr = (struct sockaddr_un*)&addr;
-                lstate_str2tbl( L, "path", uaddr->sun_path ); 
-                return 1;
-            
-            default:
-                lua_pop( L, 1 );
-                errno = ENOTSUP;
-        }
-    }
-*/
-
 
 static int nameinfo_lua( lua_State *L )
 {
@@ -73,12 +45,56 @@ static int nameinfo_lua( lua_State *L )
         lstate_str2tbl( L, "service", serv );
         return 1;
     }
-    
+
     // got error
     lua_pushnil( L );
     lua_pushstring( L, gai_strerror( rc ) );
-    
+
     return 2;
+}
+
+
+static int info_lua( lua_State *L )
+{
+    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
+    struct sockaddr_un *uaddr = NULL;
+    struct sockaddr_in *iaddr = NULL;
+
+    // struct addrinfo
+    if( info->ai_canonname ){
+        lua_createtable( L, 0, 5 );
+        lstate_str2tbl( L, "canonname", info->ai_canonname );
+    }
+    else {
+        lua_createtable( L, 0, 4 );
+    }
+    lstate_num2tbl( L, "family", info->ai_family );
+    lstate_num2tbl( L, "socktype", info->ai_socktype );
+    lstate_num2tbl( L, "protocol", info->ai_protocol );
+    // struct sockaddr
+    lua_pushstring( L, "addr" );
+    switch( info->ai_family ){
+        case AF_INET:
+            lua_createtable( L, 0, 2 );
+            iaddr = (struct sockaddr_in*)&info->ai_addr;
+            lstate_num2tbl( L, "port", ntohs( iaddr->sin_port ) );
+            lstate_str2tbl( L, "ip", inet_ntoa( iaddr->sin_addr ) );
+            lua_rawset( L, -3 );
+        break;
+
+        case AF_UNIX:
+            lua_createtable( L, 0, 1 );
+            uaddr = (struct sockaddr_un*)info->ai_addr;
+            lstate_str2tbl( L, "path", uaddr->sun_path );
+            lua_rawset( L, -3 );
+        break;
+
+        // unsupported family
+        default:
+            lua_pop( L, 1 );
+    }
+
+    return 1;
 }
 
 
@@ -110,6 +126,7 @@ LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L )
         { NULL, NULL }
     };
     struct luaL_Reg method[] = {
+        { "info", info_lua },
         { "nameinfo", nameinfo_lua },
         { NULL, NULL }
     };
