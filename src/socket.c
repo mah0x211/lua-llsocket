@@ -97,6 +97,15 @@ static int tcpkeepcnt_lua( lua_State *L )
     return sockopt_int_lua( L, IPPROTO_TCP, TCP_KEEPCNT, LUA_TNUMBER );
 }
 
+#if defined(TCP_KEEPALIVE)
+#define HAVE_TCP_KEEPALIVE
+
+static int tcpkeepalive_lua( lua_State *L )
+{
+    return sockopt_int_lua( L, IPPROTO_TCP, TCP_KEEPALIVE, LUA_TNUMBER );
+}
+
+#endif
 
 #if defined(TCP_CORK) || defined(TCP_NOPUSH)
 #define HAVE_TCP_CORK 1
@@ -972,6 +981,13 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { "tcpnodelay", tcpnodelay_lua },
         { "tcpkeepintvl", tcpkeepintvl_lua },
         { "tcpkeepcnt", tcpkeepcnt_lua },
+
+#if defined(HAVE_TCP_KEEPALIVE)
+        { "tcpkeepalive", tcpkeepalive_lua },
+#else
+#warning "tcpkeepalive does not implemented in this platform."
+#endif
+
 #if defined(HAVE_TCP_CORK)
         { "tcpcork", tcpcork_lua },
 #else
