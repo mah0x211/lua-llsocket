@@ -75,6 +75,11 @@ static int error_lua( lua_State *L )
     return sockopt_int_lua( L, SOL_SOCKET, SO_ERROR, LUA_TNUMBER );
 }
 
+static int acceptconn_lua( lua_State *L )
+{
+    return sockopt_int_lua( L, SOL_SOCKET, SO_ACCEPTCONN, LUA_TBOOLEAN );
+}
+
 
 // writable
 static int tcpnodelay_lua( lua_State *L )
@@ -952,6 +957,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         // read-only socket option
         { "type", type_lua },
         { "error", error_lua },
+        { "acceptconn", acceptconn_lua },
         // socket option
         { "tcpnodelay", tcpnodelay_lua },
 #if defined(HAVE_TCP_CORK)
