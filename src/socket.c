@@ -92,6 +92,11 @@ static int tcpkeepintvl_lua( lua_State *L )
     return sockopt_int_lua( L, IPPROTO_TCP, TCP_KEEPINTVL, LUA_TNUMBER );
 }
 
+static int tcpkeepcnt_lua( lua_State *L )
+{
+    return sockopt_int_lua( L, IPPROTO_TCP, TCP_KEEPCNT, LUA_TNUMBER );
+}
+
 
 #if defined(TCP_CORK) || defined(TCP_NOPUSH)
 #define HAVE_TCP_CORK 1
@@ -966,6 +971,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         // socket option
         { "tcpnodelay", tcpnodelay_lua },
         { "tcpkeepintvl", tcpkeepintvl_lua },
+        { "tcpkeepcnt", tcpkeepcnt_lua },
 #if defined(HAVE_TCP_CORK)
         { "tcpcork", tcpcork_lua },
 #else
