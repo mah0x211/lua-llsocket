@@ -97,15 +97,20 @@ static int tcpkeepcnt_lua( lua_State *L )
     return sockopt_int_lua( L, IPPROTO_TCP, TCP_KEEPCNT, LUA_TNUMBER );
 }
 
-#if defined(TCP_KEEPALIVE)
+#if defined(TCP_KEEPALIVE) || defined(TCP_KEEPIDLE)
 #define HAVE_TCP_KEEPALIVE
 
 static int tcpkeepalive_lua( lua_State *L )
 {
+#if defined(TCP_KEEPALIVE)
     return sockopt_int_lua( L, IPPROTO_TCP, TCP_KEEPALIVE, LUA_TNUMBER );
+#else
+    return sockopt_int_lua( L, IPPROTO_TCP, TCP_KEEPIDLE, LUA_TNUMBER );
+#endif
 }
 
 #endif
+
 
 #if defined(TCP_CORK) || defined(TCP_NOPUSH)
 #define HAVE_TCP_CORK 1
