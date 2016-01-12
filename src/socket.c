@@ -785,15 +785,13 @@ static int bind_lua( lua_State *L )
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
     if( bind( s->fd, (struct sockaddr*)&s->addr, s->addrlen ) == 0 ){
-        lua_pushboolean( L, 1 );
-        return 1;
+        return 0;
     }
 
     // got error
-    lua_pushboolean( L, 0 );
     lua_pushstring( L, strerror( errno ) );
 
-    return 2;
+    return 1;
 }
 
 
