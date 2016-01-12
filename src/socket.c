@@ -295,21 +295,23 @@ static int close_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
-    if( s->fd )
+    if( s->fd != -1 )
     {
         int how = (int)lls_optinteger( L, 2, -1 );
+        int fd = s->fd;
         int rc = 0;
 
+        s->fd = -1;
         switch( how ){
             case SHUT_RD:
             case SHUT_WR:
             case SHUT_RDWR:
-                rc = shutdown( s->fd, how );
+                rc = shutdown( fd, how );
             break;
         }
 
         // got error
-        if( ( rc + close( s->fd ) ) ){
+        if( ( rc + close( fd ) ) ){
             lua_pushstring( L, strerror( errno ) );
             return 1;
         }
