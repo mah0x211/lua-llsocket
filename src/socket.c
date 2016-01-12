@@ -884,7 +884,7 @@ FAILED:
 }
 
 
-static int socketpair_lua( lua_State *L )
+static int pair_lua( lua_State *L )
 {
     int socktype = (int)lls_checkinteger( L, 1 );
     int nonblock = lls_optboolean( L, 2, 0 );
@@ -1042,7 +1042,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
     lua_newtable( L );
     // method
     lstate_fn2tbl( L, "new", new_lua );
-    lstate_fn2tbl( L, "socketpair", socketpair_lua );
+    lstate_fn2tbl( L, "pair", pair_lua );
 
     
     return 1;
