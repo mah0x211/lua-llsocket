@@ -770,15 +770,13 @@ static int connect_lua( lua_State *L )
     if( connect( s->fd, (struct sockaddr*)&s->addr, s->addrlen ) == 0 ||
         // nonblocking connect
         errno == EINPROGRESS ){
-        lua_pushboolean( L, 1 );
-        return 1;
+        return 0;
     }
 
     // got error
-    lua_pushboolean( L, 0 );
     lua_pushstring( L, strerror( errno ) );
 
-    return 2;
+    return 1;
 }
 
 
