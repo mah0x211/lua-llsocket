@@ -3,7 +3,7 @@ local STREAM = llsocket.SOCK_STREAM;
 local DGRAM = llsocket.SOCK_DGRAM;
 local SEQPACKET = llsocket.SOCK_SEQPACKET;
 local RAW = llsocket.SOCK_RAW;
-local socketpair = require('llsocket').socket.socketpair;
+local socketpair = require('llsocket').socket.pair;
 local NONBLOCK = true;
 
 
