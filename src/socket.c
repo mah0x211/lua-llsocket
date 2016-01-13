@@ -225,7 +225,7 @@ static int atmark_lua( lua_State *L )
 
 // MARK: address info
 
-static int sockname_lua( lua_State *L )
+static int getsockname_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
     struct addrinfo wrap;
@@ -246,7 +246,7 @@ static int sockname_lua( lua_State *L )
 }
 
 
-static int peername_lua( lua_State *L )
+static int getpeername_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
     socklen_t len = sizeof( struct sockaddr_storage );
@@ -969,8 +969,8 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { "atmark", atmark_lua },
 
         // address info
-        { "sockname", sockname_lua },
-        { "peername", peername_lua },
+        { "getsockname", getsockname_lua },
+        { "getpeername", getpeername_lua },
 
         // fd option
         { "cloexec", cloexec_lua },
