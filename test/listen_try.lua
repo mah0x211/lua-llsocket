@@ -41,7 +41,7 @@ local function test( addr, file )
     -- create socket
     sock = ifNil( socket.new( addr ) );
     ifNotTrue( sock:reuseaddr( true ) );
-    ifNotTrue( sock:bind() );
+    ifNotNil( sock:bind() );
     ifNotNil( sock:listen() );
     ifNotNil( sock:close() );
     if file then
@@ -50,7 +50,7 @@ local function test( addr, file )
     -- w nonblock
     sock = ifNil( socket.new( addr, NONBLOCK ) );
     ifNotTrue( sock:reuseaddr( true ) );
-    ifNotTrue( sock:bind() );
+    ifNotNil( sock:bind() );
     ifNotNil( sock:listen() );
     ifNotNil( sock:close() );
     if file then
