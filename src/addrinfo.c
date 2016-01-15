@@ -30,7 +30,7 @@
 #include "llsocket.h"
 
 
-static int nameinfo_lua( lua_State *L )
+static int getnameinfo_lua( lua_State *L )
 {
     struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
     int flag = lls_optflags( L, 2 );
@@ -127,7 +127,7 @@ LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L )
     };
     struct luaL_Reg method[] = {
         { "info", info_lua },
-        { "nameinfo", nameinfo_lua },
+        { "getnameinfo", getnameinfo_lua },
         { NULL, NULL }
     };
     struct luaL_Reg *ptr = mmethod;
