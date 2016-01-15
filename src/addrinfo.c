@@ -54,45 +54,71 @@ static int getnameinfo_lua( lua_State *L )
 }
 
 
-static int info_lua( lua_State *L )
+static int addr_lua( lua_State *L )
 {
     struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
     struct sockaddr_un *uaddr = NULL;
     struct sockaddr_in *iaddr = NULL;
 
-    // struct addrinfo
-    if( info->ai_canonname ){
-        lua_createtable( L, 0, 5 );
-        lstate_str2tbl( L, "canonname", info->ai_canonname );
-    }
-    else {
-        lua_createtable( L, 0, 4 );
-    }
-    lstate_num2tbl( L, "family", info->ai_family );
-    lstate_num2tbl( L, "socktype", info->ai_socktype );
-    lstate_num2tbl( L, "protocol", info->ai_protocol );
-    // struct sockaddr
-    lua_pushstring( L, "addr" );
     switch( info->ai_family ){
         case AF_INET:
             lua_createtable( L, 0, 2 );
             iaddr = (struct sockaddr_in*)&info->ai_addr;
             lstate_num2tbl( L, "port", ntohs( iaddr->sin_port ) );
             lstate_str2tbl( L, "ip", inet_ntoa( iaddr->sin_addr ) );
-            lua_rawset( L, -3 );
-        break;
+            return 1;
 
         case AF_UNIX:
             lua_createtable( L, 0, 1 );
             uaddr = (struct sockaddr_un*)info->ai_addr;
             lstate_str2tbl( L, "path", uaddr->sun_path );
-            lua_rawset( L, -3 );
-        break;
+            return 1;
 
         // unsupported family
         default:
-            lua_pop( L, 1 );
+            return 0;
     }
+}
+
+
+static int canonname_lua( lua_State *L )
+{
+    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
+
+    if( info->ai_canonname ){
+        lua_pushstring( L, info->ai_canonname );
+        return 1;
+    }
+
+    return 0;
+}
+
+
+static int protocol_lua( lua_State *L )
+{
+    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
+
+    lua_pushinteger( L, info->ai_protocol );
+
+    return 1;
+}
+
+
+static int socktype_lua( lua_State *L )
+{
+    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
+
+    lua_pushinteger( L, info->ai_socktype );
+
+    return 1;
+}
+
+
+static int family_lua( lua_State *L )
+{
+    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
+
+    lua_pushinteger( L, info->ai_family );
 
     return 1;
 }
@@ -126,7 +152,11 @@ LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L )
         { NULL, NULL }
     };
     struct luaL_Reg method[] = {
-        { "info", info_lua },
+        { "family", family_lua },
+        { "socktype", socktype_lua },
+        { "protocol", protocol_lua },
+        { "cannoname", canonname_lua },
+        { "addr", addr_lua },
         { "getnameinfo", getnameinfo_lua },
         { NULL, NULL }
     };
