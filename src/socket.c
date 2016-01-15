@@ -32,6 +32,9 @@
 
 typedef struct {
     int fd;
+    int family;
+    int socktype;
+    int protocol;
     socklen_t addrlen;
     struct sockaddr_storage addr;
 } lls_socket_t;
@@ -67,8 +70,11 @@ static int nonblock_lua( lua_State *L )
 // readonly
 static int type_lua( lua_State *L )
 {
-    return sockopt_int_lua( L, SOL_SOCKET, SO_TYPE, LUA_TNUMBER );
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+
+    return s->socktype;
 }
+
 
 static int error_lua( lua_State *L )
 {
@@ -228,11 +234,17 @@ static int atmark_lua( lua_State *L )
 static int getsockname_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
-    struct addrinfo wrap;
+    struct addrinfo wrap = {
+        .ai_flags = 0,
+        .ai_family = s->family,
+        .ai_socktype = s->socktype,
+        .ai_protocol = s->protocol,
+        .ai_addrlen = s->addrlen,
+        .ai_addr = (struct sockaddr*)&s->addr,
+        .ai_canonname = NULL,
+        .ai_next = NULL
+    };
 
-    memset( (void*)&wrap, 0, sizeof( struct addrinfo ) );
-    wrap.ai_addrlen = s->addrlen;
-    wrap.ai_addr = (struct sockaddr*)&s->addr;
     // push llsocket.addr udata
     if( lls_addrinfo_alloc( L, &wrap ) ){
         return 1;
@@ -255,11 +267,17 @@ static int getpeername_lua( lua_State *L )
     memset( (void*)&addr, 0, len );
     if( getpeername( s->fd, (struct sockaddr*)&addr, &len ) == 0 )
     {
-        struct addrinfo wrap;
+        struct addrinfo wrap = {
+            .ai_flags = 0,
+            .ai_family = s->family,
+            .ai_socktype = s->socktype,
+            .ai_protocol = s->protocol,
+            .ai_addrlen = len,
+            .ai_addr = (struct sockaddr*)&addr,
+            .ai_canonname = NULL,
+            .ai_next = NULL
+        };
 
-        memset( (void*)&wrap, 0, sizeof( struct addrinfo ) );
-        wrap.ai_addrlen = len;
-        wrap.ai_addr = (struct sockaddr*)&addr;
         if( lls_addrinfo_alloc( L, &wrap ) ){
             return 1;
         }
@@ -865,9 +883,14 @@ static int new_lua( lua_State *L )
         lua_settop( L, 1 );
         if( ( s = lua_newuserdata( L, sizeof( lls_socket_t ) ) ) ){
             lstate_setmetatable( L, SOCKET_MT );
-            s->fd = fd;
+            *s = (lls_socket_t){
+                .fd = fd,
+                .family = info->ai_family,
+                .socktype = info->ai_socktype,
+                .protocol = info->ai_protocol,
+                .addrlen = info->ai_addrlen
+            };
             // copy sockaddr
-            s->addrlen = info->ai_addrlen;
             memcpy( (void*)&s->addr, (void*)info->ai_addr, info->ai_addrlen );
 
             return 1;
@@ -911,9 +934,14 @@ static int pair_lua( lua_State *L )
                 fcntl( fds[i], F_SETFD, FD_CLOEXEC ) != -1 &&
                 ( !nonblock || fcntl( fds[i], F_SETFL, O_NONBLOCK ) != -1 ) &&
                 ( s = lua_newuserdata( L, sizeof( lls_socket_t ) ) ) ){
-                s->fd = fds[i];
+                *s = (lls_socket_t){
+                    .fd = fds[i],
+                    .family = AF_UNIX,
+                    .socktype = socktype,
+                    .protocol = protocol,
+                    .addrlen = addrlen
+                };
                 // copy sockaddr
-                s->addrlen = addrlen;
                 memcpy( (void*)&s->addr, (void*)&addr, addrlen );
                 lstate_setmetatable( L, SOCKET_MT );
                 lua_rawseti( L, -2, i + 1 );
