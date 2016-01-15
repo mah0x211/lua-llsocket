@@ -808,11 +808,27 @@ static int bind_lua( lua_State *L )
 }
 
 
+static int protocol_lua( lua_State *L )
+{
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+
+    return s->protocol;
+}
+
+
 static int socktype_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
     return s->socktype;
+}
+
+
+static int family_lua( lua_State *L )
+{
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+
+    return s->family;
 }
 
 
@@ -977,7 +993,9 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
     };
     struct luaL_Reg method[] = {
         { "fd", fd_lua },
+        { "family", family_lua },
         { "socktype", socktype_lua },
+        { "protocol", protocol_lua },
         { "bind", bind_lua },
         { "connect", connect_lua },
         { "shutdown", shutdown_lua },
