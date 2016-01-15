@@ -867,6 +867,55 @@ static int gc_lua( lua_State *L )
 }
 
 
+static int dup_lua( lua_State *L )
+{
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+    struct addrinfo info = {
+        .ai_family = s->family,
+        .ai_socktype = s->socktype,
+        .ai_protocol = s->protocol,
+        .ai_addrlen = s->addrlen,
+        .ai_addr = (struct sockaddr*)&s->addr,
+    };
+    struct addrinfo *ptr = &info;
+    int fd = 0;
+
+    // check argument
+    if( lua_gettop( L ) > 1 ){
+        ptr = luaL_checkudata( L, 2, ADDRINFO_MT );
+    }
+
+    if( ( fd = dup( s->fd ) ) != -1 )
+    {
+        lls_socket_t *sd = NULL;
+
+        if( fcntl( fd, F_SETFD, FD_CLOEXEC ) != -1 &&
+            ( sd = lua_newuserdata( L, sizeof( lls_socket_t ) ) ) ){
+            lstate_setmetatable( L, SOCKET_MT );
+            *sd = (lls_socket_t){
+                .fd = fd,
+                .family = ptr->ai_family,
+                .socktype = ptr->ai_socktype,
+                .protocol = ptr->ai_protocol,
+                .addrlen = ptr->ai_addrlen
+            };
+            // copy sockaddr
+            memcpy( (void*)&sd->addr, (void*)&ptr->ai_addr, ptr->ai_addrlen );
+            return 1;
+        }
+
+        // got error
+        close( fd );
+    }
+
+    // got error
+    lua_pushnil( L );
+    lua_pushstring( L, strerror( errno ) );
+
+    return 2;
+}
+
+
 static int new_lua( lua_State *L )
 {
     struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
@@ -998,6 +1047,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { NULL, NULL }
     };
     struct luaL_Reg method[] = {
+        { "dup", dup_lua },
         { "fd", fd_lua },
         { "family", family_lua },
         { "socktype", socktype_lua },
