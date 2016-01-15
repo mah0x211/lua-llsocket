@@ -750,11 +750,17 @@ static int recvfrom_lua( lua_State *L )
             }
             else
             {
-                struct addrinfo wrap;
+                struct addrinfo wrap = {
+                    .ai_flags = 0,
+                    .ai_family = s->family,
+                    .ai_socktype = s->socktype,
+                    .ai_protocol = s->protocol,
+                    .ai_addrlen = slen,
+                    .ai_addr = (struct sockaddr*)&src,
+                    .ai_canonname = NULL,
+                    .ai_next = NULL
+                };
 
-                memset( (void*)&wrap, 0, sizeof( struct addrinfo ) );
-                wrap.ai_addrlen = slen;
-                wrap.ai_addr = (struct sockaddr*)&src;
                 // push llsocket.addr udata
                 if( lls_addrinfo_alloc( L, &wrap ) ){
                     rv = 2;
