@@ -68,13 +68,6 @@ static int nonblock_lua( lua_State *L )
 
 
 // readonly
-static int type_lua( lua_State *L )
-{
-    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
-
-    return s->socktype;
-}
-
 
 static int error_lua( lua_State *L )
 {
@@ -815,6 +808,14 @@ static int bind_lua( lua_State *L )
 }
 
 
+static int socktype_lua( lua_State *L )
+{
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+
+    return s->socktype;
+}
+
+
 static int fd_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
@@ -976,6 +977,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
     };
     struct luaL_Reg method[] = {
         { "fd", fd_lua },
+        { "socktype", socktype_lua },
         { "bind", bind_lua },
         { "connect", connect_lua },
         { "shutdown", shutdown_lua },
@@ -1005,7 +1007,6 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { "nonblock", nonblock_lua },
 
         // read-only socket option
-        { "type", type_lua },
         { "error", error_lua },
         { "acceptconn", acceptconn_lua },
         // socket option
