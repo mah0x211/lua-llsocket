@@ -811,8 +811,17 @@ static int connect_lua( lua_State *L )
 static int bind_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+    struct sockaddr *addr = (struct sockaddr*)&s->addr;
+    socklen_t addrlen = s->addrlen;
 
-    if( bind( s->fd, (struct sockaddr*)&s->addr, s->addrlen ) == 0 ){
+    // check argument
+    if( lua_gettop( L ) > 1 ){
+        struct addrinfo *info = luaL_checkudata( L, 2, ADDRINFO_MT );
+        addr = info->ai_addr;
+        addrlen = info->ai_addrlen;
+    }
+
+    if( bind( s->fd, addr, addrlen ) == 0 ){
         return 0;
     }
 
