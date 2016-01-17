@@ -128,6 +128,41 @@ static int multicastif_lua( lua_State *L )
 }
 
 
+static inline int membership_lua( lua_State *L, int opt )
+{
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+    struct ip_mreq mr = {
+        .imr_multiaddr = { 0 },
+        .imr_interface = { 0 }
+    };
+
+    if( lls_checkaddr( L, 2, &mr.imr_multiaddr ) == 0 &&
+        lls_optaddr( L, 3, &mr.imr_interface, INADDR_ANY ) == 0 &&
+        setsockopt( s->fd, IPPROTO_IP, opt, (void*)&mr, sizeof( mr ) ) == 0 ){
+        lua_pushboolean( L, 1 );
+        return 1;
+    }
+
+    // got error
+    lua_pushboolean( L, 0 );
+    lua_pushstring( L, strerror( errno ) );
+
+    return 2;
+}
+
+
+static int addmembership_lua( lua_State *L )
+{
+    return membership_lua( L, IP_ADD_MEMBERSHIP );
+}
+
+
+static int dropmembership_lua( lua_State *L )
+{
+    return membership_lua( L, IP_DROP_MEMBERSHIP );
+}
+
+
 
 // readonly
 
@@ -1203,6 +1238,8 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { "multicastloop", multicastloop_lua },
         { "multicastttl", multicastttl_lua },
         { "multicastif", multicastif_lua },
+        { "addmembership", addmembership_lua },
+        { "dropmembership", dropmembership_lua },
         { NULL, NULL }
     };
     struct luaL_Reg *ptr = mmethod;
