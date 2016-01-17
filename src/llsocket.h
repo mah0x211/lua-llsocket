@@ -283,6 +283,18 @@ static inline int lls_checkaddr( lua_State *L, int idx, struct in_addr *addr )
 }
 
 
+static inline int lls_optaddr( lua_State *L, int idx, struct in_addr *addr,
+                               int def )
+{
+    if( lua_isnoneornil( L, idx ) ){
+        addr->s_addr = def;
+        return 0;
+    }
+
+    return lls_checkaddr( L, idx, addr );
+}
+
+
 // fd option
 static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl, 
                                  int fl )
