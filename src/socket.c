@@ -75,6 +75,12 @@ static int multicastloop_lua( lua_State *L )
 }
 
 
+static int multicastttl_lua( lua_State *L )
+{
+    return sockopt_int_lua( L, IPPROTO_IP, IP_MULTICAST_TTL, LUA_TNUMBER );
+}
+
+
 // readonly
 
 static int error_lua( lua_State *L )
@@ -1147,6 +1153,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { "sndtimeo", sndtimeo_lua },
         // multicast
         { "multicastloop", multicastloop_lua },
+        { "multicastttl", multicastttl_lua },
         { NULL, NULL }
     };
     struct luaL_Reg *ptr = mmethod;
