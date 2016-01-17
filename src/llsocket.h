@@ -266,6 +266,23 @@ static inline int lls_optflags( lua_State *L, int idx )
 }
 
 
+static inline int lls_checkaddr( lua_State *L, int idx, struct in_addr *addr )
+{
+    const char *str = lls_checkstring( L, idx );
+
+    switch( inet_pton( AF_INET, str, (void*)addr ) )
+    {
+        case 0:
+            errno = EINVAL;
+        case -1:
+            return -1;
+
+        default:
+            return 0;
+    }
+}
+
+
 // fd option
 static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl, 
                                  int fl )
