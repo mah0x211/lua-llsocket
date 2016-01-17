@@ -81,6 +81,54 @@ static int multicastttl_lua( lua_State *L )
 }
 
 
+static int multicastif_lua( lua_State *L )
+{
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+    struct in_addr iaddr = { 0 };
+    socklen_t addrlen = sizeof( struct in_addr );
+
+    if( lua_gettop( L ) > 1 )
+    {
+        size_t len = 0;
+        const char *ipaddr = lls_checklstring( L, 2, &len );
+
+        switch( inet_pton( AF_INET, ipaddr, (void*)&iaddr ) )
+        {
+            case 0:
+                errno = EINVAL;
+            case -1:
+            break;
+
+            default:
+                if( setsockopt( s->fd, IPPROTO_IP, IP_MULTICAST_IF,
+                                (void*)&iaddr, addrlen ) == 0 ){
+                    lua_pushlstring( L, ipaddr, len );
+                    return 1;
+                }
+        }
+    }
+    else if( getsockopt( s->fd, IPPROTO_IP, IP_MULTICAST_IF, (void*)&iaddr,
+                         &addrlen ) == 0 )
+    {
+        char buf[INET_ADDRSTRLEN] = { 0 };
+        const char *ipaddr = inet_ntop( AF_INET, (void*)&iaddr, buf,
+                                        INET_ADDRSTRLEN );
+
+        if( ipaddr ){
+            lua_pushstring( L, ipaddr );
+            return 1;
+        }
+    }
+
+    // got error
+    lua_pushnil( L );
+    lua_pushstring( L, strerror( errno ) );
+
+    return 2;
+}
+
+
+
 // readonly
 
 static int error_lua( lua_State *L )
@@ -1154,6 +1202,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         // multicast
         { "multicastloop", multicastloop_lua },
         { "multicastttl", multicastttl_lua },
+        { "multicastif", multicastif_lua },
         { NULL, NULL }
     };
     struct luaL_Reg *ptr = mmethod;
