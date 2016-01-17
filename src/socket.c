@@ -200,6 +200,17 @@ static int dropsrcmembership_lua( lua_State *L )
 }
 
 
+static int blocksrc_lua( lua_State *L )
+{
+    return srcmembership_lua( L, IP_BLOCK_SOURCE );
+}
+
+
+static int unblocksrc_lua( lua_State *L )
+{
+    return srcmembership_lua( L, IP_UNBLOCK_SOURCE );
+}
+
 
 // readonly
 
@@ -1279,6 +1290,8 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { "dropmembership", dropmembership_lua },
         { "addsrcmembership", addsrcmembership_lua },
         { "dropsrcmembership", dropsrcmembership_lua },
+        { "blocksrc", blocksrc_lua },
+        { "unblocksrc", unblocksrc_lua },
         { NULL, NULL }
     };
     struct luaL_Reg *ptr = mmethod;
