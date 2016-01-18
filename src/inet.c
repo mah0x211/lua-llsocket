@@ -31,35 +31,22 @@
 #include "llsocket.h"
 
 
-static int getaddrinfo_lua( lua_State *L, int ai_family )
+static int getaddrinfo_lua( lua_State *L )
 {
     const char *node = lls_optstring( L, 1, NULL );
     const char *service = lls_optstring( L, 2, NULL );
-    struct addrinfo hints = {
-        // AF_INET:ipv4 | AF_INET6:ipv6
-        .ai_family = ai_family,
-        // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
-        .ai_socktype = (int)lls_optinteger( L, 3, 0 ),
-        // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
-        .ai_protocol = (int)lls_optinteger( L, 4, 0 ),
-        // AI_PASSIVE:bind socket if node is null
-        .ai_flags = lls_optflags( L, 5 ),
-        // initialize
-        .ai_addrlen = 0,
-        .ai_addr = NULL,
-        .ai_canonname = NULL,
-        .ai_next = NULL
-    };
+    // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
+    int socktype = (int)lls_optinteger( L, 3, 0 );
+    // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
+    int protocol = (int)lls_optinteger( L, 4, 0 );
+    // AI_PASSIVE:bind socket if node is null
+    int flags = lls_optflags( L, 5 );
     struct addrinfo *list = NULL;
     struct addrinfo *ptr = NULL;
+    int rc = lls_getaddrinfo( &list, node, service, socktype, protocol, flags );
     int idx = 1;
-    int rc = 0;
 
-    // getaddrinfo is better than inet_pton.
-    // i wonder that can be ignore an overhead of creating socket
-    // descriptor when i simply want to confirm correct address?
-    // wildcard ip-address
-    if( ( rc = getaddrinfo( node, service, &hints, &list ) ) != 0 ){
+    if( rc != 0 ){
         lua_pushnil( L );
         lua_pushstring( L, gai_strerror( rc ) );
         return 2;
@@ -92,23 +79,11 @@ static int getaddrinfo_lua( lua_State *L, int ai_family )
 }
 
 
-static int getaddrinfo4_lua( lua_State *L )
-{
-    return getaddrinfo_lua( L, AF_INET );
-}
-
-
-static int getaddrinfo6_lua( lua_State *L )
-{
-    return getaddrinfo_lua( L, AF_INET6 );
-}
-
 
 LUALIB_API int luaopen_llsocket_inet( lua_State *L )
 {
     lua_newtable( L );
-    lstate_fn2tbl( L, "getaddrinfo", getaddrinfo4_lua );
-    lstate_fn2tbl( L, "getaddrinfo6", getaddrinfo6_lua );
+    lstate_fn2tbl( L, "getaddrinfo", getaddrinfo_lua );
 
     return 1;
 }

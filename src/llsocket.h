@@ -130,6 +130,35 @@ LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L );
 LUALIB_API int luaopen_llsocket_socket( lua_State *L );
 
 
+
+static inline int lls_getaddrinfo( struct addrinfo **list, const char *node,
+                                   const char *service, int socktype,
+                                   int protocol, int flags )
+{
+    struct addrinfo hints = {
+        // AF_INET:ipv4 | AF_INET6:ipv6
+        .ai_family = AF_UNSPEC,
+        // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
+        .ai_socktype = socktype,
+        // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
+        .ai_protocol = protocol,
+        // AI_PASSIVE:bind socket if node is null
+        .ai_flags = flags,
+        // initialize
+        .ai_addrlen = 0,
+        .ai_addr = NULL,
+        .ai_canonname = NULL,
+        .ai_next = NULL
+    };
+
+    // getaddrinfo is better than inet_pton.
+    // i wonder that can be ignore an overhead of creating socket
+    // descriptor when i simply want to confirm correct address?
+    // wildcard ip-address
+    return getaddrinfo( node, service, &hints, list );
+}
+
+
 static inline struct addrinfo *lls_addrinfo_alloc( lua_State *L,
                                                    struct addrinfo *src )
 {
