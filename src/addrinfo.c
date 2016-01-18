@@ -59,6 +59,7 @@ static int addr_lua( lua_State *L )
     struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
     struct sockaddr_un *uaddr = NULL;
     struct sockaddr_in *iaddr = NULL;
+    struct sockaddr_in6 *iaddr6 = NULL;
     char buf[INET6_ADDRSTRLEN] = { 0 };
 
     switch( info->ai_family ){
@@ -70,6 +71,14 @@ static int addr_lua( lua_State *L )
                                                 (const void*)&iaddr->sin_addr,
                                                 buf, INET6_ADDRSTRLEN ) );
             return 1;
+
+        case AF_INET6:
+            lua_createtable( L, 0, 2 );
+            iaddr6 = (struct sockaddr_in6*)&info->ai_addr;
+            lstate_num2tbl( L, "port", ntohs( iaddr->sin_port ) );
+            lstate_str2tbl( L, "ip", inet_ntop( info->ai_family,
+                                                (const void*)&iaddr6->sin6_addr,
+                                                buf, INET6_ADDRSTRLEN ) );
             return 1;
 
         case AF_UNIX:
