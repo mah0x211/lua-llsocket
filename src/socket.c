@@ -87,7 +87,7 @@ static int multicastif_lua( lua_State *L )
     struct in_addr iaddr = { 0 };
     socklen_t addrlen = sizeof( struct in_addr );
 
-    if( lua_gettop( L ) > 1 )
+    if( !lua_isnoneornil( L, 2 ) )
     {
         size_t len = 0;
         const char *ipaddr = lls_checklstring( L, 2, &len );
@@ -934,7 +934,7 @@ static int connect_lua( lua_State *L )
     socklen_t addrlen = s->addrlen;
 
     // check argument
-    if( lua_gettop( L ) > 1 ){
+    if( !lua_isnoneornil( L, 2 ) ){
         struct addrinfo *info = luaL_checkudata( L, 2, ADDRINFO_MT );
         addr = info->ai_addr;
         addrlen = info->ai_addrlen;
@@ -960,7 +960,7 @@ static int bind_lua( lua_State *L )
     socklen_t addrlen = s->addrlen;
 
     // check argument
-    if( lua_gettop( L ) > 1 ){
+    if( !lua_isnoneornil( L, 2 ) ){
         struct addrinfo *info = luaL_checkudata( L, 2, ADDRINFO_MT );
         addr = info->ai_addr;
         addrlen = info->ai_addrlen;
@@ -1044,7 +1044,7 @@ static int dup_lua( lua_State *L )
     int fd = 0;
 
     // check argument
-    if( lua_gettop( L ) > 1 ){
+    if( !lua_isnoneornil( L, 2 ) ){
         ptr = luaL_checkudata( L, 2, ADDRINFO_MT );
     }
 

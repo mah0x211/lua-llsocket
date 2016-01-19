@@ -333,7 +333,7 @@ static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl,
     if( flg != -1 )
     {
         // no args
-        if( lua_gettop( L ) == 1 ){
+        if( lua_isnoneornil( L, 2 ) ){
             lua_pushboolean( L, flg & fl );
             return 1;
         }
@@ -371,7 +371,7 @@ static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level,
     int flg = 0;
     socklen_t len = sizeof(int);
 
-    if( lua_gettop( L ) > 1 )
+    if( !lua_isnoneornil( L, 2 ) )
     {
         // type check
         luaL_checktype( L, 2, type );
@@ -418,7 +418,7 @@ static inline int lls_sockopt_timeval_lua( lua_State *L, int fd, int level,
     struct timeval tval = {0,0};
     socklen_t len = sizeof( struct timeval );
     
-    if( lua_gettop( L ) > 1 )
+    if( !lua_isnoneornil( L, 2 ) )
     {
         double tnum = (double)luaL_checknumber( L, 2 );
         double hi = 0;
