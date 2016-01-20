@@ -27,8 +27,7 @@
  */
 
 #include "llsocket.h"
-#include <ifaddrs.h>
-#include <net/if.h>
+
 
 // MARK: device info
 #if defined(__linux__)
