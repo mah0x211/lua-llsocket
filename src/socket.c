@@ -71,13 +71,47 @@ static int nonblock_lua( lua_State *L )
 
 static int multicastloop_lua( lua_State *L )
 {
-    return sockopt_int_lua( L, IPPROTO_IP, IP_MULTICAST_LOOP, LUA_TBOOLEAN );
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+
+    switch( s->family ){
+        case AF_INET:
+            return lls_sockopt_int_lua(
+                L, s->fd, IPPROTO_IP, IP_MULTICAST_LOOP, LUA_TBOOLEAN
+            );
+
+        case AF_INET6:
+            return lls_sockopt_int_lua(
+                L, s->fd, IPPROTO_IP, IPV6_MULTICAST_LOOP, LUA_TBOOLEAN
+            );
+
+        default:
+            lua_pushnil( L );
+            lua_pushstring( L, strerror( ENOTSUP ) );
+            return 2;
+    }
 }
 
 
 static int multicastttl_lua( lua_State *L )
 {
-    return sockopt_int_lua( L, IPPROTO_IP, IP_MULTICAST_TTL, LUA_TNUMBER );
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+
+    switch( s->family ){
+        case AF_INET:
+            return lls_sockopt_int_lua(
+                L, s->fd, IPPROTO_IP, IP_MULTICAST_TTL, LUA_TNUMBER
+            );
+
+        case AF_INET6:
+            return lls_sockopt_int_lua(
+                L, s->fd, IPPROTO_IP, IPV6_MULTICAST_HOPS, LUA_TNUMBER
+            );
+
+        default:
+            lua_pushnil( L );
+            lua_pushstring( L, strerror( ENOTSUP ) );
+            return 2;
+    }
 }
 
 
