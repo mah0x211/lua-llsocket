@@ -12,10 +12,10 @@ local function test_sup( addr )
     -- create socket
     local sock = ifNil( socket.new( addr ) );
 
-    ifNotEqual( sock:multicastif( '0.0.0.0' ), '0.0.0.0' );
-    ifNotEqual( sock:multicastif(), '0.0.0.0' );
-    ifNotEqual( sock:multicastif( '127.0.0.1' ), '127.0.0.1' );
-    ifNotEqual( sock:multicastif(), '127.0.0.1' );
+    ifNotEqual( sock:multicastif( 'lo0' ), 'lo0' );
+    ifNotEqual( sock:multicastif(), 'lo0' );
+    ifNotEqual( sock:multicastif( 'lo0' ), 'lo0' );
+    ifNotEqual( sock:multicastif(), 'lo0' );
 
     ifNotNil( sock:close() );
 end
