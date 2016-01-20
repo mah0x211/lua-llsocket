@@ -558,6 +558,9 @@ static int accept_lua( lua_State *L )
         if( cs ){
             lstate_setmetatable( L, SOCKET_MT );
             cs->fd = fd;
+            cs->family = s->family;
+            cs->socktype = s->socktype;
+            cs->protocol = s->protocol;
             cs->addrlen = addrlen;
             // copy sockaddr
             memcpy( (void*)cs->addr, (void*)&addr, addrlen );
@@ -577,6 +580,9 @@ static int accept_lua( lua_State *L )
             fcntl( fd, F_SETFL, flg ) == 0 ){
             lstate_setmetatable( L, SOCKET_MT );
             cs->fd = fd;
+            cs->family = s->family;
+            cs->socktype = s->socktype;
+            cs->protocol = s->protocol;
             cs->addrlen = addrlen;
             // copy sockaddr
             memcpy( (void*)cs->addr, (void*)&addr, addrlen );
@@ -597,6 +603,9 @@ static int accept_lua( lua_State *L )
         if( cs ){
             lstate_setmetatable( L, SOCKET_MT );
             cs->fd = fd;
+            cs->family = s->family;
+            cs->socktype = s->socktype;
+            cs->protocol = s->protocol;
             cs->addrlen = addrlen;
             // copy sockaddr
             memcpy( (void*)&cs->addr, (void*)&addr, addrlen );
