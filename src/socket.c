@@ -139,15 +139,13 @@ static inline int membership_lua( lua_State *L, int opt )
     if( lls_checkaddr( L, 2, &mr.imr_multiaddr ) == 0 &&
         lls_optaddr( L, 3, &mr.imr_interface, INADDR_ANY ) == 0 &&
         setsockopt( s->fd, IPPROTO_IP, opt, (void*)&mr, sizeof( mr ) ) == 0 ){
-        lua_pushboolean( L, 1 );
-        return 1;
+        return 0;
     }
 
     // got error
-    lua_pushboolean( L, 0 );
     lua_pushstring( L, strerror( errno ) );
 
-    return 2;
+    return 1;
 }
 
 
@@ -176,15 +174,13 @@ static inline int srcmembership_lua( lua_State *L, int opt )
         lls_checkaddr( L, 3, &mr.imr_sourceaddr ) == 0 &&
         lls_optaddr( L, 4, &mr.imr_interface, INADDR_ANY ) == 0 &&
         setsockopt( s->fd, IPPROTO_IP, opt, (void*)&mr, sizeof( mr ) ) == 0 ){
-        lua_pushboolean( L, 1 );
-        return 1;
+        return 0;
     }
 
     // got error
-    lua_pushboolean( L, 0 );
     lua_pushstring( L, strerror( errno ) );
 
-    return 2;
+    return 1;
 }
 
 
