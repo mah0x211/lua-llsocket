@@ -86,7 +86,7 @@ static int multicastloop_lua( lua_State *L )
 
         default:
             lua_pushnil( L );
-            lua_pushstring( L, strerror( ENOTSUP ) );
+            lua_pushstring( L, strerror( EOPNOTSUPP ) );
             return 2;
     }
 }
@@ -109,7 +109,7 @@ static int multicastttl_lua( lua_State *L )
 
         default:
             lua_pushnil( L );
-            lua_pushstring( L, strerror( ENOTSUP ) );
+            lua_pushstring( L, strerror( EOPNOTSUPP ) );
             return 2;
     }
 }
