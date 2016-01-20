@@ -118,40 +118,92 @@ static int multicastttl_lua( lua_State *L )
 static int multicastif_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
-    struct in_addr iaddr = { 0 };
-    socklen_t addrlen = sizeof( struct in_addr );
+    unsigned int ifidx = 0;
+    socklen_t len = sizeof( struct in_addr );
+    struct in_addr addr = { 0 };
 
-    if( !lua_isnoneornil( L, 2 ) )
+    switch( s->family )
     {
-        size_t len = 0;
-        const char *ipaddr = lls_checklstring( L, 2, &len );
+        case AF_INET:
+            if( lua_isnoneornil( L, 2 ) )
+            {
+                len = sizeof( addr );
+                if( getsockopt( s->fd, IPPROTO_IP, IP_MULTICAST_IF,
+                                (void*)&addr, &len ) == 0 )
+                {
+                    struct ifaddrs *list = NULL;
 
-        switch( inet_pton( AF_INET, ipaddr, (void*)&iaddr ) )
-        {
-            case 0:
-                errno = EINVAL;
-            case -1:
-            break;
+                    if( getifaddrs( &list ) == 0 )
+                    {
+                        struct ifaddrs *ptr = list;
+                        struct sockaddr_in *ifa_addr = NULL;
 
-            default:
-                if( setsockopt( s->fd, IPPROTO_IP, IP_MULTICAST_IF,
-                                (void*)&iaddr, addrlen ) == 0 ){
-                    lua_pushlstring( L, ipaddr, len );
+                        for( ptr = list; ptr; ptr = ptr->ifa_next )
+                        {
+                            ifa_addr = (struct sockaddr_in*)ptr->ifa_addr;
+                            if( ptr->ifa_addr->sa_family == AF_INET &&
+                                addr.s_addr == ifa_addr->sin_addr.s_addr ){
+                                lua_pushstring( L, ptr->ifa_name );
+                                freeifaddrs( list );
+                                return 1;
+                            }
+                        }
+
+                        freeifaddrs( list );
+                    }
+                }
+            }
+            else
+            {
+                const char *ifname = lls_checkstring( L, 2 );
+                struct ifreq ifr;
+
+                strncpy( ifr.ifr_name, ifname, IFNAMSIZ );
+                // get interface address
+                if( ioctl( s->fd, SIOCGIFADDR, &ifr ) == 0 )
+                {
+                    addr = ((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr;
+                    // set address to multicast_if
+                    if( setsockopt( s->fd, IPPROTO_IP, IP_MULTICAST_IF,
+                                    (void*)&addr, sizeof( addr ) ) == 0 ){
+                        lua_settop( L, 2 );
+                        return 1;
+                    }
+                }
+            }
+        break;
+
+        case AF_INET6:
+            if( lua_isnoneornil( L, 2 ) )
+            {
+                len = sizeof( ifidx );
+
+                if( getsockopt( s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
+                                    (void*)&ifidx, &len ) == 0 )
+                {
+                    char ifname[IFNAMSIZ] = { 0 };
+
+                    if( if_indextoname( ifidx, ifname ) ){
+                        lua_pushstring( L, ifname );
+                        return 1;
+                    }
+                }
+            }
+            else
+            {
+                const char *ifname = lls_checkstring( L, 2 );
+
+                if( ( ifidx = if_nametoindex( ifname ) ) != 0 &&
+                    setsockopt( s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
+                                (void*)&ifidx, sizeof( ifidx ) ) == 0 ){
+                    lua_settop( L, 2 );
                     return 1;
                 }
-        }
-    }
-    else if( getsockopt( s->fd, IPPROTO_IP, IP_MULTICAST_IF, (void*)&iaddr,
-                         &addrlen ) == 0 )
-    {
-        char buf[INET_ADDRSTRLEN] = { 0 };
-        const char *ipaddr = inet_ntop( AF_INET, (void*)&iaddr, buf,
-                                        INET_ADDRSTRLEN );
+            }
+        break;
 
-        if( ipaddr ){
-            lua_pushstring( L, ipaddr );
-            return 1;
-        }
+        default:
+            errno = EOPNOTSUPP;
     }
 
     // got error

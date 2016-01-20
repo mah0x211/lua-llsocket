@@ -48,6 +48,9 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+#include <net/if.h>
+#include <sys/ioctl.h> 
+#include <ifaddrs.h>
 // lualib
 #include <lauxlib.h>
 #include <lualib.h>
