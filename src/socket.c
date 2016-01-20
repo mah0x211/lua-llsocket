@@ -81,7 +81,7 @@ static int multicastloop_lua( lua_State *L )
 
         case AF_INET6:
             return lls_sockopt_int_lua(
-                L, s->fd, IPPROTO_IP, IPV6_MULTICAST_LOOP, LUA_TBOOLEAN
+                L, s->fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, LUA_TBOOLEAN
             );
 
         default:
@@ -104,7 +104,7 @@ static int multicastttl_lua( lua_State *L )
 
         case AF_INET6:
             return lls_sockopt_int_lua(
-                L, s->fd, IPPROTO_IP, IPV6_MULTICAST_HOPS, LUA_TNUMBER
+                L, s->fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, LUA_TNUMBER
             );
 
         default:
