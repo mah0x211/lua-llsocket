@@ -12,10 +12,10 @@ local function test_sup( addr )
     -- create socket
     local sock = ifNil( socket.new( addr ) );
 
-    ifNotTrue( sock:addmembership( '225.1.1.1' ) );
-    ifNotTrue( sock:dropmembership( '225.1.1.1' ) );
-    ifNotTrue( sock:addmembership( '225.1.1.1', '0.0.0.0' ) );
-    ifNotTrue( sock:dropmembership( '225.1.1.1', '0.0.0.0' ) );
+    ifNotNil( sock:addmembership( '225.1.1.1' ) );
+    ifNotNil( sock:dropmembership( '225.1.1.1' ) );
+    ifNotNil( sock:addmembership( '225.1.1.1', '0.0.0.0' ) );
+    ifNotNil( sock:dropmembership( '225.1.1.1', '0.0.0.0' ) );
 
     ifNotNil( sock:close() );
 end
@@ -25,8 +25,8 @@ local function test_nosup( addr )
     -- create socket
     local sock = ifNil( socket.new( addr ) );
 
-    ifNotFalse( sock:addmembership( '225.1.1.1' ) );
-    ifNotFalse( sock:dropmembership( '225.1.1.1' ) );
+    ifNil( sock:addmembership( '225.1.1.1' ) );
+    ifNil( sock:dropmembership( '225.1.1.1' ) );
 
     ifNotNil( sock:close() );
 end
