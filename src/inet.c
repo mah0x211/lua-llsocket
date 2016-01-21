@@ -43,8 +43,9 @@ static int getaddrinfo_lua( lua_State *L )
     int flags = lls_optflags( L, 5 );
     struct addrinfo *list = NULL;
     struct addrinfo *ptr = NULL;
-    int rc = lls_getaddrinfo( &list, node, service, socktype, protocol, flags );
     int idx = 1;
+    int rc = lls_getaddrinfo( &list, node, service, AF_UNSPEC, socktype,
+                              protocol, flags );
 
     if( rc != 0 ){
         lua_pushnil( L );

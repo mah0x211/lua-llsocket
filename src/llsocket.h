@@ -135,12 +135,12 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L );
 
 
 static inline int lls_getaddrinfo( struct addrinfo **list, const char *node,
-                                   const char *service, int socktype,
-                                   int protocol, int flags )
+                                   const char *service, int family,
+                                   int socktype, int protocol, int flags )
 {
     struct addrinfo hints = {
-        // AF_INET:ipv4 | AF_INET6:ipv6
-        .ai_family = AF_UNSPEC,
+        // AF_INET:ipv4 | AF_INET6:ipv6 | AF_UNSPEC
+        .ai_family = family,
         // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
         .ai_socktype = socktype,
         // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
