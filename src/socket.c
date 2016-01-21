@@ -69,7 +69,7 @@ static int nonblock_lua( lua_State *L )
 
 // multicast
 
-static int multicastloop_lua( lua_State *L )
+static int mcastloop_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
@@ -92,7 +92,7 @@ static int multicastloop_lua( lua_State *L )
 }
 
 
-static int multicastttl_lua( lua_State *L )
+static int mcastttl_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
@@ -115,7 +115,7 @@ static int multicastttl_lua( lua_State *L )
 }
 
 
-static int multicastif_lua( lua_State *L )
+static int mcastif_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
     unsigned int ifidx = 0;
@@ -1564,9 +1564,9 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { "rcvtimeo", rcvtimeo_lua },
         { "sndtimeo", sndtimeo_lua },
         // multicast
-        { "multicastloop", multicastloop_lua },
-        { "multicastttl", multicastttl_lua },
-        { "multicastif", multicastif_lua },
+        { "mcastloop", mcastloop_lua },
+        { "mcastttl", mcastttl_lua },
+        { "mcastif", mcastif_lua },
         { "mcastjoin", mcastjoin_lua },
         { "mcastleave", mcastleave_lua },
         { "mcastjoinsrc", mcastjoinsrc_lua },
