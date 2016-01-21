@@ -12,10 +12,10 @@ local function test_sup( addr )
     -- create socket
     local sock = ifNil( socket.new( addr ) );
 
-    ifNotEqual( sock:multicastif( 'lo0' ), 'lo0' );
-    ifNotEqual( sock:multicastif(), 'lo0' );
-    ifNotEqual( sock:multicastif( 'lo0' ), 'lo0' );
-    ifNotEqual( sock:multicastif(), 'lo0' );
+    ifNotEqual( sock:mcastif( 'lo0' ), 'lo0' );
+    ifNotEqual( sock:mcastif(), 'lo0' );
+    ifNotEqual( sock:mcastif( 'lo0' ), 'lo0' );
+    ifNotEqual( sock:mcastif(), 'lo0' );
 
     ifNotNil( sock:close() );
 end
@@ -25,8 +25,8 @@ local function test_nosup( addr )
     -- create socket
     local sock = ifNil( socket.new( addr ) );
 
-    ifNotNil( sock:multicastif() );
-    ifNotNil( sock:multicastif( '0.0.0.0' ) );
+    ifNotNil( sock:mcastif() );
+    ifNotNil( sock:mcastif( '0.0.0.0' ) );
 
     ifNotNil( sock:close() );
 end
@@ -40,6 +40,7 @@ end
 -- via unix domain
 addrs = ifNil( getaddrinfoUnix( SOCKFILE, SOCK_STREAM ) );
 test_nosup( addrs );
+os.remove( SOCKFILE );
 
 
 -- dgram socket
@@ -50,6 +51,7 @@ end
 -- via unix domain
 addrs = ifNil( getaddrinfoUnix( SOCKFILE, SOCK_DGRAM ) );
 test_nosup( addrs );
+os.remove( SOCKFILE );
 
 
 
