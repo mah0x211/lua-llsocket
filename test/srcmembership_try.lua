@@ -12,10 +12,10 @@ local function test_sup( addr )
     -- create socket
     local sock = ifNil( socket.new( addr ) );
 
-    ifNotNil( sock:addsrcmembership( '225.1.1.1', '127.0.0.1' ) );
-    ifNotNil( sock:dropsrcmembership( '225.1.1.1', '127.0.0.1' ) );
-    ifNotNil( sock:addsrcmembership( '225.1.1.2', '127.0.0.1', '0.0.0.0' ) );
-    ifNotNil( sock:dropsrcmembership( '225.1.1.2', '127.0.0.1', '0.0.0.0' ) );
+    ifNotNil( sock:mcastjoinsrc( '224.0.0.251', '127.0.0.1' ) );
+    ifNotNil( sock:mcastleavesrc( '224.0.0.251', '127.0.0.1' ) );
+    ifNotNil( sock:mcastjoinsrc( '224.0.0.251', '127.0.0.1', 'lo0' ) );
+    ifNotNil( sock:mcastleavesrc( '224.0.0.251', '127.0.0.1', 'lo0' ) );
 
     ifNotNil( sock:close() );
 end
@@ -25,8 +25,8 @@ local function test_nosup( addr )
     -- create socket
     local sock = ifNil( socket.new( addr ) );
 
-    ifNil( sock:addsrcmembership( '225.1.1.1', '127.0.0.1' ) );
-    ifNil( sock:dropsrcmembership( '225.1.1.1', '127.0.0.1' ) );
+    ifNil( sock:mcastjoinsrc( '224.0.0.251', '127.0.0.1' ) );
+    ifNil( sock:mcastleavesrc( '224.0.0.251', '127.0.0.1' ) );
 
     ifNotNil( sock:close() );
 end
@@ -40,6 +40,7 @@ end
 -- via unix domain
 addrs = ifNil( getaddrinfoUnix( SOCKFILE, SOCK_STREAM ) );
 test_nosup( addrs );
+os.remove( SOCKFILE );
 
 
 -- dgram socket
@@ -50,6 +51,7 @@ end
 -- via unix domain
 addrs = ifNil( getaddrinfoUnix( SOCKFILE, SOCK_DGRAM ) );
 test_nosup( addrs );
+os.remove( SOCKFILE );
 
 
 
