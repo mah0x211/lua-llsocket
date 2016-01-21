@@ -215,7 +215,7 @@ static int multicastif_lua( lua_State *L )
 
 
 
-static inline int membership_lua( lua_State *L, lls_socket_t *s, int opt )
+static inline int mcast4group_lua( lua_State *L, lls_socket_t *s, int opt )
 {
     struct ip_mreq mr = {
         .imr_multiaddr = { INADDR_ANY },
@@ -259,14 +259,14 @@ FAILED:
 }
 
 
-static int addmembership_lua( lua_State *L )
+static int mcastjoin_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
     // check socket family
     switch( s->family ){
         case AF_INET:
-            return membership_lua( L, s, IP_ADD_MEMBERSHIP );
+            return mcast4group_lua( L, s, IP_ADD_MEMBERSHIP );
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
@@ -275,14 +275,14 @@ static int addmembership_lua( lua_State *L )
 }
 
 
-static int dropmembership_lua( lua_State *L )
+static int mcastleave_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
     // check socket family
     switch( s->family ){
         case AF_INET:
-            return membership_lua( L, s, IP_DROP_MEMBERSHIP );
+            return mcast4group_lua( L, s, IP_DROP_MEMBERSHIP );
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
@@ -292,7 +292,7 @@ static int dropmembership_lua( lua_State *L )
 
 
 
-static inline int srcmembership_lua( lua_State *L, lls_socket_t *s, int opt )
+static inline int mcast4srcgroup_lua( lua_State *L, lls_socket_t *s, int opt )
 {
     struct ip_mreq_source mr = {
         .imr_multiaddr = { 0 },
@@ -344,14 +344,14 @@ FAILED:
 }
 
 
-static int addsrcmembership_lua( lua_State *L )
+static int mcastjoinsrc_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
     // check socket family
     switch( s->family ){
         case AF_INET:
-            return srcmembership_lua( L, s, IP_ADD_SOURCE_MEMBERSHIP );
+            return mcast4srcgroup_lua( L, s, IP_ADD_SOURCE_MEMBERSHIP );
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
@@ -360,14 +360,14 @@ static int addsrcmembership_lua( lua_State *L )
 }
 
 
-static int dropsrcmembership_lua( lua_State *L )
+static int mcastleavesrc_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
     // check socket family
     switch( s->family ){
         case AF_INET:
-            return srcmembership_lua( L, s, IP_DROP_SOURCE_MEMBERSHIP );
+            return mcast4srcgroup_lua( L, s, IP_DROP_SOURCE_MEMBERSHIP );
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
@@ -376,14 +376,14 @@ static int dropsrcmembership_lua( lua_State *L )
 }
 
 
-static int blocksrc_lua( lua_State *L )
+static int mcastblocksrc_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
     // check socket family
     switch( s->family ){
         case AF_INET:
-            return srcmembership_lua( L, s, IP_BLOCK_SOURCE );
+            return mcast4srcgroup_lua( L, s, IP_BLOCK_SOURCE );
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
@@ -392,14 +392,14 @@ static int blocksrc_lua( lua_State *L )
 }
 
 
-static int unblocksrc_lua( lua_State *L )
+static int mcastunblocksrc_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
     // check socket family
     switch( s->family ){
         case AF_INET:
-            return srcmembership_lua( L, s, IP_UNBLOCK_SOURCE );
+            return mcast4srcgroup_lua( L, s, IP_UNBLOCK_SOURCE );
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
@@ -1491,12 +1491,12 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { "multicastloop", multicastloop_lua },
         { "multicastttl", multicastttl_lua },
         { "multicastif", multicastif_lua },
-        { "addmembership", addmembership_lua },
-        { "dropmembership", dropmembership_lua },
-        { "addsrcmembership", addsrcmembership_lua },
-        { "dropsrcmembership", dropsrcmembership_lua },
-        { "blocksrc", blocksrc_lua },
-        { "unblocksrc", unblocksrc_lua },
+        { "mcastjoin", mcastjoin_lua },
+        { "mcastleave", mcastleave_lua },
+        { "mcastjoinsrc", mcastjoinsrc_lua },
+        { "mcastleavesrc", mcastleavesrc_lua },
+        { "mcastblocksrc", mcastblocksrc_lua },
+        { "mcastunblocksrc", mcastunblocksrc_lua },
         { NULL, NULL }
     };
     struct luaL_Reg *ptr = mmethod;
