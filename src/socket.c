@@ -259,6 +259,35 @@ FAILED:
 }
 
 
+static inline int mcast6group_lua( lua_State *L, lls_socket_t *s, int opt )
+{
+    struct ipv6_mreq mr = {
+        .ipv6mr_multiaddr = IN6ADDR_ANY_INIT,
+        .ipv6mr_interface = 0
+    };
+    int rc = lls_check6inaddr( L, 2, s->socktype, &mr.ipv6mr_multiaddr );
+    const char *ifname = NULL;
+
+    if( rc != 0 ){
+        lua_pushstring( L, gai_strerror( rc ) );
+        return 1;
+    }
+
+    ifname = lls_optstring( L, 3, NULL );
+    if( ( !ifname ||
+        ( mr.ipv6mr_interface = if_nametoindex( ifname ) ) != 0 ) &&
+        setsockopt( s->fd, IPPROTO_IPV6, opt, (void*)&mr,
+                    sizeof( struct ipv6_mreq ) ) == 0 ){
+        return 0;
+    }
+
+    // got error
+    lua_pushstring( L, strerror( errno ) );
+
+    return 1;
+}
+
+
 static int mcastjoin_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
@@ -267,6 +296,9 @@ static int mcastjoin_lua( lua_State *L )
     switch( s->family ){
         case AF_INET:
             return mcast4group_lua( L, s, IP_ADD_MEMBERSHIP );
+
+        case AF_INET6:
+            return mcast6group_lua( L, s, IPV6_JOIN_GROUP );
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
@@ -284,12 +316,14 @@ static int mcastleave_lua( lua_State *L )
         case AF_INET:
             return mcast4group_lua( L, s, IP_DROP_MEMBERSHIP );
 
+        case AF_INET6:
+            return mcast6group_lua( L, s, IPV6_LEAVE_GROUP );
+
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
             return 1;
     }
 }
-
 
 
 static inline int mcast4srcgroup_lua( lua_State *L, lls_socket_t *s, int opt )
