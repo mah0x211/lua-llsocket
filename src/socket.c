@@ -214,6 +214,33 @@ static int multicastif_lua( lua_State *L )
 }
 
 
+static inline int mcastgroup_lua( lua_State *L, lls_socket_t *s, int family,
+                                  int proto, int opt )
+{
+    struct group_req gr;
+    int rc = lls_checksockaddr( L, 2, family, s->socktype, &gr.gr_group );
+    const char *ifname = NULL;
+
+    // check arguments
+    if( rc != 0 ){
+        lua_pushstring( L, gai_strerror( rc ) );
+        return 1;
+    }
+
+    gr.gr_interface = 0;
+    ifname = lls_optstring( L, 3, NULL );
+    if( ( !ifname || ( gr.gr_interface = if_nametoindex( ifname ) ) != 0 ) &&
+        setsockopt( s->fd, proto, opt, (void*)&gr,
+                    sizeof( struct group_req ) ) == 0 ){
+        return 0;
+    }
+
+    // got error
+    lua_pushstring( L, strerror( errno ) );
+
+    return 1;
+}
+
 
 static inline int mcast4group_lua( lua_State *L, lls_socket_t *s, int opt )
 {
@@ -387,6 +414,9 @@ static int mcastjoinsrc_lua( lua_State *L )
         case AF_INET:
             return mcast4srcgroup_lua( L, s, IP_ADD_SOURCE_MEMBERSHIP );
 
+        case AF_INET6:
+            return mcastgroup_lua( L, s, AF_INET6, IPPROTO_IPV6,
+                                   MCAST_JOIN_SOURCE_GROUP );
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
             return 1;
@@ -402,6 +432,10 @@ static int mcastleavesrc_lua( lua_State *L )
     switch( s->family ){
         case AF_INET:
             return mcast4srcgroup_lua( L, s, IP_DROP_SOURCE_MEMBERSHIP );
+
+        case AF_INET6:
+            return mcastgroup_lua( L, s, AF_INET6, IPPROTO_IPV6,
+                                   MCAST_LEAVE_SOURCE_GROUP );
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
@@ -419,6 +453,10 @@ static int mcastblocksrc_lua( lua_State *L )
         case AF_INET:
             return mcast4srcgroup_lua( L, s, IP_BLOCK_SOURCE );
 
+        case AF_INET6:
+            return mcastgroup_lua( L, s, AF_INET6, IPPROTO_IPV6,
+                                   MCAST_BLOCK_SOURCE );
+
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
             return 1;
@@ -434,6 +472,10 @@ static int mcastunblocksrc_lua( lua_State *L )
     switch( s->family ){
         case AF_INET:
             return mcast4srcgroup_lua( L, s, IP_UNBLOCK_SOURCE );
+
+        case AF_INET6:
+            return mcastgroup_lua( L, s, AF_INET6, IPPROTO_IPV6,
+                                   MCAST_UNBLOCK_SOURCE );
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
