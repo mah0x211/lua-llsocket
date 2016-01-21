@@ -214,20 +214,44 @@ static int multicastif_lua( lua_State *L )
 }
 
 
-static inline int membership_lua( lua_State *L, int opt )
+
+static inline int membership_lua( lua_State *L, lls_socket_t *s, int opt )
 {
-    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
     struct ip_mreq mr = {
-        .imr_multiaddr = { 0 },
+        .imr_multiaddr = { INADDR_ANY },
         .imr_interface = { 0 }
     };
+    int rc = lls_check4inaddr( L, 2, s->socktype, &mr.imr_multiaddr );
+    const char *ifname = NULL;
 
-    if( lls_checkaddr( L, 2, &mr.imr_multiaddr ) == 0 &&
-        lls_optaddr( L, 3, &mr.imr_interface, INADDR_ANY ) == 0 &&
-        setsockopt( s->fd, IPPROTO_IP, opt, (void*)&mr, sizeof( mr ) ) == 0 ){
+    if( rc != 0 ){
+        lua_pushstring( L, gai_strerror( rc ) );
+        return 1;
+    }
+
+    ifname = lls_optstring( L, 3, NULL );
+    if( ifname )
+    {
+        struct ifreq ifr;
+
+        strncpy( ifr.ifr_name, ifname, IFNAMSIZ );
+        // get interface address
+        if( ioctl( s->fd, SIOCGIFADDR, &ifr ) != 0 ){
+            goto FAILED;
+        }
+        // set in_addr
+        mr.imr_interface = ((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr;
+    }
+    else {
+        mr.imr_interface.s_addr = INADDR_ANY;
+    }
+
+    if( setsockopt( s->fd, IPPROTO_IP, opt, (void*)&mr,
+                    sizeof( struct ip_mreq ) ) == 0 ){
         return 0;
     }
 
+FAILED:
     // got error
     lua_pushstring( L, strerror( errno ) );
 
@@ -237,32 +261,82 @@ static inline int membership_lua( lua_State *L, int opt )
 
 static int addmembership_lua( lua_State *L )
 {
-    return membership_lua( L, IP_ADD_MEMBERSHIP );
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+
+    // check socket family
+    switch( s->family ){
+        case AF_INET:
+            return membership_lua( L, s, IP_ADD_MEMBERSHIP );
+
+        default:
+            lua_pushstring( L, strerror( EOPNOTSUPP ) );
+            return 1;
+    }
 }
 
 
 static int dropmembership_lua( lua_State *L )
 {
-    return membership_lua( L, IP_DROP_MEMBERSHIP );
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+
+    // check socket family
+    switch( s->family ){
+        case AF_INET:
+            return membership_lua( L, s, IP_DROP_MEMBERSHIP );
+
+        default:
+            lua_pushstring( L, strerror( EOPNOTSUPP ) );
+            return 1;
+    }
 }
 
 
-static inline int srcmembership_lua( lua_State *L, int opt )
+
+static inline int srcmembership_lua( lua_State *L, lls_socket_t *s, int opt )
 {
-    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
     struct ip_mreq_source mr = {
         .imr_multiaddr = { 0 },
         .imr_sourceaddr = { 0 },
         .imr_interface = { 0 }
     };
+    int rc = lls_check4inaddr( L, 2, s->socktype, &mr.imr_multiaddr );
+    const char *ifname = NULL;
 
-    if( lls_checkaddr( L, 2, &mr.imr_multiaddr ) == 0 &&
-        lls_checkaddr( L, 3, &mr.imr_sourceaddr ) == 0 &&
-        lls_optaddr( L, 4, &mr.imr_interface, INADDR_ANY ) == 0 &&
-        setsockopt( s->fd, IPPROTO_IP, opt, (void*)&mr, sizeof( mr ) ) == 0 ){
+    // check arguments
+    if( rc != 0 ){
+        lua_pushstring( L, gai_strerror( rc ) );
+        return 1;
+    }
+
+    rc = lls_check4inaddr( L, 3, s->socktype, &mr.imr_sourceaddr );
+    if( rc != 0 ){
+        lua_pushstring( L, gai_strerror( rc ) );
+        return 1;
+    }
+
+    ifname = lls_optstring( L, 4, NULL );
+    if( ifname )
+    {
+        struct ifreq ifr;
+
+        strncpy( ifr.ifr_name, ifname, IFNAMSIZ );
+        // get interface address
+        if( ioctl( s->fd, SIOCGIFADDR, &ifr ) != 0 ){
+            goto FAILED;
+        }
+        // set in_addr
+        mr.imr_interface = ((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr;
+    }
+    else {
+        mr.imr_interface.s_addr = INADDR_ANY;
+    }
+
+    if( setsockopt( s->fd, IPPROTO_IP, opt, (void*)&mr,
+                    sizeof( struct ip_mreq_source ) ) == 0 ){
         return 0;
     }
 
+FAILED:
     // got error
     lua_pushstring( L, strerror( errno ) );
 
@@ -272,25 +346,65 @@ static inline int srcmembership_lua( lua_State *L, int opt )
 
 static int addsrcmembership_lua( lua_State *L )
 {
-    return srcmembership_lua( L, IP_ADD_SOURCE_MEMBERSHIP );
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+
+    // check socket family
+    switch( s->family ){
+        case AF_INET:
+            return srcmembership_lua( L, s, IP_ADD_SOURCE_MEMBERSHIP );
+
+        default:
+            lua_pushstring( L, strerror( EOPNOTSUPP ) );
+            return 1;
+    }
 }
 
 
 static int dropsrcmembership_lua( lua_State *L )
 {
-    return srcmembership_lua( L, IP_DROP_SOURCE_MEMBERSHIP );
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+
+    // check socket family
+    switch( s->family ){
+        case AF_INET:
+            return srcmembership_lua( L, s, IP_DROP_SOURCE_MEMBERSHIP );
+
+        default:
+            lua_pushstring( L, strerror( EOPNOTSUPP ) );
+            return 1;
+    }
 }
 
 
 static int blocksrc_lua( lua_State *L )
 {
-    return srcmembership_lua( L, IP_BLOCK_SOURCE );
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+
+    // check socket family
+    switch( s->family ){
+        case AF_INET:
+            return srcmembership_lua( L, s, IP_BLOCK_SOURCE );
+
+        default:
+            lua_pushstring( L, strerror( EOPNOTSUPP ) );
+            return 1;
+    }
 }
 
 
 static int unblocksrc_lua( lua_State *L )
 {
-    return srcmembership_lua( L, IP_UNBLOCK_SOURCE );
+    lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
+
+    // check socket family
+    switch( s->family ){
+        case AF_INET:
+            return srcmembership_lua( L, s, IP_UNBLOCK_SOURCE );
+
+        default:
+            lua_pushstring( L, strerror( EOPNOTSUPP ) );
+            return 1;
+    }
 }
 
 

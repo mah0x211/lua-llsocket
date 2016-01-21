@@ -311,32 +311,79 @@ static inline int lls_optflags( lua_State *L, int idx )
 }
 
 
-static inline int lls_checkaddr( lua_State *L, int idx, struct in_addr *addr )
+static inline int lls_checksockaddr( lua_State *L, int idx, int family,
+                                     int socktype,
+                                     struct sockaddr_storage *sockaddr )
 {
     const char *str = lls_checkstring( L, idx );
+    struct addrinfo *list = NULL;
+    int rc = lls_getaddrinfo( &list, str, NULL, family, socktype, 0,
+                              AI_NUMERICHOST );
 
-    switch( inet_pton( AF_INET, str, (void*)addr ) )
-    {
-        case 0:
-            errno = EINVAL;
-        case -1:
-            return -1;
-
-        default:
-            return 0;
+    if( rc == 0 ){
+        memcpy( (void*)sockaddr, list->ai_addr, list->ai_addrlen );
+        freeaddrinfo( list );
     }
+
+    return rc;
 }
 
 
-static inline int lls_optaddr( lua_State *L, int idx, struct in_addr *addr,
-                               int def )
+static inline int lls_check4inaddr( lua_State *L, int idx, int socktype,
+                                    struct in_addr *addr )
+{
+    const char *str = lls_checkstring( L, idx );
+    struct addrinfo *list = NULL;
+    int rc = lls_getaddrinfo( &list, str, NULL, AF_INET, socktype, 0,
+                              AI_NUMERICHOST );
+
+    if( rc == 0 ){
+        *addr = ((struct sockaddr_in*)list->ai_addr)->sin_addr;
+        freeaddrinfo( list );
+    }
+
+    return rc;
+}
+
+
+static inline int lls_opt4inaddr( lua_State *L, int idx, int socktype,
+                                  struct in_addr *addr, struct in_addr def )
 {
     if( lua_isnoneornil( L, idx ) ){
-        addr->s_addr = def;
+        *addr = def;
         return 0;
     }
 
-    return lls_checkaddr( L, idx, addr );
+    return lls_check4inaddr( L, idx, socktype, addr );
+}
+
+
+static inline int lls_check6inaddr( lua_State *L, int idx, int socktype,
+                                    struct in6_addr *addr )
+{
+    const char *str = lls_checkstring( L, idx );
+    struct addrinfo *list = NULL;
+    int rc = lls_getaddrinfo( &list, str, NULL, AF_INET6, socktype, 0,
+                              AI_NUMERICHOST );
+
+    if( rc == 0 ){
+        *addr = ((struct sockaddr_in6*)list->ai_addr)->sin6_addr;
+        freeaddrinfo( list );
+    }
+
+    return rc;
+}
+
+
+static inline int lls_opt6inaddr( lua_State *L, int idx, int socktype,
+                                  struct in6_addr *addr, struct in6_addr def )
+{
+    if( lua_isnoneornil( L, idx ) ){
+        *addr = def;
+        return 0;
+    }
+
+    return lls_check6inaddr( L, idx, socktype, addr );
 }
 
 
