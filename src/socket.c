@@ -577,6 +577,11 @@ static int oobinline_lua( lua_State *L )
     return sockopt_int_lua( L, SOL_SOCKET, SO_OOBINLINE, LUA_TBOOLEAN );
 }
 
+static int dontroute_lua( lua_State *L )
+{
+    return sockopt_int_lua( L, SOL_SOCKET, SO_DONTROUTE, LUA_TBOOLEAN );
+}
+
 static int timestamp_lua( lua_State *L )
 {
     return sockopt_int_lua( L, SOL_SOCKET, SO_TIMESTAMP, LUA_TBOOLEAN );
@@ -1556,6 +1561,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { "debug", debug_lua },
         { "keepalive", keepalive_lua },
         { "oobinline", oobinline_lua },
+        { "dontroute", dontroute_lua },
         { "timestamp", timestamp_lua },
         { "rcvbuf", rcvbuf_lua },
         { "rcvlowat", rcvlowat_lua },
