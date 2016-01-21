@@ -231,6 +231,19 @@ static inline const char *lls_checklstring( lua_State *L, int idx, size_t *len )
 }
 
 
+static inline const char *lls_optlstring( lua_State *L, int idx,
+                                         const char *def, size_t *len )
+{
+    if( lua_isnoneornil( L, idx ) ){
+        return def;
+    }
+
+    luaL_checktype( L, idx, LUA_TSTRING );
+
+    return lua_tolstring( L, idx, len );
+}
+
+
 static inline const char *lls_checkstring( lua_State *L, int idx )
 {
     luaL_checktype( L, idx, LUA_TSTRING );
