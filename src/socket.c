@@ -810,7 +810,7 @@ static int accept_lua( lua_State *L )
             cs->protocol = s->protocol;
             cs->addrlen = addrlen;
             // copy sockaddr
-            memcpy( (void*)cs->addr, (void*)&addr, addrlen );
+            memcpy( (void*)&cs->addr, (void*)&addr, addrlen );
 
             return 1;
         }
@@ -832,7 +832,7 @@ static int accept_lua( lua_State *L )
             cs->protocol = s->protocol;
             cs->addrlen = addrlen;
             // copy sockaddr
-            memcpy( (void*)cs->addr, (void*)&addr, addrlen );
+            memcpy( (void*)&cs->addr, (void*)&addr, addrlen );
 
             return 1;
         }
@@ -981,7 +981,7 @@ static int sendfile_lua( lua_State *L )
         return 1;
     }
     // again
-    else if( errno == EAGAIN || errno = EINTR ){
+    else if( errno == EAGAIN || errno == EINTR ){
         lua_pushnil( L );
         lua_pushboolean( L, 1 );
         return 3;
@@ -1417,7 +1417,9 @@ static int new_lua( lua_State *L )
             return 1;
         }
 
+#if !defined(LINUX_SOCKEXT)
 FAILED:
+#endif
         // got error
         close( fd );
     }
