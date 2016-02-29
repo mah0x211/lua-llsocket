@@ -55,6 +55,8 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include "config.h"
+
 
 // linux 2.6.27
 #if defined(SOCK_CLOEXEC)

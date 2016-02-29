@@ -14,24 +14,11 @@ dependencies = {
     "util >= 1.4.1"
 }
 build = {
-    type = "make",
-    build_variables = {
-        PACKAGE         = "llsocket",
-        SRCDIR          = "src",
-        TMPLDIR         = "tmpl",
-        VARDIR          = "var",
-        CFLAGS          = "$(CFLAGS)",
-        WARNINGS        = "-Wall -Wno-trigraphs -Wmissing-field-initializers -Wreturn-type -Wmissing-braces -Wparentheses -Wno-switch -Wunused-function -Wunused-label -Wunused-parameter -Wunused-variable -Wunused-value -Wuninitialized -Wunknown-pragmas -Wshadow -Wsign-compare",
-        CPPFLAGS        = "-I$(LUA_INCDIR)",
-        LDFLAGS         = "$(LIBFLAG)",
-        LIB_EXTENSION   = "$(LIB_EXTENSION)"
-    },
-    install_variables = {
-        PACKAGE         = "llsocket",
-        SRCDIR          = "src",
-        LIBDIR          = "$(LIBDIR)",
-        PREFIX          = "$(PREFIX)",
-        LIB_EXTENSION   = "$(LIB_EXTENSION)"
-    }
+    type = "command",
+    build_command = [[
+        	autoreconf -ivf && CFLAGS="$(CFLAGS)" CPPFLAGS="-I$(LUA_INCDIR)" LIBFLAG="$(LIBFLAG)" OBJ_EXTENSION="$(OBJ_EXTENSION)" LIB_EXTENSION="$(LIB_EXTENSION)" LIBDIR="$(LIBDIR)" TMPLDIR="tmpl" VARDIR="var" ./configure && make clean && make
+    ]],
+    install_command = [[
+        make install
+    ]]
 }
-

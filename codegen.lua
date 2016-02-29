@@ -13,7 +13,7 @@ local decl, file, def, tbl, arr;
 for _, path in ipairs( _G.arg ) do
     if path:find('%.txt$') then
         file = assert( io.open( path ) );
-        decl = ('GEN_%s_DECL'):format( path:match('/(.+).txt'):upper() );
+        decl = ('GEN_%s_DECL'):format( path:match('/([^/]+)%.txt'):upper() );
         
         -- remove duplicate
         tbl = {};
@@ -52,7 +52,7 @@ for _, path in ipairs( _G.arg ) do
             file = file:gsub( '#define (' .. k .. ')\n', v );
         end
         -- to src path
-        path = path:gsub( '^tmpl/', 'src/' ):gsub( '_tmpl%.c', '.c' );
+        path = path:gsub( 'tmpl/', 'src/' ):gsub( '_tmpl%.c', '.c' );
         assert( io.open( path, 'w' ) ):write( file );
     end
 end

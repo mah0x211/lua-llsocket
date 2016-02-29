@@ -1,0 +1,33 @@
+CC=@CC@
+CFLAGS=@CFLAGS@
+WARNINGS=-Wall -Wno-trigraphs -Wmissing-field-initializers -Wmissing-prototypes -Wreturn-type -Wmissing-braces -Wparentheses -Wswitch -Wunused-function -Wunused-label -Wunused-parameter -Wunused-variable -Wunused-value -Wuninitialized -Wunknown-pragmas -Wshadow -Wsign-compare
+CPPFLAGS=-I. @CPPFLAGS@
+LDFLAGS=@LIBFLAG@
+LIBS=@LIBS@
+TARGET=@PACKAGE@.@LIB_EXTENSION@
+SRCS=$(wildcard *.c)
+OBJS=$(SRCS:.c=.@OBJ_EXTENSION@)
+LIBDIR=@LIBDIR@
+VARS=$(wildcard ../@VARDIR@/*.txt)
+TMPL=$(wildcard ../@TMPLDIR@/*.c)
+
+
+all: preprocess $(TARGET)
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(WARNINGS) $(CPPFLAGS) -c $^
+
+$(TARGET): $(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
+
+preprocess:
+	lua ../codegen.lua $(VARS) $(TMPL)
+
+install:
+	mkdir -p $(LIBDIR)
+	cp $(TARGET) $(LIBDIR)
+	rm -f $(OBJS) $(TARGET)
+
+# cleanup
+clean:
+	rm -f *.o $(TARGET)
