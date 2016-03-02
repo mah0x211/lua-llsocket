@@ -795,7 +795,7 @@ static int accept_lua( lua_State *L )
         return 2;
     }
 
-#if defined(LINUX_ACCEPT4)
+#if defined(HAVE_ACCEPT4)
     flg = SOCK_CLOEXEC | ( ( flg & O_NONBLOCK ) ? SOCK_NONBLOCK : 0 );
     fd = accept4( s->fd, (struct sockaddr*)&addr, &addrlen, flg );
     if( fd != -1 )
@@ -1368,41 +1368,22 @@ static int dup_lua( lua_State *L )
 static int new_lua( lua_State *L )
 {
     struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
-#if defined(LINUX_SOCKEXT)
-    int nonblock = lls_optboolean( L, 2, SOCK_NONBLOCK );
-#else
     int nonblock = lls_optboolean( L, 2, 0 );
-#endif
-    int fd = -1;
-
-
     // create socket
-#if defined(LINUX_SOCKEXT)
-    fd = socket( info->ai_family,
-                 info->ai_socktype|SOCK_CLOEXEC|nonblock,
-                 info->ai_protocol );
-
-#else
-    fd = socket( info->ai_family, info->ai_socktype, info->ai_protocol );
-
-#endif
+    int fd = socket( info->ai_family, info->ai_socktype, info->ai_protocol );
 
     if( fd != -1 )
     {
         lls_socket_t *s = NULL;
-
-#if !defined(LINUX_SOCKEXT)
         int fl = 0;
 
-        if( fcntl( fd, F_SETFD, FD_CLOEXEC ) == -1 ||
-            ( nonblock && ( ( fl = fcntl( fd, F_GETFL ) ) == -1 ||
-              fcntl( fd, F_SETFL, fl|O_NONBLOCK ) == -1 ) ) ){
-            goto FAILED;
-        }
-#endif
-
         lua_settop( L, 1 );
-        if( ( s = lua_newuserdata( L, sizeof( lls_socket_t ) ) ) ){
+        // alloc
+        if( ( s = lua_newuserdata( L, sizeof( lls_socket_t ) ) ) &&
+            // set cloexec and nonblock flag
+            fcntl( fd, F_SETFD, FD_CLOEXEC ) != -1 &&
+            ( !nonblock || ( ( fl = fcntl( fd, F_GETFL ) ) != -1 &&
+              fcntl( fd, F_SETFL, fl|O_NONBLOCK ) != -1 ) ) ){
             lstate_setmetatable( L, SOCKET_MT );
             *s = (lls_socket_t){
                 .fd = fd,
@@ -1417,9 +1398,6 @@ static int new_lua( lua_State *L )
             return 1;
         }
 
-#if !defined(LINUX_SOCKEXT)
-FAILED:
-#endif
         // got error
         close( fd );
     }
