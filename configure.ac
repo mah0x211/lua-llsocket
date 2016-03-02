@@ -46,10 +46,12 @@ AC_CHECK_HEADERS(
     netinet/tcp.h \
     arpa/inet.h \
     net/if.h \
-    net/if_dl.h \
     sys/ioctl.h \
     ifaddrs.h,,
     AC_MSG_FAILURE([required header not found])
+)
+AC_CHECK_HEADERS(
+    net/if_dl.h
 )
 
 
