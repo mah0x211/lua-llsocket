@@ -896,29 +896,42 @@ static int send_lua( lua_State *L )
         lua_pushstring( L, strerror( EINVAL ) );
         return 2;
     }
-    
-    rv = send( s->fd, buf, len, flg );
-    if( rv != -1 ){
-        lua_pushinteger( L, rv );
-        return 1;
-    }
-    // again
-    else if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
-        lua_pushnil( L );
-        lua_pushnil( L );
-        lua_pushboolean( L, 1 );
-        return 3;
-    }
-    // closed by peer
-    else if( errno == ECONNRESET ){
-        return 0;
-    }
-    
-    // got error
-    lua_pushnil( L );
-    lua_pushstring( L, strerror( errno ) );
 
-    return 2;
+    rv = send( s->fd, buf, len, flg );
+    switch( rv )
+    {
+        // closed by peer
+        case 0:
+            if( !len ){
+                lua_pushinteger( L, 0 );
+                return 1;
+            }
+            return 0;
+
+        // got error
+        case -1:
+            // again
+            if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+                lua_pushinteger( L, 0 );
+                lua_pushnil( L );
+                lua_pushboolean( L, 1 );
+                return 3;
+            }
+            // closed by peer
+            else if( errno == ECONNRESET ){
+                return 0;
+            }
+            // got error
+            lua_pushnil( L );
+            lua_pushstring( L, strerror( errno ) );
+            return 2;
+
+        default:
+            lua_pushinteger( L, rv );
+            lua_pushnil( L );
+            lua_pushboolean( L, len - (size_t)rv );
+            return 3;
+    }
 }
 
 
@@ -940,27 +953,40 @@ static int sendto_lua( lua_State *L )
     
     rv = sendto( s->fd, buf, len, flg, (const struct sockaddr*)info->ai_addr,
                  info->ai_addrlen );
-    if( rv != -1 ){
-        lua_pushinteger( L, rv );
-        return 1;
+    switch( rv )
+    {
+        // closed by peer
+        case 0:
+            if( !len ){
+                lua_pushinteger( L, 0 );
+                return 1;
+            }
+            return 0;
+
+        // got error
+        case -1:
+            // again
+            if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+                lua_pushinteger( L, 0 );
+                lua_pushnil( L );
+                lua_pushboolean( L, 1 );
+                return 3;
+            }
+            // closed by peer
+            else if( errno == ECONNRESET ){
+                return 0;
+            }
+            // got error
+            lua_pushnil( L );
+            lua_pushstring( L, strerror( errno ) );
+            return 2;
+
+        default:
+            lua_pushinteger( L, rv );
+            lua_pushnil( L );
+            lua_pushboolean( L, len - (size_t)rv );
+            return 3;
     }
-    // again
-    else if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
-        lua_pushnil( L );
-        lua_pushnil( L );
-        lua_pushboolean( L, 1 );
-        return 3;
-    }
-    // close by peer
-    else if( errno == ECONNRESET ){
-        return 0;
-    }
-    
-    // got error
-    lua_pushnil( L );
-    lua_pushstring( L, strerror( errno ) );
-    
-    return 2;
 }
 
 
