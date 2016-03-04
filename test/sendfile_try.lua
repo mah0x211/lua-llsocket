@@ -43,8 +43,10 @@ local function sendfileNonBlocking( cli, rcv )
     local fd = imgLarge.fd;
     local totalByte = imgLarge.size;
     local recvByte = 0;
+    local sendByte = 0;
     local data = {};
     local pkt, err, eagain;
+    local nloop = 0;
     
     -- set nonblock flag
     ifNotTrue( cli:nonblock( true ) );
@@ -53,18 +55,32 @@ local function sendfileNonBlocking( cli, rcv )
     repeat
         -- sendfile
         if offset < totalByte then
-            outByte, err, eagain = cli:sendfile( fd, totalByte - offset, offset );
-            ifTrue( eagain ~= true and err ~= nil, err );
-            -- update offset
-            offset = offset + outByte;
-            ifTrue( offset > totalByte, 'invalid implementation' );
+            sendByte = totalByte - offset;
+            outByte, err, eagain = cli:sendfile( fd, sendByte, offset );
+            
+            if outByte then
+                -- update offset
+                offset = offset + outByte;
+                ifTrue( offset > totalByte, 'invalid implementation' );
+                ifTrue( eagain == true and sendByte == outByte, 'invalid implementation' );
+            elseif err then
+                error( err );
+            else
+                error('closed by peer');
+            end
         end
+        
         -- recv
         pkt, err, eagain = rcv:recv( outByte == 0 and 1024 or outByte );
         ifTrue( eagain ~= true and err ~= nil, err );
         if not eagain then
             recvByte = recvByte + #pkt;
             data[#data+1] = pkt;
+        end
+        
+        nloop = nloop + 1;
+        if nloop == 5000 then
+            error('too many senfile loop');
         end
     until recvByte == totalByte;
     
