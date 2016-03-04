@@ -982,9 +982,10 @@ static int sendto_lua( lua_State *L )
 }
 
 
+#if defined(HAVE_SENDFILE)
+
 #if defined(__linux__)
 #include <sys/sendfile.h>
-#define HAVE_SENDFILE_LUA   1
 
 static int sendfile_lua( lua_State *L )
 {
@@ -992,14 +993,26 @@ static int sendfile_lua( lua_State *L )
     int fd = (int)lls_checkinteger( L, 2 );
     size_t len = (size_t)lls_checkinteger( L, 3 );
     off_t offset = (off_t)lls_optinteger( L, 4, 0 );
-    ssize_t rv = sendfile( s->fd, fd, &offset, len );
-    
-    if( rv != -1 ){
+    ssize_t rv = 0;
+
+    // invalid length
+    if( !len ){
+        errno = EINVAL;
+    }
+    // TODO: should test the following behaviors;
+    // - interruption
+    // - close a file
+    // - close a sender socket
+    // - close a receiver socket
+    else if( ( rv = sendfile( s->fd, fd, &offset, len ) ) != -1 ){
         lua_pushinteger( L, rv );
-        return 1;
+        lua_pushnil( L );
+        lua_pushboolean( L, len - (size_t)rv );
+        return 3;
     }
     // again
     else if( errno == EAGAIN || errno == EINTR ){
+        lua_pushinteger( L, 0 );
         lua_pushnil( L );
         lua_pushboolean( L, 1 );
         return 3;
@@ -1018,7 +1031,6 @@ static int sendfile_lua( lua_State *L )
 
 
 #elif defined(__APPLE__)
-#define HAVE_SENDFILE_LUA   1
 
 static int sendfile_lua( lua_State *L )
 {
@@ -1026,8 +1038,12 @@ static int sendfile_lua( lua_State *L )
     int fd = (int)lls_checkinteger( L, 2 );
     off_t len = (off_t)lls_checkinteger( L, 3 );
     off_t offset = (off_t)lls_optinteger( L, 4, 0 );
-    
-    if( sendfile( fd, s->fd, offset, &len, NULL, 0 ) == 0 ){
+
+    // invalid length
+    if( !len ){
+        errno = EINVAL;
+    }
+    else if( sendfile( fd, s->fd, offset, &len, NULL, 0 ) == 0 ){
         lua_pushinteger( L, len );
         return 1;
     }
@@ -1052,7 +1068,6 @@ static int sendfile_lua( lua_State *L )
 
 
 #elif defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-#define HAVE_SENDFILE_LUA   1
 
 static int sendfile_lua( lua_State *L )
 {
@@ -1062,8 +1077,14 @@ static int sendfile_lua( lua_State *L )
     off_t offset = (off_t)lls_optinteger( L, 4, 0 );
     off_t nbytes = 0;
     
-    if( sendfile( fd, s->fd, offset, len, NULL, &nbytes, 0 ) == 0 ){
+    // invalid length
+    if( !len ){
+        errno = EINVAL;
+    }
+    else if( sendfile( fd, s->fd, offset, len, NULL, &nbytes, 0 ) == 0 ){
         lua_pushinteger( L, nbytes );
+        lua_pushnil( L );
+        lua_pushboolean( L, len - nbytes );
         return 1;
     }
     // again
@@ -1085,6 +1106,7 @@ static int sendfile_lua( lua_State *L )
     return 2;
 }
 
+#endif
 #endif
 
 
@@ -1507,7 +1529,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { "accept", accept_lua },
         { "send", send_lua },
         { "sendto", sendto_lua },
-#if HAVE_SENDFILE_LUA
+#if defined(HAVE_SENDFILE)
         { "sendfile", sendfile_lua },
 #else
 #warning "sendfile does not implmeneted in this platform."
