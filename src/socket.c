@@ -902,10 +902,6 @@ static int send_lua( lua_State *L )
     {
         // closed by peer
         case 0:
-            if( !len ){
-                lua_pushinteger( L, 0 );
-                return 1;
-            }
             return 0;
 
         // got error
@@ -957,10 +953,6 @@ static int sendto_lua( lua_State *L )
     {
         // closed by peer
         case 0:
-            if( !len ){
-                lua_pushinteger( L, 0 );
-                return 1;
-            }
             return 0;
 
         // got error
