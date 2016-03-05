@@ -32,6 +32,7 @@
 #ifndef ___LLSOCKET_LUA___
 #define ___LLSOCKET_LUA___
 
+#define _GNU_SOURCE
 
 #include <stdlib.h>
 #include <unistd.h>
