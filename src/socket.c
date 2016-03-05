@@ -73,16 +73,21 @@ static int mcastloop_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
-    switch( s->family ){
-        case AF_INET:
-            return lls_sockopt_int_lua(
-                L, s->fd, IPPROTO_IP, IP_MULTICAST_LOOP, LUA_TBOOLEAN
-            );
+    switch( s->socktype )
+    {
+        case SOCK_RAW:
+        case SOCK_DGRAM:
+            switch( s->family ){
+                case AF_INET:
+                    return lls_sockopt_int_lua(
+                        L, s->fd, IPPROTO_IP, IP_MULTICAST_LOOP, LUA_TBOOLEAN
+                    );
 
-        case AF_INET6:
-            return lls_sockopt_int_lua(
-                L, s->fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, LUA_TBOOLEAN
-            );
+                case AF_INET6:
+                    return lls_sockopt_int_lua(
+                        L, s->fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, LUA_TBOOLEAN
+                    );
+            }
 
         default:
             lua_pushnil( L );
@@ -96,16 +101,21 @@ static int mcastttl_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
-    switch( s->family ){
-        case AF_INET:
-            return lls_sockopt_int_lua(
-                L, s->fd, IPPROTO_IP, IP_MULTICAST_TTL, LUA_TNUMBER
-            );
+    switch( s->socktype )
+    {
+        case SOCK_RAW:
+        case SOCK_DGRAM:
+            switch( s->family ){
+                case AF_INET:
+                    return lls_sockopt_int_lua(
+                        L, s->fd, IPPROTO_IP, IP_MULTICAST_TTL, LUA_TNUMBER
+                    );
 
-        case AF_INET6:
-            return lls_sockopt_int_lua(
-                L, s->fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, LUA_TNUMBER
-            );
+                case AF_INET6:
+                    return lls_sockopt_int_lua(
+                        L, s->fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, LUA_TNUMBER
+                    );
+            }
 
         default:
             lua_pushnil( L );
@@ -122,85 +132,90 @@ static int mcastif_lua( lua_State *L )
     socklen_t len = sizeof( struct in_addr );
     struct in_addr addr = { 0 };
 
-    switch( s->family )
+    switch( s->socktype )
     {
-        case AF_INET:
-            if( lua_isnoneornil( L, 2 ) )
+        case SOCK_RAW:
+        case SOCK_DGRAM:
+            switch( s->family )
             {
-                len = sizeof( addr );
-                if( getsockopt( s->fd, IPPROTO_IP, IP_MULTICAST_IF,
-                                (void*)&addr, &len ) == 0 )
-                {
-                    struct ifaddrs *list = NULL;
-
-                    if( getifaddrs( &list ) == 0 )
+                case AF_INET:
+                    if( lua_isnoneornil( L, 2 ) )
                     {
-                        struct ifaddrs *ptr = list;
-                        struct sockaddr_in *ifa_addr = NULL;
-
-                        for( ptr = list; ptr; ptr = ptr->ifa_next )
+                        len = sizeof( addr );
+                        if( getsockopt( s->fd, IPPROTO_IP, IP_MULTICAST_IF,
+                                        (void*)&addr, &len ) == 0 )
                         {
-                            ifa_addr = (struct sockaddr_in*)ptr->ifa_addr;
-                            if( ptr->ifa_addr->sa_family == AF_INET &&
-                                addr.s_addr == ifa_addr->sin_addr.s_addr ){
-                                lua_pushstring( L, ptr->ifa_name );
+                            struct ifaddrs *list = NULL;
+
+                            if( getifaddrs( &list ) == 0 )
+                            {
+                                struct ifaddrs *ptr = list;
+                                struct sockaddr_in *ifa_addr = NULL;
+
+                                for( ptr = list; ptr; ptr = ptr->ifa_next )
+                                {
+                                    ifa_addr = (struct sockaddr_in*)ptr->ifa_addr;
+                                    if( ptr->ifa_addr->sa_family == AF_INET &&
+                                        addr.s_addr == ifa_addr->sin_addr.s_addr ){
+                                        lua_pushstring( L, ptr->ifa_name );
+                                        freeifaddrs( list );
+                                        return 1;
+                                    }
+                                }
+
                                 freeifaddrs( list );
+                            }
+                        }
+                    }
+                    else
+                    {
+                        const char *ifname = lls_checkstring( L, 2 );
+                        struct ifreq ifr;
+
+                        strncpy( ifr.ifr_name, ifname, IFNAMSIZ );
+                        // get interface address
+                        if( ioctl( s->fd, SIOCGIFADDR, &ifr ) == 0 )
+                        {
+                            addr = ((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr;
+                            // set address to multicast_if
+                            if( setsockopt( s->fd, IPPROTO_IP, IP_MULTICAST_IF,
+                                            (void*)&addr, sizeof( addr ) ) == 0 ){
+                                lua_settop( L, 2 );
                                 return 1;
                             }
                         }
-
-                        freeifaddrs( list );
                     }
-                }
-            }
-            else
-            {
-                const char *ifname = lls_checkstring( L, 2 );
-                struct ifreq ifr;
+                break;
 
-                strncpy( ifr.ifr_name, ifname, IFNAMSIZ );
-                // get interface address
-                if( ioctl( s->fd, SIOCGIFADDR, &ifr ) == 0 )
-                {
-                    addr = ((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr;
-                    // set address to multicast_if
-                    if( setsockopt( s->fd, IPPROTO_IP, IP_MULTICAST_IF,
-                                    (void*)&addr, sizeof( addr ) ) == 0 ){
-                        lua_settop( L, 2 );
-                        return 1;
+                case AF_INET6:
+                    if( lua_isnoneornil( L, 2 ) )
+                    {
+                        len = sizeof( ifidx );
+
+                        if( getsockopt( s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
+                                            (void*)&ifidx, &len ) == 0 )
+                        {
+                            char ifname[IFNAMSIZ] = { 0 };
+
+                            if( if_indextoname( ifidx, ifname ) ){
+                                lua_pushstring( L, ifname );
+                                return 1;
+                            }
+                        }
                     }
-                }
-            }
-        break;
+                    else
+                    {
+                        const char *ifname = lls_checkstring( L, 2 );
 
-        case AF_INET6:
-            if( lua_isnoneornil( L, 2 ) )
-            {
-                len = sizeof( ifidx );
-
-                if( getsockopt( s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
-                                    (void*)&ifidx, &len ) == 0 )
-                {
-                    char ifname[IFNAMSIZ] = { 0 };
-
-                    if( if_indextoname( ifidx, ifname ) ){
-                        lua_pushstring( L, ifname );
-                        return 1;
+                        if( ( ifidx = if_nametoindex( ifname ) ) != 0 &&
+                            setsockopt( s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
+                                        (void*)&ifidx, sizeof( ifidx ) ) == 0 ){
+                            lua_settop( L, 2 );
+                            return 1;
+                        }
                     }
-                }
+                break;
             }
-            else
-            {
-                const char *ifname = lls_checkstring( L, 2 );
-
-                if( ( ifidx = if_nametoindex( ifname ) ) != 0 &&
-                    setsockopt( s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
-                                (void*)&ifidx, sizeof( ifidx ) ) == 0 ){
-                    lua_settop( L, 2 );
-                    return 1;
-                }
-            }
-        break;
 
         default:
             errno = EOPNOTSUPP;
@@ -319,13 +334,18 @@ static int mcastjoin_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
-    // check socket family
-    switch( s->family ){
-        case AF_INET:
-            return mcast4group_lua( L, s, IP_ADD_MEMBERSHIP );
+    switch( s->socktype )
+    {
+        case SOCK_RAW:
+        case SOCK_DGRAM:
+            // check socket family
+            switch( s->family ){
+                case AF_INET:
+                    return mcast4group_lua( L, s, IP_ADD_MEMBERSHIP );
 
-        case AF_INET6:
-            return mcast6group_lua( L, s, IPV6_JOIN_GROUP );
+                case AF_INET6:
+                    return mcast6group_lua( L, s, IPV6_JOIN_GROUP );
+            }
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
@@ -338,13 +358,18 @@ static int mcastleave_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
-    // check socket family
-    switch( s->family ){
-        case AF_INET:
-            return mcast4group_lua( L, s, IP_DROP_MEMBERSHIP );
+    switch( s->socktype )
+    {
+        case SOCK_RAW:
+        case SOCK_DGRAM:
+            // check socket family
+            switch( s->family ){
+                case AF_INET:
+                    return mcast4group_lua( L, s, IP_DROP_MEMBERSHIP );
 
-        case AF_INET6:
-            return mcast6group_lua( L, s, IPV6_LEAVE_GROUP );
+                case AF_INET6:
+                    return mcast6group_lua( L, s, IPV6_LEAVE_GROUP );
+            }
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
@@ -409,14 +434,20 @@ static int mcastjoinsrc_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
-    // check socket family
-    switch( s->family ){
-        case AF_INET:
-            return mcast4srcgroup_lua( L, s, IP_ADD_SOURCE_MEMBERSHIP );
+    switch( s->socktype )
+    {
+        case SOCK_RAW:
+        case SOCK_DGRAM:
+            // check socket family
+            switch( s->family ){
+                case AF_INET:
+                    return mcast4srcgroup_lua( L, s, IP_ADD_SOURCE_MEMBERSHIP );
 
-        case AF_INET6:
-            return mcastgroup_lua( L, s, AF_INET6, IPPROTO_IPV6,
-                                   MCAST_JOIN_SOURCE_GROUP );
+                case AF_INET6:
+                    return mcastgroup_lua( L, s, AF_INET6, IPPROTO_IPV6,
+                                           MCAST_JOIN_SOURCE_GROUP );
+            }
+
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
             return 1;
@@ -428,14 +459,19 @@ static int mcastleavesrc_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
-    // check socket family
-    switch( s->family ){
-        case AF_INET:
-            return mcast4srcgroup_lua( L, s, IP_DROP_SOURCE_MEMBERSHIP );
+    switch( s->socktype )
+    {
+        case SOCK_RAW:
+        case SOCK_DGRAM:
+            // check socket family
+            switch( s->family ){
+                case AF_INET:
+                    return mcast4srcgroup_lua( L, s, IP_DROP_SOURCE_MEMBERSHIP );
 
-        case AF_INET6:
-            return mcastgroup_lua( L, s, AF_INET6, IPPROTO_IPV6,
-                                   MCAST_LEAVE_SOURCE_GROUP );
+                case AF_INET6:
+                    return mcastgroup_lua( L, s, AF_INET6, IPPROTO_IPV6,
+                                           MCAST_LEAVE_SOURCE_GROUP );
+            }
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
@@ -448,14 +484,19 @@ static int mcastblocksrc_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
-    // check socket family
-    switch( s->family ){
-        case AF_INET:
-            return mcast4srcgroup_lua( L, s, IP_BLOCK_SOURCE );
+    switch( s->socktype )
+    {
+        case SOCK_RAW:
+        case SOCK_DGRAM:
+            // check socket family
+            switch( s->family ){
+                case AF_INET:
+                    return mcast4srcgroup_lua( L, s, IP_BLOCK_SOURCE );
 
-        case AF_INET6:
-            return mcastgroup_lua( L, s, AF_INET6, IPPROTO_IPV6,
-                                   MCAST_BLOCK_SOURCE );
+                case AF_INET6:
+                    return mcastgroup_lua( L, s, AF_INET6, IPPROTO_IPV6,
+                                           MCAST_BLOCK_SOURCE );
+            }
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
@@ -468,14 +509,19 @@ static int mcastunblocksrc_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
-    // check socket family
-    switch( s->family ){
-        case AF_INET:
-            return mcast4srcgroup_lua( L, s, IP_UNBLOCK_SOURCE );
+    switch( s->socktype )
+    {
+        case SOCK_RAW:
+        case SOCK_DGRAM:
+            // check socket family
+            switch( s->family ){
+                case AF_INET:
+                    return mcast4srcgroup_lua( L, s, IP_UNBLOCK_SOURCE );
 
-        case AF_INET6:
-            return mcastgroup_lua( L, s, AF_INET6, IPPROTO_IPV6,
-                                   MCAST_UNBLOCK_SOURCE );
+                case AF_INET6:
+                    return mcastgroup_lua( L, s, AF_INET6, IPPROTO_IPV6,
+                                           MCAST_UNBLOCK_SOURCE );
+            }
 
         default:
             lua_pushstring( L, strerror( EOPNOTSUPP ) );
