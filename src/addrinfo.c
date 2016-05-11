@@ -65,7 +65,7 @@ static int addr_lua( lua_State *L )
     switch( info->ai_family ){
         case AF_INET:
             lua_createtable( L, 0, 2 );
-            iaddr = (struct sockaddr_in*)&info->ai_addr;
+            iaddr = (struct sockaddr_in*)info->ai_addr;
             lstate_num2tbl( L, "port", ntohs( iaddr->sin_port ) );
             lstate_str2tbl( L, "ip", inet_ntop( info->ai_family,
                                                 (const void*)&iaddr->sin_addr,
@@ -74,7 +74,7 @@ static int addr_lua( lua_State *L )
 
         case AF_INET6:
             lua_createtable( L, 0, 2 );
-            iaddr6 = (struct sockaddr_in6*)&info->ai_addr;
+            iaddr6 = (struct sockaddr_in6*)info->ai_addr;
             lstate_num2tbl( L, "port", ntohs( iaddr->sin_port ) );
             lstate_str2tbl( L, "ip", inet_ntop( info->ai_family,
                                                 (const void*)&iaddr6->sin6_addr,
