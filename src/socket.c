@@ -1353,7 +1353,9 @@ static int protocol_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
-    return s->protocol;
+    lua_pushinteger( L, s->protocol );
+
+    return 1;
 }
 
 
@@ -1361,7 +1363,9 @@ static int socktype_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
-    return s->socktype;
+    lua_pushinteger( L, s->socktype );
+
+    return 1;
 }
 
 
@@ -1369,7 +1373,9 @@ static int family_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
 
-    return s->family;
+    lua_pushinteger( L, s->family );
+
+    return 1;
 }
 
 
