@@ -405,9 +405,9 @@ send a message from a socket.
     - `msg:string`: message string.
     - `flag:...`: [MSG_* flags](#msg_-flags) constants.
 - **Returns**
-        - `len:number`: the number of bytes sent.
-        - `err:string`: error string.
-        - `again:bool`: true if len != #str, or errno is EAGAIN, EWOULDBLOCK or EINTR.
+    - `len:number`: the number of bytes sent.
+    - `err:string`: error string.
+    - `again:bool`: true if len != #str, or errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 **NOTE:** all return values will be nil if closed by peer.
 
