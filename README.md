@@ -196,14 +196,14 @@ these constants defined at the `llsocket.*`
 get a list of address info of tcp stream socket.
 
 - **Parameters**
-	- `host:string`: host string.
-	- `port:string`: either a decimal port number or a service name listed in services(5).
-	- `socktype:number` [SOCK_* types](#sock-types) constants.
-	- `protocol:number`: [IPROTO_* types](#ipproto-types) constants.
-	- `flags:...`: [AI_* flags](#ai-flags) constants.
+    - `host:string`: host string.
+    - `port:string`: either a decimal port number or a service name listed in services(5).
+    - `socktype:number` [SOCK_* types](#sock_-types) constants.
+    - `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
+    - `flags:...`: [AI_* flags](#ai_-flags) constants.
 - **Returns**
-	- `arr:table`: list of [addrinfo](#llsocketaddrinfo-instance-methods).
-	- `err:string`: error string.
+    - `arr:table`: list of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `err:string`: error string.
 
 
 ### arr, err = inet.getaddrinfo6( host [, port [, socktype [, protocol [, flag, ...]]]] )
@@ -211,14 +211,14 @@ get a list of address info of tcp stream socket.
 get a list of IPv6 address info of tcp stream socket.
 
 - **Parameters**
-	- `host:string`: host string.
-	- `port:string`: either a decimal port number or a service name listed in services(5).
-	- `socktype:number` [SOCK_* types](#sock-types) constants.
-	- `protocol:number`: [IPROTO_* types](#ipproto-types) constants.
-	- `flags:...`: [AI_* flags](#ai-flags) constants.
+    - `host:string`: host string.
+    - `port:string`: either a decimal port number or a service name listed in services(5).
+    - `socktype:number` [SOCK_* types](#sock_-types) constants.
+    - `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
+    - `flags:...`: [AI_* flags](#ai_-flags) constants.
 - **Returns**
-	- `arr:table`: list of [addrinfo](#llsocketaddrinfo-instance-methods).
-	- `err:string`: error string.
+    - `arr:table`: list of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `err:string`: error string.
 
 
 ## llsocket.unix Module
@@ -231,14 +231,14 @@ get a list of IPv6 address info of tcp stream socket.
 get a list of AF_UNIX address info.
 
 - **Parameters**
-	- `host:string`: host string.
-	- `port:string`: either a decimal port number or a service name listed in services(5).
-	- `socktype:number` [SOCK_* types](#sock-types) constants.
-	- `protocol:number`: [IPROTO_* types](#ipproto-types) constants.
-	- `flags:...`: [AI_* flags](#ai-flags) constants.
+    - `host:string`: host string.
+    - `port:string`: either a decimal port number or a service name listed in services(5).
+    - `socktype:number` [SOCK_* types](#sock_-types) constants.
+    - `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
+    - `flags:...`: [AI_* flags](#ai-flags) constants.
 - **Returns**
-	- `arr:table`: list of [addrinfo](#llsocketaddrinfo-instance-methods).
-	- `err:string`: error string.
+    - `arr:table`: list of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `err:string`: error string.
 
 
 ## llsocket.addrinfo Instance Methods
@@ -250,12 +250,12 @@ get a list of AF_UNIX address info.
 get hostname and service name.
 
 - **Parameters**
-	- `flag:...`: [AI_* flags](#ai-flags) constants.
+    - `flag:...`: [AI_* flags](#ai_-flags) constants.
 - **Returns**
-	- `ni:table`: name info table.
-		- `host:string`: hostname.
-		- `serv:string`: service name.
-	- `err:string`: error string.
+    - `ni:table`: name info table.
+        - `host:string`: hostname.
+        - `serv:string`: service name.
+    - `err:string`: error string.
 
 
 ## llsocket.socket Module
@@ -268,14 +268,14 @@ get hostname and service name.
 create a pair of connected sockets.
 
 - **Parameters**
-	- `socktype:number` [SOCK_* types](#sock-types) constants.
-	- `nonblock:boolean`: enable the O_NONBLOCK flag.
-	- `protocol:number`: [IPROTO_* types](#ipproto-types) constants.
+    - `socktype:number` [SOCK_* types](#sock_-types) constants.
+    - `nonblock:boolean`: enable the O_NONBLOCK flag.
+    - `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
 - **Returns**
-	- `socks:table`: pair of connected sockets.
-		- `1:socket`: instance of [socket](#llsocketsocket-instance-methods)
-		- `2:socket`: instance of [socket](#llsocketsocket-instance-methods)
-	- `err:string`: error string.
+    - `socks:table`: pair of connected sockets.
+        - `1:socket`: instance of [socket](#llsocketsocket-instance-methods)
+        - `2:socket`: instance of [socket](#llsocketsocket-instance-methods)
+    - `err:string`: error string.
 
 
 ### sock, err = socket.new( ai, nonblock )
@@ -283,11 +283,11 @@ create a pair of connected sockets.
 create an instance of socket
 
 - **Parameters**
-	- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
-	- `nonblock:boolean`: enable the O_NONBLOCK flag.
+    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `nonblock:boolean`: enable the O_NONBLOCK flag.
 - **Returns**
-	- `sock:socket`: instance of [socket](#llsocketsocket-instance-methods).
-	- `err:string`: error string.
+    - `sock:socket`: instance of [socket](#llsocketsocket-instance-methods).
+    - `err:string`: error string.
 
 
 
@@ -299,10 +299,10 @@ create an instance of socket
 duplicate an instance of socket.
 
 - **Parameters**
-	- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 - **Returns**
-	- `sock:socket`: instance of [socket](#llsocketsocket-instance-methods).
-	- `err:string`: error string.
+    - `sock:socket`: instance of [socket](#llsocketsocket-instance-methods).
+    - `err:string`: error string.
 
 
 ### fd = sock:fd()
@@ -310,7 +310,7 @@ duplicate an instance of socket.
 get a socket file descriptor.
 
 - **Returns**
-	- `fd:number`: socket file descriptor.
+    - `fd:number`: socket file descriptor.
 
 
 ### af = sock:family()
@@ -318,7 +318,7 @@ get a socket file descriptor.
 get a address family type.
 
 - **Returns**
-	- `af:number`: [AF_* types](#af-types) constants.
+    - `af:number`: [AF_* types](#af_-types) constants.
 
 
 ### st = sock:socktype()
@@ -326,7 +326,7 @@ get a address family type.
 get a socket type.
 
 - **Returns**
-	- `st:number`: [SOCK_* type](#sock-types) constants.
+    - `st:number`: [SOCK_* type](#sock_-types) constants.
 
 
 ### proto = sock:protocol()
@@ -334,7 +334,7 @@ get a socket type.
 get a protocol type.
 
 - **Returns**
-	- `pt:number`: [IPPROTO_* type](#ipproto-types) constants.
+    - `pt:number`: [IPPROTO_* type](#ipproto_-types) constants.
 
 
 ### err = sock:bind( [ai] )
@@ -342,9 +342,9 @@ get a protocol type.
 bind the socket to an address.
 
 - **Parameters**
-	- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 - **Returns**
-	- `err:string`: error string.
+    - `err:string`: error string.
 
 
 ### err = sock:connect( [ai] )
@@ -352,9 +352,9 @@ bind the socket to an address.
 initiate a new connection.
 
 - **Parameters**
-	- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 - **Returns**
-	- `err:string`: error string.
+    - `err:string`: error string.
 
 
 ### err = sock:shutdown( [flag] )
@@ -362,9 +362,9 @@ initiate a new connection.
 shut down part of a full-duplex connection.
 
 - **Parameters**
-	- `flag:number`: [SHUT_* flag](#shut-flags) constants.
+    - `flag:number`: [SHUT_* flag](#shut_-flags) constants.
 - **Returns**
-	- `err:string`: error string.
+    - `err:string`: error string.
 
 
 ### err = sock:close( [flag] )
@@ -372,9 +372,9 @@ shut down part of a full-duplex connection.
 close a file descriptor.
 
 - **Parameters**
-	- `flag:number`: [SHUT_* flag](#shut-flags) constants.
+    - `flag:number`: [SHUT_* flag](#shut_-flags) constants.
 - **Returns**
-	- `err:string`: error string.
+    - `err:string`: error string.
 
 
 ### err = sock:listen( [backlog] )
@@ -382,9 +382,9 @@ close a file descriptor.
 listen for connections.
 
 - **Parameters**
-	- `backlog:number`: the maximum length for the queue of pending connections.
+    - `backlog:number`: the maximum length for the queue of pending connections.
 - **Returns**
-	- `err:string`: error string.
+    - `err:string`: error string.
 
 
 ### sock, err, again = sock:accept()
@@ -392,9 +392,9 @@ listen for connections.
 accept a connection.
 
 - **Returns**
-	- `sock:socket`: instance of [socket](#llsocketsocket-instance-methods).
-	- `err:string`: error string.
-	- `again:bool`: true if errno is EAGAIN, EWOULDBLOCK, EINTR or ECONNABORTED.
+    - `sock:socket`: instance of [socket](#llsocketsocket-instance-methods).
+    - `err:string`: error string.
+    - `again:bool`: true if errno is EAGAIN, EWOULDBLOCK, EINTR or ECONNABORTED.
 
 
 ### len, err, again = sock:send( msg [, flag, ...] )
@@ -402,12 +402,12 @@ accept a connection.
 send a message from a socket.
 
 - **Parameters**
-	- `msg:string`: message string.
-	- `flag:...`: [MSG_* flags](#msg-flags) constants.
+    - `msg:string`: message string.
+    - `flag:...`: [MSG_* flags](#msg_-flags) constants.
 - **Returns**
-		- `len:number`: the number of bytes sent.
-		- `err:string`: error string.
-		- `again:bool`: true if len != #str, or errno is EAGAIN, EWOULDBLOCK or EINTR.
+        - `len:number`: the number of bytes sent.
+        - `err:string`: error string.
+        - `again:bool`: true if len != #str, or errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 **NOTE:** all return values will be nil if closed by peer.
 
@@ -417,13 +417,13 @@ send a message from a socket.
 send a message to specified destination address.
 
 - **Parameters**
-	- `msg:string`: message string.
-	- `addr:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
-	- `flag:...`: [MSG_* flags](#msg-flags) constants.
+    - `msg:string`: message string.
+    - `addr:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `flag:...`: [MSG_* flags](#msg_-flags) constants.
 - **Returns**
-	- `len:number`: the number of bytes sent.
-	- `err:string`: error string.
-	- `again:bool`: true if len != #str, or errno is EAGAIN, EWOULDBLOCK or EINTR.
+    - `len:number`: the number of bytes sent.
+    - `err:string`: error string.
+    - `again:bool`: true if len != #str, or errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 **NOTE:** all return values will be nil if closed by peer.
 
@@ -433,13 +433,13 @@ send a message to specified destination address.
 send a file.
 
 - **Parameters**
-	- `fd:number`: file descriptor.
-	- `bytes:number`: how many bytes of the file should be sent.
-	- `offset:number`: where to begin in the file.
+    - `fd:number`: file descriptor.
+    - `bytes:number`: how many bytes of the file should be sent.
+    - `offset:number`: where to begin in the file.
 - **Returns**
-	- `len:number`: the number of bytes sent.
-	- `err:string`: error string.
-	- `again:bool`: true if len != #str, or errno is EAGAIN or EINTR.
+    - `len:number`: the number of bytes sent.
+    - `err:string`: error string.
+    - `again:bool`: true if len != #str, or errno is EAGAIN or EINTR.
 
 **NOTE:** all return values will be nil if closed by peer.
 
@@ -449,12 +449,12 @@ send a file.
 receive a message.
 
 - **Parameters**
-	- `bufsize:number`: working buffer size of receive operation.
-	- `flag:...`: [MSG_* flags](#msg-flags) constants.
+    - `bufsize:number`: working buffer size of receive operation.
+    - `flag:...`: [MSG_* flags](#msg_-flags) constants.
 - **Returns**
-	- `msg:string`: received message string.
-	- `err:string`: error string.
-	- `again:bool`: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
+    - `msg:string`: received message string.
+    - `err:string`: error string.
+    - `again:bool`: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 **NOTE:** all return values will be nil if closed by peer.
 
@@ -464,13 +464,13 @@ receive a message.
 receive message and address info.
 
 - **Parameters**
-	- `bufsize:number`: working buffer size of receive operation.
-	- `flag:...`: [MSG_* flags](#msg-flags) constants.
+    - `bufsize:number`: working buffer size of receive operation.
+    - `flag:...`: [MSG_* flags](#msg_-flags) constants.
 - **Returns**
-	- `msg:string`: received message string.
-	- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
-	- `err:string`: error string.
-	- `again:bool`: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
+    - `msg:string`: received message string.
+    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `err:string`: error string.
+    - `again:bool`: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 **NOTE:** all return values will be nil if closed by peer.
 
