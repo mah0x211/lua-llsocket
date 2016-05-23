@@ -76,7 +76,7 @@ get a list of AF_UNIX address info.
 get hostname and service name.
 
 - **Parameters**
-    - `flag:...`: [AI_* flags](#ai_-flags) constants.
+    - `flag:...`: [NI_* flags](#ni_-flags) constants.
 - **Returns**
     - `ni:table`: name info table.
         - `host:string`: hostname.
