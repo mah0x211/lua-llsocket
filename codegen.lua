@@ -14,31 +14,31 @@ for _, path in ipairs( _G.arg ) do
     if path:find('%.txt$') then
         file = assert( io.open( path ) );
         decl = ('GEN_%s_DECL'):format( path:match('/([^/]+)%.txt'):upper() );
-        
+
         -- remove duplicate
         tbl = {};
         for _ in file:lines() do
-            def = _:match('^[A-Z0-9_]+$' );
+            def = _:match('^[a-zA-Z0-9_]+$' );
             if not def then
                 error( 'invalid line: ' .. _ );
             end
             tbl[def] = true;
         end
         file:close();
-        
+
         -- to array
         arr = {};
         for _ in pairs( tbl ) do
             arr[#arr+1] = _;
         end
         table.sort( arr );
-        
+
         -- generate
         def = '';
         for _, v in ipairs( arr ) do
             def = def .. TMPL:format( v, v, v );
         end
-        
+
         -- save decl
         decls[decl] = def;
     end
