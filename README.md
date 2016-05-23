@@ -143,7 +143,7 @@ these constants defined at the `llsocket.*`
 - IPPROTO_RAW
 
 
-### MSG_* FLAGS
+### MSG_* Flags
 
 - MSG_CMSG_CLOEXEC
 - MSG_CONFIRM
@@ -407,7 +407,7 @@ send a message from a socket.
 - **Returns**
     - `len:number`: the number of bytes sent.
     - `err:string`: error string.
-    - `again:bool`: true if len != #str, or errno is EAGAIN, EWOULDBLOCK or EINTR.
+    - `again:bool`: true if len != #msg, or errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 **NOTE:** all return values will be nil if closed by peer.
 
@@ -423,7 +423,7 @@ send a message to specified destination address.
 - **Returns**
     - `len:number`: the number of bytes sent.
     - `err:string`: error string.
-    - `again:bool`: true if len != #str, or errno is EAGAIN, EWOULDBLOCK or EINTR.
+    - `again:bool`: true if len != #msg, or errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 **NOTE:** all return values will be nil if closed by peer.
 
@@ -439,7 +439,7 @@ send a file.
 - **Returns**
     - `len:number`: the number of bytes sent.
     - `err:string`: error string.
-    - `again:bool`: true if len != #str, or errno is EAGAIN or EINTR.
+    - `again:bool`: true if len != #bytes, or errno is EAGAIN or EINTR.
 
 **NOTE:** all return values will be nil if closed by peer.
 
@@ -474,48 +474,387 @@ receive message and address info.
 
 **NOTE:** all return values will be nil if closed by peer.
 
+
+### bool, err = sock:atmark()
+
+determine whether socket is at out-of-band mark.
+
+- **Returns**
+    - `bool:boolean`: true if the socket is at the out-of-band mark.
+    - `err:string`: error string.
+
+
+### ai, err = sock:getsockname()
+
+get socket name.
+
+- **Returns**
+    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `err:string`: error string.
+
+
+### ai, err = sock:getpeername()
+
+get address of connected peer.
+
+- **Returns**: same as [sock:getsockname](#ai-err--sockgetsockname).
+
+
+### enable, err = sock:cloexec( [enable] )
+
+determine whether the FD_CLOEXEC flag enabled, or change the state to an argument value.
+
+- **Parameters**
+    - `enable:boolean`: to enable or disable the FD_CLOEXEC flag.
+- **Returns**
+    - `enable:boolean`: state of the FD_CLOEXEC flag.
+    - `err:string`: error string.
+
+
+### enable, err = sock:nonblock( [enable] )
+
+determine whether the O_NONBLOCK flag enabled, or change the state to an argument value.
+
+- **Parameters**
+    - `enable:boolean`: to enable or disable the O_NONBLOCK flag.
+- **Returns**
+    - `enable:boolean`: state of the O_NONBLOCK flag.
+    - `err:string`: error string.
+
+
+### errno, err = sock:error()
+
+get pending socket error status with and clears it.
+
+- **Returns**
+    - `errno:number`: number of last error.
+    - `err:string`: error string.
+
+
+### bool, err = sock:acceptconn()
+
+determine whether the SO_ACCEPTCONN flag enabled.
+
+- **Returns**
+    - `bool:boolean`: state of the SO_ACCEPTCONN flag.
+    - `err:string`: error string.
+
+
+### enable, err = sock:tcpnodelay( [enable] )
+
+determine whether the TCP_NODELAY flag enabled, or change the state to an argument value.
+
+- **Parameters**
+    - `enable:boolean`: to enable or disable the TCP_NODELAY flag.
+- **Returns**
+    - `enable:boolean`: state of the TCP_NODELAY flag.
+    - `err:string`: error string.
+
+
+### sec, err = sock:tcpkeepintvl( [sec] )
+
+get the TCP_KEEPINTVL value, or change that value to an argument value.
+
+- **Parameters**
+    - `sec:number`: set the TCP_KEEPINTVL value.
+- **Returns**
+    - `sec:number`: value of the TCP_KEEPINTVL.
+    - `err:string`: error string.
+
+
+### cnt, err = sock:tcpkeepcnt( [cnt] )
+
+get the TCP_KEEPCNT value, or change that value to an argument value.
+
+- **Parameters**
+    - `cnt:number`: set the TCP_KEEPCNT value.
+- **Returns**
+    - `sec:number`: value of the TCP_KEEPCNT.
+    - `err:string`: error string.
+
+
+### sec, err = sock:tcpkeepalive( [sec] )
+
+get the TCP_KEEPALIVE value, or set that value if argument passed.
+
+- **Parameters**
+    - `sec:number`: set the TCP_KEEPALIVE value.
+- **Returns**
+    - `sec:number`: value of the TCP_KEEPALIVE.
+    - `err:string`: error string.
+
+
+### enable, err = sock:tcpcork( [enable] )
+
+determine whether the TCP_CORK flag enabled, or change the state to an argument value.
+
+- **Parameters**
+    - `enable:boolean`: to enable or disable the TCP_CORK flag.
+- **Returns**
+    - `enable:boolean`: state of the TCP_CORK flag.
+    - `err:string`: error string.
+
+
+### enable, err = sock:reuseport( [enable] )
+
+determine whether the SO_REUSEPORT flag enabled, or change the state to an argument value.
+
+- **Parameters**
+    - `enable:boolean`: to enable or disable the SO_REUSEPORT flag.
+- **Returns**
+    - `bool:boolean`: state of the SO_REUSEADDR flag.
+    - `err:string`: error string.
+
+
+### enable, err = sock:reuseaddr( [enable] )
+
+determine whether the SO_REUSEADDR flag enabled, or change the state to an argument value.
+
+- **Parameters**
+    - `enable:boolean`: to enable or disable the SO_REUSEADDR flag.
+- **Returns**
+    - `enable:boolean`: state of the SO_REUSEADDR flag.
+    - `err:string`: error string.
+
+
+### enable, err = sock:broadcast( [enable] )
+
+determine whether the SO_BROADCAST flag enabled, or change the state to an argument value.
+
+- **Parameters**
+    - `enable:boolean`: to enable or disable the SO_BROADCAST flag.
+- **Returns**
+    - `enable:boolean`: state of the SO_BROADCAST flag.
+    - `err:string`: error string.
+
+
+### enable, err = sock:debug( [enable] )
+
+determine whether the SO_DEBUG flag enabled, or change the state to an argument value.
+
+- **Parameters**
+    - `enable:boolean`: to enable or disable the SO_DEBUG flag.
+- **Returns**
+    - `enable:boolean`: state of the SO_DEBUG flag.
+    - `err:string`: error string.
+
+
+### enable, err = sock:keepalive( [enable] )
+
+determine whether the SO_KEEPALIVE flag enabled, or change the state to an argument value.
+
+- **Parameters**
+    - `enable:boolean`: to enable or disable the SO_KEEPALIVE flag.
+- **Returns**
+    - `enable:boolean`: state of the SO_KEEPALIVE flag.
+    - `err:string`: error string.
+
+
+### enable, err = sock:oobinline( [enable] )
+
+determine whether the SO_OOBINLINE flag enabled, or change the state to an argument value.
+
+- **Parameters**
+    - `enable:boolean`: to enable or disable the SO_OOBINLINE flag.
+- **Returns**
+    - `enable:boolean`: state of the SO_OOBINLINE flag.
+    - `err:string`: error string.
+
+
+### enable, err = sock:dontroute( [enable] )
+
+determine whether the SO_DONTROUTE flag enabled, or change the state to an argument value.
+
+- **Parameters**
+    - `enable:boolean`: to enable or disable the SO_DONTROUTE flag.
+- **Returns**
+    - `enable:boolean`: state of the SO_DONTROUTE flag.
+    - `err:string`: error string.
+
+
+### enable, err = sock:timestamp( [enable] )
+
+determine whether the SO_TIMESTAMP flag enabled, or change the state to an argument value.
+
+- **Parameters**
+    - `enable:boolean`: to enable or disable the SO_TIMESTAMP flag.
+- **Returns**
+    - `enable:boolean`: state of the SO_TIMESTAMP flag.
+    - `err:string`: error string.
+
+
+### sz, err = sock:rcvbuf( [sz] )
+
+get the SO_RCVBUF value, or change that value to an argument value.
+
+- **Parameters**
+    - `sz:number`: set the SO_RCVBUF value.
+- **Returns**
+    - `sz:number`: value of the SO_RCVBUF.
+    - `err:string`: error string.
+
+
+### sz, err = sock:rcvlowat( [sz] )
+
+get the SO_RCVLOWAT value, or change that value to an argument value.
+
+- **Parameters**
+    - `sz:number`: set the SO_RCVLOWAT value.
+- **Returns**
+    - `sz:number`: value of the SO_RCVLOWAT.
+    - `err:string`: error string.
+
+
+### sz, err = sock:sndbuf( [sz] )
+
+get the SO_SNDBUF value, or change that value to an argument value.
+
+- **Parameters**
+    - `sz:number`: set the SO_SNDBUF value.
+- **Returns**
+    - `sz:number`: value of the SO_SNDBUF.
+    - `err:string`: error string.
+
+
+### sz, err = sock:sndlowat( [sz] )
+
+get the SO_SNDLOWAT value, or change that value to an argument value.
+
+- **Parameters**
+    - `sz:number`: set the SO_SNDLOWAT value.
+- **Returns**
+    - `sz:number`: value of the SO_SNDLOWAT.
+    - `err:string`: error string.
+
+
+### sec, err = sock:rcvtimeo( [sec] )
+
+get the SO_RCVTIMEO value, or change that value to an argument value.
+
+- **Parameters**
+    - `sec:number`: set the SO_RCVTIMEO value.
+- **Returns**
+    - `sec:number`: value of the SO_RCVTIMEO.
+    - `err:string`: error string.
+
+
+### sec, err = sock:sndtimeo( [sec] )
+
+get the SO_SNDTIMEO value, or change that value to an argument value.
+
+- **Parameters**
+    - `sec:number`: set the SO_SNDTIMEO value.
+- **Returns**
+    - `sec:number`: value of the SO_SNDTIMEO.
+    - `err:string`: error string.
+
+
+### enable, err = sock:mcastloop( [enable] )
+
+determine whether the IP_MULTICAST_LOOP flag enabled, or change the state to an argument value.
+
+- **Parameters**
+    - `enable:boolean`: to enable or disable the IP_MULTICAST_LOOP flag.
+- **Returns**
+    - `enable:boolean`: state of the IP_MULTICAST_LOOP flag.
+    - `err:string`: error string.
+
+
+### ttl, err = sock:mcastttl( [ttl] )
+
+get the IP_MULTICAST_TTL value, or change that value to an argument value.
+
+- **Parameters**
+    - `ttl:number`: set the IP_MULTICAST_TTL value.
+- **Returns**
+    - `sec:number`: value of the IP_MULTICAST_TTL.
+    - `err:string`: error string.
+
+
+### ifname, err = sock:mcastif( [ifname] )
+
+get the IP_MULTICAST_IF value, or change that value to an argument value.
+
+- **Parameters**
+    - `ifname:string`: set the IP_MULTICAST_IF value.
+- **Returns**
+    - `ifnames:string`: value of the IP_MULTICAST_IF.
+    - `err:string`: error string.
+
+
+### err = sock:mcastjoin( mcaddr [, ifname] )
+
+set the IP_ADD_MEMBERSHIP or IPV6_JOIN_GROUP (if IPv6) value.
+
+- **Parameters**
+    - `mcaddr:string`: multicast group address.
+    - `ifname:string`: interface name.
+- **Returns**
+    - `err:string`: error string.
+
+
+### err = sock:mcastleave( mcaddr [, ifname] )
+
+set the IP_DROP_MEMBERSHIP or IPV6_LEAVE_GROUP (if IPv6) value.
+
+- **Parameters**
+    - `mcaddr:string`: multicast group address.
+    - `ifname:string`: interface name.
+- **Returns**
+    - `err:string`: error string.
+
+
+### err = sock:mcastjoinsrc( mcaddr, srcaddr [, ifname] )
+
+set the IP_ADD_SOURCE_MEMBERSHIP or MCAST_JOIN_SOURCE_GROUP (if IPv6) value.
+
+- **Parameters**
+    - `mcaddr:string`: multicast group address.
+    - `srcaddr:string`: multicast source address.
+    - `ifname:string`: interface name.
+- **Returns**
+    - `err:string`: error string.
+
+
+### err = sock:mcastleavesrc( mcaddr, srcaddr [, ifname] )
+
+set the IP_DROP_SOURCE_MEMBERSHIP or MCAST_LEAVE_SOURCE_GROUP (if IPv6) value.
+
+- **Parameters**
+    - `mcaddr:string`: multicast group address.
+    - `srcaddr:string`: multicast source address.
+    - `ifname:string`: interface name.
+- **Returns**
+    - `err:string`: error string.
+
+
+### err = sock:mcastblocksrc( mcaddr, srcaddr [, ifname] )
+
+set the IP_BLOCK_SOURCE or MCAST_BLOCK_SOURCE (if IPv6) value.
+
+- **Parameters**
+    - `mcaddr:string`: multicast group address.
+    - `srcaddr:string`: multicast source address.
+    - `ifname:string`: interface name.
+- **Returns**
+    - `err:string`: error string.
+
+
+### err = sock:mcastunblocksrc( mcaddr, srcaddr [, ifname] )
+
+set the IP_UNBLOCK_SOURCE or MCAST_UNBLOCK_SOURCE (if IPv6) value.
+
+- **Parameters**
+    - `mcaddr:string`: multicast group address.
+    - `srcaddr:string`: multicast source address.
+    - `ifname:string`: interface name.
+- **Returns**
+    - `err:string`: error string.
+
+
 ***
 
 # TODO
-
-## Documentation
-
-- bool, err = sock:atmark()
-- ai, err = sock:getsockname()
-- ai, err = sock:getpeername()
-- enable, err = sock:cloexec( [enable] )
-- enable, err = sock:nonblock( [enable] )
-- errno, err = sock:error()
-- bool, err = sock:acceptconn()
-- enable, err = sock:tcpnodelay( [enable] )
-- sec, err = sock:tcpkeepintvl( [sec] )
-- cnt, err = sock:tcpkeepcnt( [cnt] )
-- sec, err = sock:tcpkeepalive( [sec] )
-- enable, err = sock:tcpcork( [enable] )
-- enable, err = sock:reuseport( [enable] )
-- enable, err = sock:reuseaddr( [enable] )
-- enable, err = sock:broadcast( [enable] )
-- enable, err = sock:debug( [enable] )
-- enable, err = sock:keepalive( [enable] )
-- enable, err = sock:oobinline( [enable] )
-- enable, err = sock:dontroute( [enable] )
-- enable, err = sock:timestamp( [enable] )
-- sz, err = sock:rcvbuf( [sz] )
-- sz, err = sock:rcvlowat( [sz] )
-- sz, err = sock:sndbuf( [sz] )
-- sz, err = sock:sndlowat( [sz] )
-- sec, err = sock:rcvtimeo( [sec] )
-- sec, err = sock:sndtimeo( [sec] )
-- enable, err = sock:mcastloop( [enable] )
-- ttl, err = sock:mcastttl( [ttl] )
-- ifname, err = sock:mcastif( [ifname] )
-- err = sock:mcastjoin( mcaddr [, ifname] )
-- err = sock:mcastleave( mcaddr [, ifname] )
-- err = sock:mcastjoinsrc( mcaddr, srcaddr [, ifname] )
-- err = sock:mcastleavesrc( mcaddr, srcaddr [, ifname] )
-- err = sock:mcastblocksrc( mcaddr, srcaddr [, ifname] )
-- err = sock:mcastunblocksrc( mcaddr, srcaddr [, ifname] )
-
 
 ## Implementation
 
