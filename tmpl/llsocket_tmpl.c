@@ -61,6 +61,8 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
 
     // for send/recv flags
 #define GEN_MSG_FLAGS_DECL
+    // address family
+#define GEN_ADDRESS_FAMILY_DECL
     // socktype
 #define GEN_SOCKTYPE_DECL
     // protocol
