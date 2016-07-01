@@ -71,7 +71,7 @@ get a list of AF_UNIX address info.
 
 `llsocket.addrinfo` (address info) instance has following methods.
 
-### ni, err = ai:nameinfo( [flag, ...] )
+### ni, err = ai:getnameinfo( [flag, ...] )
 
 get hostname and service name.
 
