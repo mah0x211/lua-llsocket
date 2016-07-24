@@ -173,7 +173,7 @@ bind the socket to an address.
     - `err:string`: error string.
 
 
-### err = sock:connect( [ai] )
+### err, again = sock:connect( [ai] )
 
 initiate a new connection.
 
@@ -181,6 +181,7 @@ initiate a new connection.
     - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 - **Returns**
     - `err:string`: error string.
+    - `again:boolean`: true if errno is EINPROGRESS.
 
 
 ### err = sock:shutdown( [flag] )
