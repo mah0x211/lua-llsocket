@@ -1312,10 +1312,14 @@ static int connect_lua( lua_State *L )
         addrlen = info->ai_addrlen;
     }
 
-    if( connect( s->fd, addr, addrlen ) == 0 ||
-        // nonblocking connect
-        errno == EINPROGRESS ){
+    if( connect( s->fd, addr, addrlen ) == 0 ){
         return 0;
+    }
+    // nonblocking connect
+    else if( errno == EINPROGRESS ){
+        lua_pushnil( L );
+        lua_pushboolean( L, 1 );
+        return 2;
     }
 
     // got error
