@@ -1043,13 +1043,10 @@ static int sendfile_lua( lua_State *L )
 
     // invalid length
     if( !len ){
-        errno = EINVAL;
+        lua_pushnil( L );
+        lua_pushstring( L, strerror( EINVAL ) );
+        return 2;
     }
-    // TODO: should test the following behaviors;
-    // - interruption
-    // - close a file
-    // - close a sender socket
-    // - close a receiver socket
     else if( ( rv = sendfile( s->fd, fd, &offset, len ) ) != -1 ){
         lua_pushinteger( L, rv );
         lua_pushnil( L );
@@ -1064,7 +1061,7 @@ static int sendfile_lua( lua_State *L )
         return 3;
     }
     // closed by peer
-    else if( errno == EPIPE ){
+    else if( errno == EPIPE || errno == ECONNRESET ){
         return 0;
     }
 
