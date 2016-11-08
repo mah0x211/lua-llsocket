@@ -1129,8 +1129,6 @@ static int sendfile_lua( lua_State *L )
     }
     else if( sendfile( fd, s->fd, offset, len, NULL, &nbytes, 0 ) == 0 ){
         lua_pushinteger( L, nbytes );
-        lua_pushnil( L );
-        lua_pushboolean( L, len - nbytes );
         return 1;
     }
     // again
