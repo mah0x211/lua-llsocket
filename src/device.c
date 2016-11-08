@@ -1,11 +1,11 @@
 /*
  *  Copyright 2015 Masatoshi Teruya. All rights reserved.
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a 
- *  copy of this software and associated documentation files (the "Software"), 
- *  to deal in the Software without restriction, including without limitation 
- *  the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- *  and/or sell copies of the Software, and to permit persons to whom the 
+ *  Permission is hereby granted, free of charge, to any person obtaining a
+ *  copy of this software and associated documentation files (the "Software"),
+ *  to deal in the Software without restriction, including without limitation
+ *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *  and/or sell copies of the Software, and to permit persons to whom the
  *  Software is furnished to do so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
@@ -13,10 +13,10 @@
  *
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL 
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  *  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  *  DEALINGS IN THE SOFTWARE.
  *
  *  device.c
@@ -85,7 +85,7 @@ static int macaddrs_lua( lua_State *L )
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    
+
     return 2;
 }
 
@@ -97,18 +97,18 @@ static int macaddrs_lua( lua_State *L )
 static int macaddrs_lua( lua_State *L )
 {
     struct ifaddrs *ifa;
-    
+
     if( getifaddrs( &ifa ) == 0 )
     {
         lua_newtable( L );
-        
+
         if( ifa )
         {
             struct ifaddrs *ptr = ifa;
             char buf[INET6_ADDRSTRLEN];
             unsigned char *mac = NULL;
             struct sockaddr_dl *sd;
-            
+
             do
             {
                 if( ptr->ifa_addr->sa_family == AF_LINK )
@@ -117,38 +117,38 @@ static int macaddrs_lua( lua_State *L )
                     switch( sd->sdl_alen ){
                         case 6:
                             mac = (unsigned char*)LLADDR( sd );
-                            snprintf( 
-                                buf, INET6_ADDRSTRLEN, 
+                            snprintf(
+                                buf, INET6_ADDRSTRLEN,
                                 "%02x:%02x:%02x:%02x:%02x:%02x",
-                                *mac, mac[1], mac[2], mac[3], mac[4], mac[5] 
+                                *mac, mac[1], mac[2], mac[3], mac[4], mac[5]
                             );
                             lstate_str2tbl( L, ptr->ifa_name, buf );
                         break;
                         case 8:
                             mac = (unsigned char*)LLADDR( sd );
-                            snprintf( 
-                                buf, INET6_ADDRSTRLEN, 
+                            snprintf(
+                                buf, INET6_ADDRSTRLEN,
                                 "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
-                                *mac, mac[1], mac[2], mac[3], mac[4], mac[5], 
+                                *mac, mac[1], mac[2], mac[3], mac[4], mac[5],
                                 mac[6], mac[7]
                             );
                             lstate_str2tbl( L, ptr->ifa_name, buf );
                         break;
                     }
                 }
-                
+
                 ptr = ptr->ifa_next;
             } while( ptr );
         }
-        
+
         freeifaddrs( ifa );
         return 1;
     }
-    
+
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    
+
     return 2;
 }
 #endif
@@ -162,13 +162,13 @@ LUALIB_API int luaopen_llsocket_device( lua_State *L )
         { NULL, NULL }
     };
     struct luaL_Reg *ptr = method;
-    
+
     lua_newtable( L );
     do {
         lstate_fn2tbl( L, ptr->name, ptr->func );
         ptr++;
     } while( ptr->name );
-    
+
     return 1;
 }
 

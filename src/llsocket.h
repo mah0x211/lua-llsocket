@@ -50,7 +50,7 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <net/if.h>
-#include <sys/ioctl.h> 
+#include <sys/ioctl.h>
 #include <ifaddrs.h>
 // lualib
 #include <lauxlib.h>
@@ -188,11 +188,11 @@ static inline struct addrinfo *lls_addrinfo_alloc( lua_State *L,
 static inline void *lls_checkudata( lua_State *L, int idx, const char *tname )
 {
     const int argc = lua_gettop( L );
-    
+
     if( argc >= idx )
     {
         void *udata = NULL;
-        
+
         switch( lua_type( L, idx ) ){
             case LUA_TUSERDATA:
                 udata = lua_touserdata( L, idx );
@@ -210,7 +210,7 @@ static inline void *lls_checkudata( lua_State *L, int idx, const char *tname )
         }
         luaL_argerror( L, idx, "llsocket.addr expected" );
     }
-    
+
     return NULL;
 }
 
@@ -294,11 +294,11 @@ static inline int lls_optflags( lua_State *L, int idx )
 {
     const int argc = lua_gettop( L );
     int flg = 0;
-    
+
     for(; idx <= argc; idx++ ){
         flg |= (int)lls_optinteger( L, idx, 0 );
     }
-    
+
     return flg;
 }
 
@@ -380,11 +380,11 @@ static inline int lls_opt6inaddr( lua_State *L, int idx, int socktype,
 
 
 // fd option
-static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl, 
+static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl,
                                  int fl )
 {
     int flg = fcntl( fd, getfl );
-    
+
     if( flg != -1 )
     {
         // no args
@@ -392,7 +392,7 @@ static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl,
             lua_pushboolean( L, flg & fl );
             return 1;
         }
-        
+
         // type check
         luaL_checktype( L, 2, LUA_TBOOLEAN );
         // set flag
@@ -403,24 +403,24 @@ static inline int lls_fcntl_lua( lua_State *L, int fd, int getfl, int setfl,
         else {
             flg &= ~fl;
         }
-        
+
         if( fcntl( fd, setfl, flg ) == 0 ){
             lua_pushboolean( L, flg & fl );
             return 1;
         }
     }
-    
+
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    
+
     return 2;
 }
 
 
 // socket option
 
-static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level, 
+static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level,
                                        int opt, int type )
 {
     int flg = 0;
@@ -458,30 +458,30 @@ static inline int lls_sockopt_int_lua( lua_State *L, int fd, int level,
         }
         return 1;
     }
-    
+
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    
+
     return 2;
 }
 
 
-static inline int lls_sockopt_timeval_lua( lua_State *L, int fd, int level, 
+static inline int lls_sockopt_timeval_lua( lua_State *L, int fd, int level,
                                            int opt )
 {
     struct timeval tval = {0,0};
     socklen_t len = sizeof( struct timeval );
-    
+
     if( !lua_isnoneornil( L, 2 ) )
     {
         double tnum = (double)luaL_checknumber( L, 2 );
         double hi = 0;
         double lo = modf( tnum, &hi );
-        
+
         tval.tv_sec = (time_t)hi;
         tval.tv_usec = (suseconds_t)(lo * 1000000);
-    
+
         // set delay flag
         if( setsockopt( fd, level, opt, (void*)&tval, len ) == 0 ){
             lua_pushnumber( L, tnum );
@@ -494,11 +494,11 @@ static inline int lls_sockopt_timeval_lua( lua_State *L, int fd, int level,
         );
         return 1;
     }
-    
+
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    
+
     return 2;
 }
 

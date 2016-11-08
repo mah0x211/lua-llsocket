@@ -1,11 +1,11 @@
 /*
  *  Copyright (C) 2015 Masatoshi Teruya
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a 
- *  copy of this software and associated documentation files (the "Software"), 
- *  to deal in the Software without restriction, including without limitation 
- *  the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- *  and/or sell copies of the Software, and to permit persons to whom the 
+ *  Permission is hereby granted, free of charge, to any person obtaining a
+ *  copy of this software and associated documentation files (the "Software"),
+ *  to deal in the Software without restriction, including without limitation
+ *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *  and/or sell copies of the Software, and to permit persons to whom the
  *  Software is furnished to do so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
@@ -13,10 +13,10 @@
  *
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL 
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  *  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  *  DEALINGS IN THE SOFTWARE.
  *
  *
@@ -676,16 +676,16 @@ static int atmark_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
     int rc = sockatmark( s->fd );
-    
+
     if( rc != -1 ){
         lua_pushboolean( L, rc );
         return 1;
     }
-    
+
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    
+
     return 2;
 }
 
@@ -714,7 +714,7 @@ static int getsockname_lua( lua_State *L )
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    
+
     return 2;
 }
 
@@ -747,7 +747,7 @@ static int getpeername_lua( lua_State *L )
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    
+
     return 2;
 }
 
@@ -758,7 +758,7 @@ static int shutdown_lua( lua_State *L )
 {
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
     int how = (int)lls_checkinteger( L, 2 );
-    
+
     if( shutdown( s->fd, how ) == 0 ){
         return 0;
     }
@@ -795,7 +795,7 @@ static int close_lua( lua_State *L )
             return 1;
         }
     }
-    
+
     return 0;
 }
 
@@ -805,7 +805,7 @@ static int listen_lua( lua_State *L )
     lls_socket_t *s = luaL_checkudata( L, 1, SOCKET_MT );
     // default backlog size
     lua_Integer backlog = lls_optinteger( L, 2, SOMAXCONN );
-    
+
     // check args
     if( backlog < 1 || backlog > INT_MAX ){
         return luaL_error( L, "backlog range must be 1 to %d", INT_MAX );
@@ -816,7 +816,7 @@ static int listen_lua( lua_State *L )
         lua_pushstring( L, strerror( errno ) );
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -833,7 +833,7 @@ static int accept_lua( lua_State *L )
 
 #if defined(__linux__)
     int flg = fcntl( s->fd, F_GETFL );
-    
+
     // got error
     if( flg == -1 ){
         lua_pushnil( L );
@@ -935,7 +935,7 @@ static int send_lua( lua_State *L )
     const char *buf = lls_checklstring( L, 2, &len );
     int flg = lls_optflags( L, 3 );
     ssize_t rv = 0;
-    
+
     // invalid length
     if( !len ){
         lua_pushnil( L );
@@ -985,14 +985,14 @@ static int sendto_lua( lua_State *L )
     struct addrinfo *info = luaL_checkudata( L, 3, ADDRINFO_MT );
     int flg = lls_optflags( L, 4 );
     ssize_t rv = 0;
-    
+
     // invalid length
     if( !len ){
         lua_pushnil( L );
         lua_pushstring( L, strerror( EINVAL ) );
         return 2;
     }
-    
+
     rv = sendto( s->fd, buf, len, flg, (const struct sockaddr*)info->ai_addr,
                  info->ai_addrlen );
     switch( rv )
@@ -1067,11 +1067,11 @@ static int sendfile_lua( lua_State *L )
     else if( errno == EPIPE ){
         return 0;
     }
-    
+
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    
+
     return 2;
 }
 
@@ -1104,11 +1104,11 @@ static int sendfile_lua( lua_State *L )
     else if( errno == EPIPE ){
         return 0;
     }
-    
+
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    
+
     return 2;
 }
 
@@ -1122,7 +1122,7 @@ static int sendfile_lua( lua_State *L )
     size_t len = (size_t)lls_checkinteger( L, 3 );
     off_t offset = (off_t)lls_optinteger( L, 4, 0 );
     off_t nbytes = 0;
-    
+
     // invalid length
     if( !len ){
         errno = EINVAL;
@@ -1144,11 +1144,11 @@ static int sendfile_lua( lua_State *L )
     else if( errno == EPIPE ){
         return 0;
     }
-    
+
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    
+
     return 2;
 }
 
@@ -1163,7 +1163,7 @@ static int recv_lua( lua_State *L )
     int flg = lls_optflags( L, 3 );
     char *buf = NULL;
     ssize_t rv = 0;
-    
+
     // invalid length
     if( len <= 0 ){
         lua_pushnil( L );
@@ -1176,13 +1176,13 @@ static int recv_lua( lua_State *L )
         lua_pushstring( L, strerror( errno ) );
         return 2;
     }
-    
+
     rv = recv( s->fd, buf, (size_t)len, flg );
     switch( rv ){
         // close by peer
         case 0:
         break;
-        
+
         // got error
         case -1:
             lua_pushnil( L );
@@ -1198,14 +1198,14 @@ static int recv_lua( lua_State *L )
                 rv = 2;
             }
         break;
-        
+
         default:
             lua_pushlstring( L, buf, rv );
             rv = 1;
     }
-    
+
     pdealloc( buf );
-    
+
     return rv;
 }
 
@@ -1219,7 +1219,7 @@ static int recvfrom_lua( lua_State *L )
     struct sockaddr_storage src;
     ssize_t rv = 0;
     char *buf = NULL;
-    
+
     memset( (void*)&src, 0, slen );
     // invalid length
     if( len <= 0 ){
@@ -1235,13 +1235,13 @@ static int recvfrom_lua( lua_State *L )
         lua_pushstring( L, strerror( errno ) );
         return 3;
     }
-    
+
     rv = recvfrom( s->fd, buf, (size_t)len, flg, (struct sockaddr*)&src, &slen );
     switch( rv ){
         // close by peer
         case 0:
         break;
-        
+
         // got error
         case -1:
             lua_pushnil( L );
@@ -1258,7 +1258,7 @@ static int recvfrom_lua( lua_State *L )
                 rv = 3;
             }
         break;
-        
+
         default:
             lua_pushlstring( L, buf, rv );
             // no addrinfo
@@ -1292,9 +1292,9 @@ static int recvfrom_lua( lua_State *L )
                 }
             }
     }
-    
+
     pdealloc( buf );
-    
+
     return rv;
 }
 
@@ -1501,7 +1501,7 @@ static int new_lua( lua_State *L )
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    
+
     return 2;
 }
 
@@ -1685,7 +1685,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
     lstate_fn2tbl( L, "new", new_lua );
     lstate_fn2tbl( L, "pair", pair_lua );
 
-    
+
     return 1;
 }
 

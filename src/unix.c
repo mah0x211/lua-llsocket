@@ -71,11 +71,11 @@ static int getaddrinfo_lua( lua_State *L )
             return 1;
         }
     }
-    
+
     // got error
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
-    
+
     return 2;
 }
 
