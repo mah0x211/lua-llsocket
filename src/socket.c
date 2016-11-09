@@ -960,7 +960,7 @@ static int send_lua( lua_State *L )
                 return 3;
             }
             // closed by peer
-            else if( errno == ECONNRESET ){
+            else if( errno == EPIPE || errno == ECONNRESET ){
                 return 0;
             }
             // got error
@@ -1011,7 +1011,7 @@ static int sendto_lua( lua_State *L )
                 return 3;
             }
             // closed by peer
-            else if( errno == ECONNRESET ){
+            else if( errno == EPIPE || errno == ECONNRESET ){
                 return 0;
             }
             // got error
