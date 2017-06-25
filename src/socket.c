@@ -1472,6 +1472,41 @@ static int unwrap_lua( lua_State *L )
 }
 
 
+static int wrap_lua( lua_State *L )
+{
+    int fd = (int)lauxh_checkinteger( L, 1 );
+    socklen_t addrlen = sizeof( struct sockaddr_storage );
+    lls_socket_t *s = NULL;
+    socklen_t typelen = sizeof( int );
+#if defined(SO_PROTOCOL)
+    socklen_t protolen = sizeof( int );
+#endif
+
+    lua_settop( L, 1 );
+    if( ( s = lua_newuserdata( L, sizeof( lls_socket_t ) ) ) &&
+        getsockname( fd, (void*)&s->addr, &addrlen ) == 0 &&
+#if defined(SO_PROTOCOL)
+        getsockopt( fd, SOL_SOCKET, SO_PROTOCOL, &s->protocol, &typelen ) == 0 &&
+#endif
+        getsockopt( fd, SOL_SOCKET, SO_TYPE, &s->socktype, &typelen ) == 0 ){
+        lauxh_setmetatable( L, SOCKET_MT );
+        s->fd = fd;
+        s->family = s->addr.ss_family;
+#if !defined(SO_PROTOCOL)
+        s->protocol = 0;
+#endif
+        s->addrlen = addrlen;
+        return 1;
+    }
+
+    // got error
+    lua_pushnil( L );
+    lua_pushstring( L, strerror( errno ) );
+
+    return 2;
+}
+
+
 static int new_lua( lua_State *L )
 {
     struct addrinfo *info = lauxh_checkudata( L, 1, ADDRINFO_MT );
@@ -1695,6 +1730,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
     lua_newtable( L );
     // method
     lauxh_pushfn2tbl( L, "new", new_lua );
+    lauxh_pushfn2tbl( L, "wrap", wrap_lua );
     lauxh_pushfn2tbl( L, "pair", pair_lua );
 
 
