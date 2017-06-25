@@ -24,8 +24,6 @@
  *  lua-llsocket
  *
  *  Created by Masatoshi Teruya on 14/03/29.
- *  Copyright 2014 Masatoshi Teruya. All rights reserved.
- *
  */
 
 

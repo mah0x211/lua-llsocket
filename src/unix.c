@@ -19,13 +19,10 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  *
- *
  *  unix.c
  *  lua-llsocket
  *
  *  Created by Masatoshi Teruya on 14/04/10.
- *  Copyright 2014 Masatoshi Teruya. All rights reserved.
- *
  */
 
 #include "llsocket.h"
