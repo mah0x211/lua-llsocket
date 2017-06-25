@@ -1486,7 +1486,7 @@ static int wrap_lua( lua_State *L )
     if( ( s = lua_newuserdata( L, sizeof( lls_socket_t ) ) ) &&
         getsockname( fd, (void*)&s->addr, &addrlen ) == 0 &&
 #if defined(SO_PROTOCOL)
-        getsockopt( fd, SOL_SOCKET, SO_PROTOCOL, &s->protocol, &typelen ) == 0 &&
+        getsockopt( fd, SOL_SOCKET, SO_PROTOCOL, &s->protocol, &protolen ) == 0 &&
 #endif
         getsockopt( fd, SOL_SOCKET, SO_TYPE, &s->socktype, &typelen ) == 0 ){
         lauxh_setmetatable( L, SOCKET_MT );
