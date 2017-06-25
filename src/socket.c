@@ -1456,6 +1456,22 @@ static int dup_lua( lua_State *L )
 }
 
 
+static int unwrap_lua( lua_State *L )
+{
+    lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
+
+    lua_settop( L, 1 );
+    // remove metatable
+    lua_pushnil( L );
+    lua_setmetatable( L, -2 );
+    // return fd and then disable
+    lua_pushinteger( L, s->fd );
+    s->fd = -1;
+
+    return 1;
+}
+
+
 static int new_lua( lua_State *L )
 {
     struct addrinfo *info = lauxh_checkudata( L, 1, ADDRINFO_MT );
@@ -1567,6 +1583,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { NULL, NULL }
     };
     struct luaL_Reg method[] = {
+        { "unwrap", unwrap_lua },
         { "dup", dup_lua },
         { "fd", fd_lua },
         { "family", family_lua },
