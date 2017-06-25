@@ -32,8 +32,8 @@
 
 static int getnameinfo_lua( lua_State *L )
 {
-    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
-    int flag = lls_optflags( L, 2 );
+    struct addrinfo *info = lauxh_checkudata( L, 1, ADDRINFO_MT );
+    int flag = lauxh_optflags( L, 2 );
     char host[NI_MAXHOST];
     char serv[NI_MAXSERV];
     int rc = getnameinfo( info->ai_addr, info->ai_addrlen, host, NI_MAXHOST,
@@ -41,8 +41,8 @@ static int getnameinfo_lua( lua_State *L )
 
     if( rc == 0 ){
         lua_createtable( L, 0, 2 );
-        lstate_str2tbl( L, "host", host );
-        lstate_str2tbl( L, "service", serv );
+        lauxh_pushstr2tbl( L, "host", host );
+        lauxh_pushstr2tbl( L, "service", serv );
         return 1;
     }
 
@@ -56,7 +56,7 @@ static int getnameinfo_lua( lua_State *L )
 
 static int addr_lua( lua_State *L )
 {
-    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
+    struct addrinfo *info = lauxh_checkudata( L, 1, ADDRINFO_MT );
     struct sockaddr_un *uaddr = NULL;
     struct sockaddr_in *iaddr = NULL;
     struct sockaddr_in6 *iaddr6 = NULL;
@@ -66,8 +66,8 @@ static int addr_lua( lua_State *L )
         case AF_INET:
             lua_createtable( L, 0, 2 );
             iaddr = (struct sockaddr_in*)info->ai_addr;
-            lstate_num2tbl( L, "port", ntohs( iaddr->sin_port ) );
-            lstate_str2tbl( L, "ip", inet_ntop( info->ai_family,
+            lauxh_pushnum2tbl( L, "port", ntohs( iaddr->sin_port ) );
+            lauxh_pushstr2tbl( L, "ip", inet_ntop( info->ai_family,
                                                 (const void*)&iaddr->sin_addr,
                                                 buf, INET6_ADDRSTRLEN ) );
             return 1;
@@ -75,8 +75,8 @@ static int addr_lua( lua_State *L )
         case AF_INET6:
             lua_createtable( L, 0, 2 );
             iaddr6 = (struct sockaddr_in6*)info->ai_addr;
-            lstate_num2tbl( L, "port", ntohs( iaddr->sin_port ) );
-            lstate_str2tbl( L, "ip", inet_ntop( info->ai_family,
+            lauxh_pushnum2tbl( L, "port", ntohs( iaddr->sin_port ) );
+            lauxh_pushstr2tbl( L, "ip", inet_ntop( info->ai_family,
                                                 (const void*)&iaddr6->sin6_addr,
                                                 buf, INET6_ADDRSTRLEN ) );
             return 1;
@@ -84,7 +84,7 @@ static int addr_lua( lua_State *L )
         case AF_UNIX:
             lua_createtable( L, 0, 1 );
             uaddr = (struct sockaddr_un*)info->ai_addr;
-            lstate_str2tbl( L, "path", uaddr->sun_path );
+            lauxh_pushstr2tbl( L, "path", uaddr->sun_path );
             return 1;
 
         // unsupported family
@@ -96,7 +96,7 @@ static int addr_lua( lua_State *L )
 
 static int canonname_lua( lua_State *L )
 {
-    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
+    struct addrinfo *info = lauxh_checkudata( L, 1, ADDRINFO_MT );
 
     if( info->ai_canonname ){
         lua_pushstring( L, info->ai_canonname );
@@ -109,7 +109,7 @@ static int canonname_lua( lua_State *L )
 
 static int protocol_lua( lua_State *L )
 {
-    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
+    struct addrinfo *info = lauxh_checkudata( L, 1, ADDRINFO_MT );
 
     lua_pushinteger( L, info->ai_protocol );
 
@@ -119,7 +119,7 @@ static int protocol_lua( lua_State *L )
 
 static int socktype_lua( lua_State *L )
 {
-    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
+    struct addrinfo *info = lauxh_checkudata( L, 1, ADDRINFO_MT );
 
     lua_pushinteger( L, info->ai_socktype );
 
@@ -129,7 +129,7 @@ static int socktype_lua( lua_State *L )
 
 static int family_lua( lua_State *L )
 {
-    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
+    struct addrinfo *info = lauxh_checkudata( L, 1, ADDRINFO_MT );
 
     lua_pushinteger( L, info->ai_family );
 
@@ -146,7 +146,7 @@ static int tostring_lua( lua_State *L )
 
 static int gc_lua( lua_State *L )
 {
-    struct addrinfo *info = luaL_checkudata( L, 1, ADDRINFO_MT );
+    struct addrinfo *info = lauxh_checkudata( L, 1, ADDRINFO_MT );
 
     if( info->ai_canonname ){
         pdealloc( info->ai_canonname );
@@ -178,7 +178,7 @@ LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L )
     luaL_newmetatable( L, ADDRINFO_MT );
     // metamethods
     do {
-        lstate_fn2tbl( L, ptr->name, ptr->func );
+        lauxh_pushfn2tbl( L, ptr->name, ptr->func );
         ptr++;
     } while( ptr->name );
     // methods
@@ -186,7 +186,7 @@ LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L )
     lua_newtable( L );
     ptr = method;
     do {
-        lstate_fn2tbl( L, ptr->name, ptr->func );
+        lauxh_pushfn2tbl( L, ptr->name, ptr->func );
         ptr++;
     } while( ptr->name );
     lua_rawset( L, -3 );

@@ -37,16 +37,16 @@
 static int getaddrinfo_lua( lua_State *L )
 {
     size_t len = 0;
-    const char *path = lls_checklstring( L, 1, &len );
+    const char *path = lauxh_checklstring( L, 1, &len );
     struct addrinfo tmpl = {
         // AF_INET:ipv4 | AF_INET6:ipv6
         .ai_family = AF_UNIX,
         // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
-        .ai_socktype = (int)lls_optinteger( L, 2, 0 ),
+        .ai_socktype = (int)lauxh_optinteger( L, 2, 0 ),
         // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
-        .ai_protocol = (int)lls_optinteger( L, 3, 0 ),
+        .ai_protocol = (int)lauxh_optinteger( L, 3, 0 ),
         // AI_PASSIVE:bind socket if node is null
-        .ai_flags = lls_optflags( L, 4 ),
+        .ai_flags = lauxh_optflags( L, 4 ),
         // initialize
         .ai_addrlen = sizeof( struct sockaddr_un ),
         .ai_addr = NULL,
@@ -84,7 +84,7 @@ LUALIB_API int luaopen_llsocket_unix( lua_State *L )
 {
     // add functions
     lua_newtable( L );
-    lstate_fn2tbl( L, "getaddrinfo", getaddrinfo_lua );
+    lauxh_pushfn2tbl( L, "getaddrinfo", getaddrinfo_lua );
 
     return 1;
 }

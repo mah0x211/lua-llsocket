@@ -33,14 +33,14 @@
 
 static int getaddrinfo_lua( lua_State *L )
 {
-    const char *node = lls_optstring( L, 1, NULL );
-    const char *service = lls_optstring( L, 2, NULL );
+    const char *node = lauxh_optstring( L, 1, NULL );
+    const char *service = lauxh_optstring( L, 2, NULL );
     // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
-    int socktype = (int)lls_optinteger( L, 3, 0 );
+    int socktype = (int)lauxh_optinteger( L, 3, 0 );
     // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
-    int protocol = (int)lls_optinteger( L, 4, 0 );
+    int protocol = (int)lauxh_optinteger( L, 4, 0 );
     // AI_PASSIVE:bind socket if node is null
-    int flags = lls_optflags( L, 5 );
+    int flags = lauxh_optflags( L, 5 );
     struct addrinfo *list = NULL;
     struct addrinfo *ptr = NULL;
     int idx = 1;
@@ -84,7 +84,7 @@ static int getaddrinfo_lua( lua_State *L )
 LUALIB_API int luaopen_llsocket_inet( lua_State *L )
 {
     lua_newtable( L );
-    lstate_fn2tbl( L, "getaddrinfo", getaddrinfo_lua );
+    lauxh_pushfn2tbl( L, "getaddrinfo", getaddrinfo_lua );
 
     return 1;
 }

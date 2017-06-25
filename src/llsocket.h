@@ -56,6 +56,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include "lauxhlib.h"
 #include "config.h"
 
 
@@ -65,53 +66,6 @@
 #define pcalloc(n,t)    (t*)calloc( n, sizeof(t) )
 #define prealloc(n,t,p) (t*)realloc( p, (n) * sizeof(t) )
 #define pdealloc(p)     free((void*)p)
-
-
-// helper macros
-#define lstate_isref(ref) \
-    ((ref) >= 0)
-
-#define lstate_ref(L) \
-    luaL_ref(L,LUA_REGISTRYINDEX)
-
-#define lstate_refat(L,idx) \
-    (lua_pushvalue(L,idx),luaL_ref(L,LUA_REGISTRYINDEX))
-
-#define lstate_pushref(L,ref) \
-    lua_rawgeti( L, LUA_REGISTRYINDEX, ref )
-
-#define lstate_unref(L,ref) \
-    (luaL_unref( L, LUA_REGISTRYINDEX, ref ),LUA_NOREF)
-
-#define lstate_setmetatable(L,label) do { \
-    luaL_getmetatable( L, label ); \
-    lua_setmetatable( L, -2 ); \
-}while(0)
-
-#define lstate_fn2tbl(L,k,v) do{ \
-    lua_pushstring(L,k); \
-    lua_pushcfunction(L,v); \
-    lua_rawset(L,-3); \
-}while(0)
-
-#define lstate_str2tbl(L,k,v) do{ \
-    lua_pushstring(L,k); \
-    lua_pushstring(L,v); \
-    lua_rawset(L,-3); \
-}while(0)
-
-#define lstate_num2tbl(L,k,v) do{ \
-    lua_pushstring(L,k); \
-    lua_pushnumber(L,v); \
-    lua_rawset(L,-3); \
-}while(0)
-
-#define lstate_bool2tbl(L,k,v) do{ \
-    lua_pushstring(L,k); \
-    lua_pushboolean(L,v); \
-    lua_rawset(L,-3); \
-}while(0)
-
 
 
 #define SOCKET_MT   "llsocket.socket"
@@ -171,7 +125,7 @@ static inline struct addrinfo *lls_addrinfo_alloc( lua_State *L,
             memcpy( (void*)info->ai_addr, (void*)src->ai_addr,
                     src->ai_addrlen );
             // set metatable
-            lstate_setmetatable( L, ADDRINFO_MT );
+            lauxh_setmetatable( L, ADDRINFO_MT );
             return info;
         }
         else if( info->ai_canonname ){
@@ -215,99 +169,11 @@ static inline void *lls_checkudata( lua_State *L, int idx, const char *tname )
 }
 
 
-static inline const char *lls_checklstring( lua_State *L, int idx, size_t *len )
-{
-    luaL_checktype( L, idx, LUA_TSTRING );
-
-    return lua_tolstring( L, idx, len );
-}
-
-
-static inline const char *lls_optlstring( lua_State *L, int idx,
-                                         const char *def, size_t *len )
-{
-    if( lua_isnoneornil( L, idx ) ){
-        return def;
-    }
-
-    luaL_checktype( L, idx, LUA_TSTRING );
-
-    return lua_tolstring( L, idx, len );
-}
-
-
-static inline const char *lls_checkstring( lua_State *L, int idx )
-{
-    luaL_checktype( L, idx, LUA_TSTRING );
-
-    return lua_tostring( L, idx );
-}
-
-
-static inline const char *lls_optstring( lua_State *L, int idx,
-                                         const char *def )
-{
-    if( lua_isnoneornil( L, idx ) ){
-        return def;
-    }
-
-    luaL_checktype( L, idx, LUA_TSTRING );
-
-    return lua_tostring( L, idx );
-}
-
-
-static inline lua_Integer lls_checkinteger( lua_State *L, int idx )
-{
-    luaL_checktype( L, idx, LUA_TNUMBER );
-
-    return lua_tointeger( L, idx );
-}
-
-
-static inline lua_Integer lls_optinteger( lua_State *L, int idx,
-                                          lua_Integer def )
-{
-    if( lua_isnoneornil( L, idx ) ){
-        return def;
-    }
-
-    luaL_checktype( L, idx, LUA_TNUMBER );
-
-    return lua_tointeger( L, idx );
-}
-
-
-static inline int lls_optboolean( lua_State *L, int idx, int def )
-{
-    if( lua_isnoneornil( L, idx ) ){
-        return def > 0;
-    }
-
-    luaL_checktype( L, idx, LUA_TBOOLEAN );
-
-    return lua_toboolean( L, idx );
-}
-
-
-static inline int lls_optflags( lua_State *L, int idx )
-{
-    const int argc = lua_gettop( L );
-    int flg = 0;
-
-    for(; idx <= argc; idx++ ){
-        flg |= (int)lls_optinteger( L, idx, 0 );
-    }
-
-    return flg;
-}
-
-
 static inline int lls_checksockaddr( lua_State *L, int idx, int family,
                                      int socktype,
                                      struct sockaddr_storage *sockaddr )
 {
-    const char *str = lls_checkstring( L, idx );
+    const char *str = lauxh_checkstring( L, idx );
     struct addrinfo *list = NULL;
     int rc = lls_getaddrinfo( &list, str, NULL, family, socktype, 0,
                               AI_NUMERICHOST );
@@ -324,7 +190,7 @@ static inline int lls_checksockaddr( lua_State *L, int idx, int family,
 static inline int lls_check4inaddr( lua_State *L, int idx, int socktype,
                                     struct in_addr *addr )
 {
-    const char *str = lls_checkstring( L, idx );
+    const char *str = lauxh_checkstring( L, idx );
     struct addrinfo *list = NULL;
     int rc = lls_getaddrinfo( &list, str, NULL, AF_INET, socktype, 0,
                               AI_NUMERICHOST );
@@ -353,7 +219,7 @@ static inline int lls_opt4inaddr( lua_State *L, int idx, int socktype,
 static inline int lls_check6inaddr( lua_State *L, int idx, int socktype,
                                     struct in6_addr *addr )
 {
-    const char *str = lls_checkstring( L, idx );
+    const char *str = lauxh_checkstring( L, idx );
     struct addrinfo *list = NULL;
     int rc = lls_getaddrinfo( &list, str, NULL, AF_INET6, socktype, 0,
                               AI_NUMERICHOST );

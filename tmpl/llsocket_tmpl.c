@@ -55,9 +55,9 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
 
     // constants
     // for shutdown
-    lstate_num2tbl( L, "SHUT_RD", SHUT_RD );
-    lstate_num2tbl( L, "SHUT_WR", SHUT_WR );
-    lstate_num2tbl( L, "SHUT_RDWR", SHUT_RDWR );
+    lauxh_pushnum2tbl( L, "SHUT_RD", SHUT_RD );
+    lauxh_pushnum2tbl( L, "SHUT_WR", SHUT_WR );
+    lauxh_pushnum2tbl( L, "SHUT_RDWR", SHUT_RDWR );
 
     // for send/recv flags
 #define GEN_MSG_FLAGS_DECL

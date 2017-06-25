@@ -70,7 +70,7 @@ static int macaddrs_lua( lua_State *L )
                         "%02x:%02x:%02x:%02x:%02x:%02x",
                         *mac, mac[1], mac[2], mac[3], mac[4], mac[5]
                     );
-                    lstate_str2tbl( L, it->ifr_name, buf );
+                    lauxh_pushstr2tbl( L, it->ifr_name, buf );
                 }
             }
 
@@ -122,7 +122,7 @@ static int macaddrs_lua( lua_State *L )
                                 "%02x:%02x:%02x:%02x:%02x:%02x",
                                 *mac, mac[1], mac[2], mac[3], mac[4], mac[5]
                             );
-                            lstate_str2tbl( L, ptr->ifa_name, buf );
+                            lauxh_pushstr2tbl( L, ptr->ifa_name, buf );
                         break;
                         case 8:
                             mac = (unsigned char*)LLADDR( sd );
@@ -132,7 +132,7 @@ static int macaddrs_lua( lua_State *L )
                                 *mac, mac[1], mac[2], mac[3], mac[4], mac[5],
                                 mac[6], mac[7]
                             );
-                            lstate_str2tbl( L, ptr->ifa_name, buf );
+                            lauxh_pushstr2tbl( L, ptr->ifa_name, buf );
                         break;
                     }
                 }
@@ -165,7 +165,7 @@ LUALIB_API int luaopen_llsocket_device( lua_State *L )
 
     lua_newtable( L );
     do {
-        lstate_fn2tbl( L, ptr->name, ptr->func );
+        lauxh_pushfn2tbl( L, ptr->name, ptr->func );
         ptr++;
     } while( ptr->name );
 
