@@ -104,6 +104,17 @@ create a pair of connected sockets.
     - `err:string`: error string.
 
 
+### sock, err = socket.wrap( fd )
+
+create an instance of socket from specified socket file descriptor.
+
+- **Parameters**
+    - `fd:number`: socket file descriptor.
+- **Returns**
+    - `sock:socket`: instance of [socket](#llsocketsocket-instance-methods).
+    - `err:string`: error string.
+
+
 ### sock, err = socket.new( ai, nonblock )
 
 create an instance of socket
@@ -118,6 +129,14 @@ create an instance of socket
 
 
 ## llsocket.socket Instance Methods
+
+
+### fd = sock:unwrap()
+
+get a socket file descriptor, and disable an instance of socket.
+
+- **Returns**
+    - `fd:number`: socket file descriptor.
 
 
 ### sock, err = sock:dup( [ai] )
