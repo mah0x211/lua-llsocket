@@ -370,7 +370,7 @@ determine whether the O_NONBLOCK flag enabled, or change the state to an argumen
 
 ### errno, err = sock:error()
 
-get pending socket error status with and clears it.
+get pending socket error status and clear it.
 
 - **Returns**
     - `errno:number`: number of last error.
