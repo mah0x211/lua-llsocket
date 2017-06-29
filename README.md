@@ -595,6 +595,17 @@ get the SO_SNDTIMEO value, or change that value to an argument value.
     - `err:string`: error string.
 
 
+### sec, err = sock:linger( [sec] )
+
+get the SO_LINGER value, or change that value to an argument value.
+
+- **Parameters**
+    - `sec:number`: if sec >= 0 then enable SO_LINGER option, or else disabled this option.
+- **Returns**
+    - `sec:number`: nil or a value of the SO_LINGER.
+    - `err:string`: error string.
+
+
 ### enable, err = sock:mcastloop( [enable] )
 
 determine whether the IP_MULTICAST_LOOP flag enabled, or change the state to an argument value.
