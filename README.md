@@ -5,6 +5,12 @@ low-level socket module.
 **NOTE: Do not use this module.  this module is under heavy development.**
 
 
+## Dependencies
+
+- luarocks-fetch-gitrec: <https://github.com/siffiejoe/luarocks-fetch-gitrec>
+- lauxhlib: <https://github.com/mah0x211/lauxhlib>
+
+
 ## Installation
 
 ```bash
