@@ -58,9 +58,9 @@ get a list of IPv6 address info of tcp stream socket.
 `llsocket.unix` module has the following functions.
 
 
-### arr, err = unix.getaddrinfo( path [, socktype [, protocol [, flag, ...]]] )
+### ai, err = unix.getaddrinfo( path [, socktype [, protocol [, flag, ...]]] )
 
-get a list of AF_UNIX address info.
+get an AF_UNIX address info.
 
 - **Parameters**
     - `host:string`: host string.
@@ -69,7 +69,7 @@ get a list of AF_UNIX address info.
     - `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
     - `flags:...`: [AI_* flags](#ai-flags) constants.
 - **Returns**
-    - `arr:table`: list of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
     - `err:string`: error string.
 
 
