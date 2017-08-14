@@ -594,15 +594,20 @@ static int tcpcork_lua( lua_State *L )
 }
 
 
-#if defined(SO_REUSEPORT)
-#define HAVE_SO_REUSEPORT 1
-
 static int reuseport_lua( lua_State *L )
 {
+#if defined(SO_REUSEPORT)
     return sockopt_int_lua( L, SOL_SOCKET, SO_REUSEPORT, LUA_TBOOLEAN );
-}
+
+#else
+    // reuseport does not implmeneted in this platform
+    lua_pushnil( L );
+    lua_pushstring( L, strerror( ENOPROTOOPT ) );
+    return 2;
 
 #endif
+}
+
 
 static int reuseaddr_lua( lua_State *L )
 {
@@ -1707,12 +1712,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { "tcpkeepcnt", tcpkeepcnt_lua },
         { "tcpkeepalive", tcpkeepalive_lua },
         { "tcpcork", tcpcork_lua },
-#if defined(HAVE_SO_REUSEPORT)
         { "reuseport", reuseport_lua },
-#else
-#warning "reuseport does not implmeneted in this platform."
-
-#endif
         { "reuseaddr", reuseaddr_lua },
         { "broadcast", broadcast_lua },
         { "debug", debug_lua },
