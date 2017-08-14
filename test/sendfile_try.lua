@@ -32,7 +32,7 @@ local function openServer( stype, addr )
     if stype == STREAM then
         ifNotNil( sock:listen() );
     end
-    
+
     return sock;
 end
 
@@ -47,17 +47,17 @@ local function sendfileNonBlocking( cli, rcv )
     local data = {};
     local pkt, err, eagain;
     local nloop = 0;
-    
+
     -- set nonblock flag
     ifNotTrue( cli:nonblock( true ) );
     ifNotTrue( rcv:nonblock( true ) );
-    
+
     repeat
         -- sendfile
         if offset < totalByte then
             sendByte = totalByte - offset;
             outByte, err, eagain = cli:sendfile( fd, sendByte, offset );
-            
+
             if outByte then
                 -- update offset
                 offset = offset + outByte;
@@ -69,7 +69,7 @@ local function sendfileNonBlocking( cli, rcv )
                 error('closed by peer');
             end
         end
-        
+
         -- recv
         pkt, err, eagain = rcv:recv( outByte == 0 and 1024 or outByte );
         ifTrue( eagain ~= true and err ~= nil, err );
@@ -77,13 +77,13 @@ local function sendfileNonBlocking( cli, rcv )
             recvByte = recvByte + #pkt;
             data[#data+1] = pkt;
         end
-        
+
         nloop = nloop + 1;
         if nloop == 5000 then
             error('too many senfile loop');
         end
     until recvByte == totalByte;
-    
+
     data = table.concat( data );
     ifNotTrue(
         data == assert( io.open( './large.png' ) ):read('*a'),
@@ -107,7 +107,7 @@ local function trySendfile( stype, addr )
     local rcv = svr;
     local outByte = 0;
     local bytes, err, eagain;
-    
+
     -- a sendfile API can be only use with a stream socket
     if stype == STREAM then
         rcv = ifNil( svr:accept() );
@@ -119,7 +119,7 @@ local function trySendfile( stype, addr )
         ifNotNil( eagain, 'incorrect implementation' );
         ifNil( err, 'incorrect implementation' );
     end
-    
+
     if rcv ~= svr then
         ifNotNil( rcv:close() );
     end

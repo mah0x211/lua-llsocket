@@ -16,11 +16,11 @@ local function isolate( fn, ... )
     local vals = { pcall( fn, ... ) };
     local tail = 1;
     local idx, v;
-    
+
     if vals[1] == false then
         return unpack( vals );
     end
-    
+
     table.remove( vals, 1 );
     -- find last index
     idx, v = next( vals );
@@ -28,7 +28,7 @@ local function isolate( fn, ... )
         tail = idx;
         idx, v = next( vals, idx );
     end
-    
+
     return unpack( vals, 1, tail );
 end
 
