@@ -1221,72 +1221,78 @@ static int sendfile_lua( lua_State *L )
 
     // invalid length
     if( !len ){
-        errno = EINVAL;
+        lua_pushnil( L );
+        lua_pushstring( L, strerror( EINVAL ) );
+        return 2;
     }
-    // alloc
-    else if( ( buf = malloc( len ) ) )
-    {
-        // read from file
-        if( ( nbytes = pread( fd, buf, len, offset ) ) != -1 )
-        {
-            // reached to EOF
-            if( nbytes == 0 ){
-                free( buf );
-                lua_pushinteger( L, 0 );
-                return 1;
-            }
+    // mem-error
+    else if( !( buf = malloc( sizeof( char ) * len ) ) ){
+        lua_pushnil( L );
+        lua_pushstring( L, strerror( errno ) );
+        return 2;
+    }
 
-            nbytes = send( s->fd, buf, nbytes, 0 );
-            free( buf );
-
-            switch( nbytes )
-            {
-                // closed by peer
-                case 0:
-                    return 0;
-
-                // got error
-                case -1:
-                    // again
-                    if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
-                        lua_pushinteger( L, 0 );
-                        lua_pushnil( L );
-                        lua_pushboolean( L, 1 );
-                        return 3;
-                    }
-                    // closed by peer
-                    else if( errno == EPIPE || errno == ECONNRESET ){
-                        return 0;
-                    }
-                    // got error
-                    lua_pushnil( L );
-                    lua_pushstring( L, strerror( errno ) );
-                    return 2;
-
-                default:
-                    lua_pushinteger( L, nbytes );
-                    lua_pushnil( L );
-                    lua_pushboolean( L, len - (size_t)nbytes );
-                    return 3;
-            }
-        }
-
+    // read data from file
+    nbytes = pread( fd, buf, len, offset );
+    // reached to end-of-file
+    if( !nbytes ){
         free( buf );
-        // should read again
-        if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+        lua_pushinteger( L, 0 );
+        return 1;
+    }
+    // got error
+    else if( nbytes == -1 )
+    {
+        free( buf );
+        // again
+        if( errno == EAGAIN || errno == EINTR ){
             lua_pushinteger( L, 0 );
             lua_pushnil( L );
             lua_pushboolean( L, 1 );
             return 3;
         }
+
+        // got error
+        lua_pushnil( L );
+        lua_pushstring( L, strerror( errno ) );
+
+        return 2;
     }
 
-    // got error
-    lua_pushnil( L );
-    lua_pushstring( L, strerror( errno ) );
+    nbytes = send( s->fd, buf, nbytes, 0 );
+    free( buf );
+    switch( nbytes )
+    {
+        // closed by peer
+        case 0:
+            return 0;
 
-    return 2;
+        // got error
+        case -1:
+            // again
+            if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+                lua_pushinteger( L, 0 );
+                lua_pushnil( L );
+                lua_pushboolean( L, 1 );
+                return 3;
+            }
+            // closed by peer
+            else if( errno == EPIPE || errno == ECONNRESET ){
+                return 0;
+            }
+            // got error
+            lua_pushnil( L );
+            lua_pushstring( L, strerror( errno ) );
+            return 2;
+
+        default:
+            lua_pushinteger( L, nbytes );
+            lua_pushnil( L );
+            lua_pushboolean( L, len - (size_t)nbytes );
+            return 3;
+    }
 }
+
 
 #endif
 
