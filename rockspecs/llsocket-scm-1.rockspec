@@ -11,7 +11,7 @@ description = {
 }
 dependencies = {
     "lua >= 5.1",
-    "util >= 1.4.1"
+    "luarocks-fetch-gitrec >= 0.2"
 }
 build = {
     type = "command",
