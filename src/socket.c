@@ -576,20 +576,23 @@ static int tcpkeepalive_lua( lua_State *L )
 }
 
 
-
-#if defined(TCP_CORK) || defined(TCP_NOPUSH)
-#define HAVE_TCP_CORK 1
-
 static int tcpcork_lua( lua_State *L )
 {
 #if defined(TCP_CORK)
     return sockopt_int_lua( L, IPPROTO_TCP, TCP_CORK, LUA_TBOOLEAN );
-#else
+
+#elif defined(TCP_NOPUSH)
     return sockopt_int_lua( L, IPPROTO_TCP, TCP_NOPUSH, LUA_TBOOLEAN );
+
+#else
+    // tcpcork does not implmeneted in this platform
+    lua_pushnil( L );
+    lua_pushstring( L, strerror( ENOPROTOOPT ) );
+    return 2;
+
 #endif
 }
 
-#endif
 
 #if defined(SO_REUSEPORT)
 #define HAVE_SO_REUSEPORT 1
@@ -1703,13 +1706,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { "tcpkeepintvl", tcpkeepintvl_lua },
         { "tcpkeepcnt", tcpkeepcnt_lua },
         { "tcpkeepalive", tcpkeepalive_lua },
-#if defined(HAVE_TCP_CORK)
         { "tcpcork", tcpcork_lua },
-#else
-#warning "tcpcork does not implmeneted in this platform."
-
-#endif
-
 #if defined(HAVE_SO_REUSEPORT)
         { "reuseport", reuseport_lua },
 #else
