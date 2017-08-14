@@ -1198,7 +1198,96 @@ static int sendfile_lua( lua_State *L )
     return 2;
 }
 
+#else
+
+// sendfile does not supported in this platform
+#undef HAVE_SENDFILE
+
 #endif
+#endif
+
+
+#if !defined(HAVE_SENDFILE)
+
+// sendfile implements for unsupported platform
+static int sendfile_lua( lua_State *L )
+{
+    lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
+    int fd = (int)lauxh_checkinteger( L, 2 );
+    size_t len = (size_t)lauxh_checkinteger( L, 3 );
+    off_t offset = (off_t)lauxh_optinteger( L, 4, 0 );
+    ssize_t nbytes = 0;
+    void *buf = NULL;
+
+    // invalid length
+    if( !len ){
+        errno = EINVAL;
+    }
+    // alloc
+    else if( ( buf = malloc( len ) ) )
+    {
+        // read from file
+        if( ( nbytes = pread( fd, buf, len, offset ) ) != -1 )
+        {
+            // reached to EOF
+            if( nbytes == 0 ){
+                free( buf );
+                lua_pushinteger( L, 0 );
+                return 1;
+            }
+
+            nbytes = send( s->fd, buf, nbytes, 0 );
+            free( buf );
+
+            switch( nbytes )
+            {
+                // closed by peer
+                case 0:
+                    return 0;
+
+                // got error
+                case -1:
+                    // again
+                    if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+                        lua_pushinteger( L, 0 );
+                        lua_pushnil( L );
+                        lua_pushboolean( L, 1 );
+                        return 3;
+                    }
+                    // closed by peer
+                    else if( errno == EPIPE || errno == ECONNRESET ){
+                        return 0;
+                    }
+                    // got error
+                    lua_pushnil( L );
+                    lua_pushstring( L, strerror( errno ) );
+                    return 2;
+
+                default:
+                    lua_pushinteger( L, nbytes );
+                    lua_pushnil( L );
+                    lua_pushboolean( L, len - (size_t)nbytes );
+                    return 3;
+            }
+        }
+
+        free( buf );
+        // should read again
+        if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+            lua_pushinteger( L, 0 );
+            lua_pushnil( L );
+            lua_pushboolean( L, 1 );
+            return 3;
+        }
+    }
+
+    // got error
+    lua_pushnil( L );
+    lua_pushstring( L, strerror( errno ) );
+
+    return 2;
+}
+
 #endif
 
 
@@ -1683,12 +1772,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
         { "accept", accept_lua },
         { "send", send_lua },
         { "sendto", sendto_lua },
-#if defined(HAVE_SENDFILE)
         { "sendfile", sendfile_lua },
-#else
-#warning "sendfile does not implmeneted in this platform."
-
-#endif
         { "recv", recv_lua },
         { "recvfrom", recvfrom_lua },
 
