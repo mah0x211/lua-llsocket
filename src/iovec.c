@@ -84,7 +84,7 @@ static int add_lua( lua_State *L )
     int used = iov->used + 1;
 
     lua_settop( L, 2 );
-    if( iov->nvec >= IOV_MAX ){
+    if( used > IOV_MAX ){
         lua_pushinteger( L, -ENOBUFS );
         return 1;
     }
