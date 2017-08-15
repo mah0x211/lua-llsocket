@@ -68,6 +68,7 @@
 
 #define SOCKET_MT   "llsocket.socket"
 #define ADDRINFO_MT "llsocket.addrinfo"
+#define IOVEC_MT    "llsocket.iovec"
 
 
 LUALIB_API int luaopen_llsocket_inet( lua_State *L );
@@ -76,6 +77,36 @@ LUALIB_API int luaopen_llsocket_device( lua_State *L );
 LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L );
 LUALIB_API int luaopen_llsocket_socket( lua_State *L );
 
+
+typedef struct {
+    int nvec;
+    int used;
+    struct iovec *vec;
+    int *refs;
+} liovec_t;
+
+LUALIB_API int luaopen_llsocket_iovec( lua_State *L );
+
+static inline liovec_t *lls_iovec_alloc( lua_State *L, int nvec )
+{
+    int top = lua_gettop( L );
+    liovec_t *iov = lua_newuserdata( L, sizeof( liovec_t ) );
+
+    if( iov && ( iov->vec = (struct iovec*)malloc( nvec ) ) )
+    {
+        if( ( iov->refs = (int*)malloc( nvec ) ) ){
+            iov->used = 0;
+            iov->nvec = nvec;
+            lauxh_setmetatable( L, IOVEC_MT );
+            return iov;
+        }
+        free( (void*)iov->vec );
+    }
+
+    lua_settop( L, top );
+
+    return NULL;
+}
 
 
 static inline int lls_getaddrinfo( struct addrinfo **list, const char *node,

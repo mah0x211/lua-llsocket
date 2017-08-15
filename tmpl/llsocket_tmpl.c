@@ -40,6 +40,10 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
     luaopen_llsocket_socket( L );
     lua_rawset( L, -3 );
 
+    lua_pushstring( L, "iovec" );
+    luaopen_llsocket_iovec( L );
+    lua_rawset( L, -3 );
+
     lua_pushstring( L, "inet" );
     luaopen_llsocket_inet( L );
     lua_rawset( L, -3 );
