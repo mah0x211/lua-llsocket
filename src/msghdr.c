@@ -28,6 +28,16 @@
 #include "llsocket.h"
 
 
+static int flags_lua( lua_State *L )
+{
+    lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
+
+    lua_pushinteger( L, msg->hdr.msg_flags );
+
+    return 1;
+}
+
+
 static int iov_lua( lua_State *L )
 {
     lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
@@ -128,6 +138,7 @@ LUALIB_API int luaopen_llsocket_msghdr( lua_State *L )
         };
         struct luaL_Reg method[] = {
             { "iov", iov_lua },
+            { "flags", flags_lua },
             { NULL, NULL }
         };
         struct luaL_Reg *ptr = mmethod;
