@@ -19,7 +19,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  *
- *  msghdr.c
+ *  iovec.c
  *  lua-llsocket
  *
  *  Created by Masatoshi Teruya on 17/08/14.
