@@ -149,9 +149,9 @@ static int gc_lua( lua_State *L )
     struct addrinfo *info = lauxh_checkudata( L, 1, ADDRINFO_MT );
 
     if( info->ai_canonname ){
-        pdealloc( info->ai_canonname );
+        free( (void*)info->ai_canonname );
     }
-    pdealloc( info->ai_addr );
+    free( (void*)info->ai_addr );
 
     return 0;
 }

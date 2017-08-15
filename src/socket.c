@@ -1312,7 +1312,7 @@ static int recv_lua( lua_State *L )
         return 2;
     }
     // mem-error
-    else if( !( buf = pnalloc( len, char ) ) ){
+    else if( !( buf = malloc( sizeof( char ) * len ) ) ){
         lua_pushnil( L );
         lua_pushstring( L, strerror( errno ) );
         return 2;
@@ -1345,7 +1345,7 @@ static int recv_lua( lua_State *L )
             rv = 1;
     }
 
-    pdealloc( buf );
+    free( buf );
 
     return rv;
 }
@@ -1370,7 +1370,7 @@ static int recvfrom_lua( lua_State *L )
         return 3;
     }
     // mem-error
-    else if( !( buf = pnalloc( len, char ) ) ){
+    else if( !( buf = malloc( sizeof( char ) * len ) ) ){
         lua_pushnil( L );
         lua_pushnil( L );
         lua_pushstring( L, strerror( errno ) );
@@ -1434,7 +1434,7 @@ static int recvfrom_lua( lua_State *L )
             }
     }
 
-    pdealloc( buf );
+    free( buf );
 
     return rv;
 }

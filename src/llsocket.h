@@ -58,14 +58,6 @@
 #include "config.h"
 
 
-// memory alloc/dealloc
-#define palloc(t)       (t*)malloc( sizeof(t) )
-#define pnalloc(n,t)    (t*)malloc( (n) * sizeof(t) )
-#define pcalloc(n,t)    (t*)calloc( n, sizeof(t) )
-#define prealloc(n,t,p) (t*)realloc( p, (n) * sizeof(t) )
-#define pdealloc(p)     free((void*)p)
-
-
 #define SOCKET_MT   "llsocket.socket"
 #define ADDRINFO_MT "llsocket.addrinfo"
 #define IOVEC_MT    "llsocket.iovec"
@@ -158,7 +150,7 @@ static inline struct addrinfo *lls_addrinfo_alloc( lua_State *L,
             return info;
         }
         else if( info->ai_canonname ){
-            pdealloc( info->ai_canonname );
+            free( (void*)info->ai_canonname );
         }
 
         info = NULL;
