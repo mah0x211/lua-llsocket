@@ -175,35 +175,38 @@ static int new_lua( lua_State *L )
 
 LUALIB_API int luaopen_llsocket_iovec( lua_State *L )
 {
-    struct luaL_Reg mmethod[] = {
-        { "__gc", gc_lua },
-        { "__tostring", tostring_lua },
-        { "__len", len_lua },
-        { NULL, NULL }
-    };
-    struct luaL_Reg method[] = {
-        { "add", add_lua },
-        { "get", get_lua },
-        { "del", del_lua },
-        { NULL, NULL }
-    };
-    struct luaL_Reg *ptr = mmethod;
+    // create metatable
+    if( luaL_newmetatable( L, IOVEC_MT ) )
+    {
+        struct luaL_Reg mmethod[] = {
+            { "__gc", gc_lua },
+            { "__tostring", tostring_lua },
+            { "__len", len_lua },
+            { NULL, NULL }
+        };
+        struct luaL_Reg method[] = {
+            { "add", add_lua },
+            { "get", get_lua },
+            { "del", del_lua },
+            { NULL, NULL }
+        };
+        struct luaL_Reg *ptr = mmethod;
 
-    luaL_newmetatable( L, IOVEC_MT );
-    // metamethods
-    do {
-        lauxh_pushfn2tbl( L, ptr->name, ptr->func );
-        ptr++;
-    } while( ptr->name );
-    // methods
-    lua_pushstring( L, "__index" );
-    lua_newtable( L );
-    ptr = method;
-    do {
-        lauxh_pushfn2tbl( L, ptr->name, ptr->func );
-        ptr++;
-    } while( ptr->name );
-    lua_rawset( L, -3 );
+        // metamethods
+        do {
+            lauxh_pushfn2tbl( L, ptr->name, ptr->func );
+            ptr++;
+        } while( ptr->name );
+        // methods
+        lua_pushstring( L, "__index" );
+        lua_newtable( L );
+        ptr = method;
+        do {
+            lauxh_pushfn2tbl( L, ptr->name, ptr->func );
+            ptr++;
+        } while( ptr->name );
+        lua_rawset( L, -3 );
+    }
     lua_pop( L, 1 );
 
     // create module table

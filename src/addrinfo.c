@@ -159,37 +159,40 @@ static int gc_lua( lua_State *L )
 
 LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L )
 {
-    struct luaL_Reg mmethod[] = {
-        { "__gc", gc_lua },
-        { "__tostring", tostring_lua },
-        { NULL, NULL }
-    };
-    struct luaL_Reg method[] = {
-        { "family", family_lua },
-        { "socktype", socktype_lua },
-        { "protocol", protocol_lua },
-        { "cannoname", canonname_lua },
-        { "addr", addr_lua },
-        { "getnameinfo", getnameinfo_lua },
-        { NULL, NULL }
-    };
-    struct luaL_Reg *ptr = mmethod;
+    // create metatable
+    if( luaL_newmetatable( L, ADDRINFO_MT ) )
+    {
+        struct luaL_Reg mmethod[] = {
+            { "__gc", gc_lua },
+            { "__tostring", tostring_lua },
+            { NULL, NULL }
+        };
+        struct luaL_Reg method[] = {
+            { "family", family_lua },
+            { "socktype", socktype_lua },
+            { "protocol", protocol_lua },
+            { "cannoname", canonname_lua },
+            { "addr", addr_lua },
+            { "getnameinfo", getnameinfo_lua },
+            { NULL, NULL }
+        };
+        struct luaL_Reg *ptr = mmethod;
 
-    luaL_newmetatable( L, ADDRINFO_MT );
-    // metamethods
-    do {
-        lauxh_pushfn2tbl( L, ptr->name, ptr->func );
-        ptr++;
-    } while( ptr->name );
-    // methods
-    lua_pushstring( L, "__index" );
-    lua_newtable( L );
-    ptr = method;
-    do {
-        lauxh_pushfn2tbl( L, ptr->name, ptr->func );
-        ptr++;
-    } while( ptr->name );
-    lua_rawset( L, -3 );
+        // metamethods
+        do {
+            lauxh_pushfn2tbl( L, ptr->name, ptr->func );
+            ptr++;
+        } while( ptr->name );
+        // methods
+        lua_pushstring( L, "__index" );
+        lua_newtable( L );
+        ptr = method;
+        do {
+            lauxh_pushfn2tbl( L, ptr->name, ptr->func );
+            ptr++;
+        } while( ptr->name );
+        lua_rawset( L, -3 );
+    }
     lua_pop( L, 1 );
 
     return 0;

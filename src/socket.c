@@ -1758,97 +1758,99 @@ FAILED:
 
 LUALIB_API int luaopen_llsocket_socket( lua_State *L )
 {
-    struct luaL_Reg mmethod[] = {
-        { "__gc", gc_lua },
-        { "__tostring", tostring_lua },
-        { NULL, NULL }
-    };
-    struct luaL_Reg method[] = {
-        { "unwrap", unwrap_lua },
-        { "dup", dup_lua },
-        { "fd", fd_lua },
-        { "family", family_lua },
-        { "socktype", socktype_lua },
-        { "protocol", protocol_lua },
-        { "bind", bind_lua },
-        { "connect", connect_lua },
-        { "shutdown", shutdown_lua },
-        { "close", close_lua },
-        { "listen", listen_lua },
-        { "accept", accept_lua },
-        { "send", send_lua },
-        { "sendto", sendto_lua },
-        { "sendfile", sendfile_lua },
-        { "recv", recv_lua },
-        { "recvfrom", recvfrom_lua },
-
-        // state
-        { "atmark", atmark_lua },
-
-        // address info
-        { "getsockname", getsockname_lua },
-        { "getpeername", getpeername_lua },
-
-        // fd option
-        { "cloexec", cloexec_lua },
-        { "nonblock", nonblock_lua },
-
-        // read-only socket option
-        { "error", error_lua },
-        { "acceptconn", acceptconn_lua },
-        // socket option
-        { "tcpnodelay", tcpnodelay_lua },
-        { "tcpkeepintvl", tcpkeepintvl_lua },
-        { "tcpkeepcnt", tcpkeepcnt_lua },
-        { "tcpkeepalive", tcpkeepalive_lua },
-        { "tcpcork", tcpcork_lua },
-        { "reuseport", reuseport_lua },
-        { "reuseaddr", reuseaddr_lua },
-        { "broadcast", broadcast_lua },
-        { "debug", debug_lua },
-        { "keepalive", keepalive_lua },
-        { "oobinline", oobinline_lua },
-        { "dontroute", dontroute_lua },
-        { "timestamp", timestamp_lua },
-        { "rcvbuf", rcvbuf_lua },
-        { "rcvlowat", rcvlowat_lua },
-        { "sndbuf", sndbuf_lua },
-        { "sndlowat", sndlowat_lua },
-        { "rcvtimeo", rcvtimeo_lua },
-        { "sndtimeo", sndtimeo_lua },
-        { "linger", linger_lua },
-        // multicast
-        { "mcastloop", mcastloop_lua },
-        { "mcastttl", mcastttl_lua },
-        { "mcastif", mcastif_lua },
-        { "mcastjoin", mcastjoin_lua },
-        { "mcastleave", mcastleave_lua },
-        { "mcastjoinsrc", mcastjoinsrc_lua },
-        { "mcastleavesrc", mcastleavesrc_lua },
-        { "mcastblocksrc", mcastblocksrc_lua },
-        { "mcastunblocksrc", mcastunblocksrc_lua },
-        { NULL, NULL }
-    };
-    struct luaL_Reg *ptr = mmethod;
-
     // create metatable
-    luaL_newmetatable( L, SOCKET_MT );
-    // lock metatable
-    lauxh_pushnum2tbl( L, "__metatable", 1 );
-    // metamethods
-    do {
-        lauxh_pushfn2tbl( L, ptr->name, ptr->func );
-        ptr++;
-    } while( ptr->name );
-    // methods
-    lua_pushstring( L, "__index" );
-    lua_newtable( L );
-    ptr = method;
-    do {
-        lauxh_pushfn2tbl( L, ptr->name, ptr->func );
-        ptr++;
-    } while( ptr->name );
-    lua_rawset( L, -3 );
+    if( luaL_newmetatable( L, SOCKET_MT ) )
+    {
+        struct luaL_Reg mmethod[] = {
+            { "__gc", gc_lua },
+            { "__tostring", tostring_lua },
+            { NULL, NULL }
+        };
+        struct luaL_Reg method[] = {
+            { "unwrap", unwrap_lua },
+            { "dup", dup_lua },
+            { "fd", fd_lua },
+            { "family", family_lua },
+            { "socktype", socktype_lua },
+            { "protocol", protocol_lua },
+            { "bind", bind_lua },
+            { "connect", connect_lua },
+            { "shutdown", shutdown_lua },
+            { "close", close_lua },
+            { "listen", listen_lua },
+            { "accept", accept_lua },
+            { "send", send_lua },
+            { "sendto", sendto_lua },
+            { "sendfile", sendfile_lua },
+            { "recv", recv_lua },
+            { "recvfrom", recvfrom_lua },
+
+            // state
+            { "atmark", atmark_lua },
+
+            // address info
+            { "getsockname", getsockname_lua },
+            { "getpeername", getpeername_lua },
+
+            // fd option
+            { "cloexec", cloexec_lua },
+            { "nonblock", nonblock_lua },
+
+            // read-only socket option
+            { "error", error_lua },
+            { "acceptconn", acceptconn_lua },
+            // socket option
+            { "tcpnodelay", tcpnodelay_lua },
+            { "tcpkeepintvl", tcpkeepintvl_lua },
+            { "tcpkeepcnt", tcpkeepcnt_lua },
+            { "tcpkeepalive", tcpkeepalive_lua },
+            { "tcpcork", tcpcork_lua },
+            { "reuseport", reuseport_lua },
+            { "reuseaddr", reuseaddr_lua },
+            { "broadcast", broadcast_lua },
+            { "debug", debug_lua },
+            { "keepalive", keepalive_lua },
+            { "oobinline", oobinline_lua },
+            { "dontroute", dontroute_lua },
+            { "timestamp", timestamp_lua },
+            { "rcvbuf", rcvbuf_lua },
+            { "rcvlowat", rcvlowat_lua },
+            { "sndbuf", sndbuf_lua },
+            { "sndlowat", sndlowat_lua },
+            { "rcvtimeo", rcvtimeo_lua },
+            { "sndtimeo", sndtimeo_lua },
+            { "linger", linger_lua },
+            // multicast
+            { "mcastloop", mcastloop_lua },
+            { "mcastttl", mcastttl_lua },
+            { "mcastif", mcastif_lua },
+            { "mcastjoin", mcastjoin_lua },
+            { "mcastleave", mcastleave_lua },
+            { "mcastjoinsrc", mcastjoinsrc_lua },
+            { "mcastleavesrc", mcastleavesrc_lua },
+            { "mcastblocksrc", mcastblocksrc_lua },
+            { "mcastunblocksrc", mcastunblocksrc_lua },
+            { NULL, NULL }
+        };
+        struct luaL_Reg *ptr = mmethod;
+
+        // lock metatable
+        lauxh_pushnum2tbl( L, "__metatable", 1 );
+        // metamethods
+        do {
+            lauxh_pushfn2tbl( L, ptr->name, ptr->func );
+            ptr++;
+        } while( ptr->name );
+        // methods
+        lua_pushstring( L, "__index" );
+        lua_newtable( L );
+        ptr = method;
+        do {
+            lauxh_pushfn2tbl( L, ptr->name, ptr->func );
+            ptr++;
+        } while( ptr->name );
+        lua_rawset( L, -3 );
+    }
     lua_pop( L, 1 );
 
     // create table
@@ -1857,7 +1859,6 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
     lauxh_pushfn2tbl( L, "new", new_lua );
     lauxh_pushfn2tbl( L, "wrap", wrap_lua );
     lauxh_pushfn2tbl( L, "pair", pair_lua );
-
 
     return 1;
 }
