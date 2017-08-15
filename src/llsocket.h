@@ -68,6 +68,7 @@ LUALIB_API int luaopen_llsocket_unix( lua_State *L );
 LUALIB_API int luaopen_llsocket_device( lua_State *L );
 LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L );
 LUALIB_API int luaopen_llsocket_socket( lua_State *L );
+LUALIB_API int luaopen_llsocket_iovec( lua_State *L );
 
 
 typedef struct {
@@ -77,16 +78,24 @@ typedef struct {
     int *refs;
 } liovec_t;
 
-LUALIB_API int luaopen_llsocket_iovec( lua_State *L );
 
 static inline liovec_t *lls_iovec_alloc( lua_State *L, int nvec )
 {
     int top = lua_gettop( L );
-    liovec_t *iov = lua_newuserdata( L, sizeof( liovec_t ) );
+    liovec_t *iov = NULL;
 
-    if( iov && ( iov->vec = (struct iovec*)malloc( nvec ) ) )
+    if( nvec > IOV_MAX ){
+        errno = EOVERFLOW;
+        return NULL;
+    }
+    else if( nvec < 0 ){
+        nvec = 0;
+    }
+
+    iov = lua_newuserdata( L, sizeof( liovec_t ) );
+    if( iov && ( iov->vec = malloc( sizeof( struct iovec ) * nvec ) ) )
     {
-        if( ( iov->refs = (int*)malloc( nvec ) ) ){
+        if( ( iov->refs = (int*)malloc( sizeof( int ) * nvec ) ) ){
             iov->used = 0;
             iov->nvec = nvec;
             lauxh_setmetatable( L, IOVEC_MT );

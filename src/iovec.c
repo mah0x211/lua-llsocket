@@ -161,10 +161,7 @@ static int new_lua( lua_State *L )
 {
     lua_Integer nvec = lauxh_optinteger( L, 1, 0 );
 
-    if( nvec > IOV_MAX ){
-        errno = EOVERFLOW;
-    }
-    else if( lls_iovec_alloc( L, ( nvec < 0 ) ? 0 : nvec ) ){
+    if( lls_iovec_alloc( L, nvec ) ){
         return 1;
     }
 
