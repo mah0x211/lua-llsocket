@@ -61,6 +61,7 @@
 #define SOCKET_MT   "llsocket.socket"
 #define ADDRINFO_MT "llsocket.addrinfo"
 #define IOVEC_MT    "llsocket.iovec"
+#define MSGHDR_MT   "llsocket.msghdr"
 
 
 LUALIB_API int luaopen_llsocket_inet( lua_State *L );
@@ -69,6 +70,7 @@ LUALIB_API int luaopen_llsocket_device( lua_State *L );
 LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L );
 LUALIB_API int luaopen_llsocket_socket( lua_State *L );
 LUALIB_API int luaopen_llsocket_iovec( lua_State *L );
+LUALIB_API int luaopen_llsocket_msghdr( lua_State *L );
 
 
 typedef struct {
@@ -77,6 +79,13 @@ typedef struct {
     struct iovec *vec;
     int *refs;
 } liovec_t;
+
+
+typedef struct {
+    struct msghdr hdr;
+    liovec_t *iov;
+    int iov_ref;
+} lmsghdr_t;
 
 
 static inline liovec_t *lls_iovec_alloc( lua_State *L, int nvec )
