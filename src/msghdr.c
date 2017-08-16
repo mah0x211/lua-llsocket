@@ -28,6 +28,26 @@
 #include "llsocket.h"
 
 
+static int flags_lua( lua_State *L )
+{
+    lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
+
+    lua_pushinteger( L, msg->flags );
+
+    return 1;
+}
+
+
+static int iov_lua( lua_State *L )
+{
+    lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
+
+    lauxh_pushref( L, msg->iov_ref );
+
+    return 1;
+}
+
+
 static int name_lua( lua_State *L )
 {
     lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
@@ -46,26 +66,6 @@ static int name_lua( lua_State *L )
 
     // push ref
     lauxh_pushref( L, msg->name_ref );
-
-    return 1;
-}
-
-
-static int flags_lua( lua_State *L )
-{
-    lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
-
-    lua_pushinteger( L, msg->flags );
-
-    return 1;
-}
-
-
-static int iov_lua( lua_State *L )
-{
-    lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
-
-    lauxh_pushref( L, msg->iov_ref );
 
     return 1;
 }
