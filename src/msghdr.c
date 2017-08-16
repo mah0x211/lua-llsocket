@@ -38,6 +38,36 @@ static int flags_lua( lua_State *L )
 }
 
 
+static int control_lua( lua_State *L )
+{
+    lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
+
+    if( lua_gettop( L ) > 1 )
+    {
+        // check argument
+        lua_settop( L, 2 );
+        if( !lauxh_isnil( L, 2 ) )
+        {
+            lauxh_checkudata( L, 2, CMSGHDR_MT );
+            // release current ref
+            if( lauxh_isref( msg->control_ref ) ){
+                lauxh_unref( L, msg->control_ref );
+            }
+            msg->control_ref = lauxh_ref( L );
+        }
+        // release ref
+        else if( lauxh_isref( msg->control_ref ) ){
+            msg->control_ref = lauxh_unref( L, msg->control_ref );
+        }
+    }
+
+    // push ref
+    lauxh_pushref( L, msg->control_ref );
+
+    return 1;
+}
+
+
 static int iov_lua( lua_State *L )
 {
     lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
@@ -162,6 +192,7 @@ LUALIB_API int luaopen_llsocket_msghdr( lua_State *L )
         struct luaL_Reg method[] = {
             { "name", name_lua },
             { "iov", iov_lua },
+            { "control", control_lua },
             { "flags", flags_lua },
             { NULL, NULL }
         };

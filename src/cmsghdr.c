@@ -112,7 +112,6 @@ static int gc_lua( lua_State *L )
 }
 
 
-
 static int new_lua( lua_State *L )
 {
     lcmsghdr_t *cmsg = lua_newuserdata( L, sizeof( lcmsghdr_t ) );
