@@ -32,7 +32,7 @@ static int flags_lua( lua_State *L )
 {
     lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
 
-    lua_pushinteger( L, msg->hdr.msg_flags );
+    lua_pushinteger( L, msg->flags );
 
     return 1;
 }
@@ -97,18 +97,13 @@ static int new_lua( lua_State *L )
 
 ALLOC_MSGHDR:
     msg = lua_newuserdata( L, sizeof( lmsghdr_t ) );
-    if( msg )
-    {
-        msg->iov = iov;
-        msg->iov_ref = ref;
-        msg->hdr = (struct msghdr){
-            .msg_name = NULL,
-            .msg_namelen = 0,
-            .msg_iov = NULL,
-            .msg_iovlen = 0,
-            .msg_control = NULL,
-            .msg_controllen = 0,
-            .msg_flags = 0
+    if( msg ){
+        *msg = (lmsghdr_t){
+            .name_ref = LUA_NOREF,
+            .iov_ref = ref,
+            .control_ref = LUA_NOREF,
+            .flags = 0,
+            .iov = iov
         };
 
         lauxh_setmetatable( L, MSGHDR_MT );

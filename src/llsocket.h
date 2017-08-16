@@ -82,9 +82,15 @@ typedef struct {
 
 
 typedef struct {
-    struct msghdr hdr;
-    liovec_t *iov;
+    // msg_name
+    int name_ref;
+    // msg_iov
     int iov_ref;
+    // msg_control
+    int control_ref;
+    // msg_flags
+    int flags;
+    liovec_t *iov;
 } lmsghdr_t;
 
 
