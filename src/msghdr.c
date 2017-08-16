@@ -38,33 +38,38 @@ static int flags_lua( lua_State *L )
 }
 
 
-static int control_lua( lua_State *L )
+static inline int ref_lua( lua_State *L, int *ref, const char *tname )
 {
-    lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
-
     if( lua_gettop( L ) > 1 )
     {
         // check argument
         lua_settop( L, 2 );
         if( !lauxh_isnil( L, 2 ) )
         {
-            lauxh_checkudata( L, 2, CMSGHDR_MT );
+            lauxh_checkudata( L, 2, tname );
             // release current ref
-            if( lauxh_isref( msg->control_ref ) ){
-                lauxh_unref( L, msg->control_ref );
+            if( lauxh_isref( *ref ) ){
+                lauxh_unref( L, *ref );
             }
-            msg->control_ref = lauxh_ref( L );
+            *ref = lauxh_ref( L );
         }
         // release ref
-        else if( lauxh_isref( msg->control_ref ) ){
-            msg->control_ref = lauxh_unref( L, msg->control_ref );
+        else if( lauxh_isref( *ref ) ){
+            *ref = lauxh_unref( L, *ref );
         }
     }
 
     // push ref
-    lauxh_pushref( L, msg->control_ref );
+    lauxh_pushref( L, *ref );
 
     return 1;
+}
+
+
+static int control_lua( lua_State *L )
+{
+    lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
+    return ref_lua( L, &msg->control_ref, CMSGHDR_MT );
 }
 
 
@@ -81,30 +86,7 @@ static int iov_lua( lua_State *L )
 static int name_lua( lua_State *L )
 {
     lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
-
-    if( lua_gettop( L ) > 1 )
-    {
-        // check argument
-        lua_settop( L, 2 );
-        if( !lauxh_isnil( L, 2 ) )
-        {
-            lauxh_checkudata( L, 2, ADDRINFO_MT );
-            // release current ref
-            if( lauxh_isref( msg->name_ref ) ){
-                lauxh_unref( L, msg->name_ref );
-            }
-            msg->name_ref = lauxh_ref( L );
-        }
-        // release ref
-        else if( lauxh_isref( msg->name_ref ) ){
-            msg->name_ref = lauxh_unref( L, msg->name_ref );
-        }
-    }
-
-    // push ref
-    lauxh_pushref( L, msg->name_ref );
-
-    return 1;
+    return ref_lua( L, &msg->name_ref, ADDRINFO_MT );
 }
 
 
