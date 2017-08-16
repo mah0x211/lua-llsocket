@@ -28,6 +28,29 @@
 #include "llsocket.h"
 
 
+static int name_lua( lua_State *L )
+{
+    lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
+
+    if( lua_gettop( L ) > 1 )
+    {
+        // release current ref
+        msg->name_ref = lauxh_unref( L, msg->name_ref );
+        // check argument
+        lua_settop( L, 2 );
+        if( !lauxh_isnil( L, 2 ) ){
+            lauxh_checkudata( L, 2, ADDRINFO_MT );
+            msg->name_ref = lauxh_ref( L );
+        }
+    }
+
+    // push ref
+    lauxh_pushref( L, msg->name_ref );
+
+    return 1;
+}
+
+
 static int flags_lua( lua_State *L )
 {
     lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
@@ -132,6 +155,7 @@ LUALIB_API int luaopen_llsocket_msghdr( lua_State *L )
             { NULL, NULL }
         };
         struct luaL_Reg method[] = {
+            { "name", name_lua },
             { "iov", iov_lua },
             { "flags", flags_lua },
             { NULL, NULL }
