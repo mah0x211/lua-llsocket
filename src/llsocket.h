@@ -58,6 +58,11 @@
 #include "config.h"
 
 
+#if !defined(IOV_MAX)
+#define IOV_MAX 1024
+#endif
+
+
 #define SOCKET_MT   "llsocket.socket"
 #define ADDRINFO_MT "llsocket.addrinfo"
 #define IOVEC_MT    "llsocket.iovec"
