@@ -212,6 +212,7 @@ LUALIB_API int luaopen_llsocket_iovec( lua_State *L )
     // create module table
     lua_newtable( L );
     lauxh_pushfn2tbl( L, "new", new_lua );
+    lauxh_pushint2tbl( L, "IOV_MAX", IOV_MAX );
 
     return 1;
 }
