@@ -106,39 +106,12 @@ static int gc_lua( lua_State *L )
 
 static int new_lua( lua_State *L )
 {
-    lmsghdr_t *msg = NULL;
-    lua_Integer nvec = 0;
-    int ref = LUA_NOREF;
+    lmsghdr_t *msg = lua_newuserdata( L, sizeof( lmsghdr_t ) );
 
-    // check argument
-    if( lua_gettop( L ) > 0 )
-    {
-        lua_settop( L, 1 );
-        switch( lua_type( L, 1 ) ){
-            case LUA_TUSERDATA:
-                lauxh_checkudata( L, 1, IOVEC_MT );
-                ref = lauxh_ref( L );
-                goto ALLOC_MSGHDR;
-
-            default:
-                nvec = lauxh_optinteger( L, 1, 0 );
-        }
-    }
-
-    // alloc iovec
-    if( !lls_iovec_alloc( L, nvec ) ){
-        lua_pushnil( L );
-        lua_pushstring( L, strerror( errno ) );
-        return 2;
-    }
-    ref = lauxh_ref( L );
-
-ALLOC_MSGHDR:
-    msg = lua_newuserdata( L, sizeof( lmsghdr_t ) );
     if( msg ){
         *msg = (lmsghdr_t){
             .name_ref = LUA_NOREF,
-            .iov_ref = ref,
+            .iov_ref = LUA_NOREF,
             .control_ref = LUA_NOREF,
             .flags = 0
         };
@@ -147,10 +120,7 @@ ALLOC_MSGHDR:
         return 1;
     }
 
-
-
     // got error
-    lauxh_unref( L, ref );
     lua_pushnil( L );
     lua_pushstring( L, strerror( errno ) );
 
@@ -176,9 +146,6 @@ LUALIB_API int luaopen_llsocket_msghdr( lua_State *L )
             { NULL, NULL }
         };
         struct luaL_Reg *ptr = mmethod;
-
-        luaopen_llsocket_iovec( L );
-        lua_pop( L, 1 );
 
         // metamethods
         do {
