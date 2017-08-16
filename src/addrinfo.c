@@ -75,7 +75,7 @@ static int addr_lua( lua_State *L )
         case AF_INET6:
             lua_createtable( L, 0, 2 );
             iaddr6 = (struct sockaddr_in6*)info->ai_addr;
-            lauxh_pushnum2tbl( L, "port", ntohs( iaddr->sin_port ) );
+            lauxh_pushnum2tbl( L, "port", ntohs( iaddr6->sin6_port ) );
             lauxh_pushstr2tbl( L, "ip", inet_ntop( info->ai_family,
                                                 (const void*)&iaddr6->sin6_addr,
                                                 buf, INET6_ADDRSTRLEN ) );
