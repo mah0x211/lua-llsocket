@@ -76,10 +76,7 @@ static int control_lua( lua_State *L )
 static int iov_lua( lua_State *L )
 {
     lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
-
-    lauxh_pushref( L, msg->iov_ref );
-
-    return 1;
+    return ref_lua( L, &msg->iov_ref, IOVEC_MT );
 }
 
 
