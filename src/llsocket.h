@@ -90,7 +90,6 @@ typedef struct {
     int control_ref;
     // msg_flags
     int flags;
-    liovec_t *iov;
 } lmsghdr_t;
 
 

@@ -91,7 +91,6 @@ static int gc_lua( lua_State *L )
 static int new_lua( lua_State *L )
 {
     lmsghdr_t *msg = NULL;
-    liovec_t *iov = NULL;
     lua_Integer nvec = 0;
     int ref = LUA_NOREF;
 
@@ -101,7 +100,7 @@ static int new_lua( lua_State *L )
         lua_settop( L, 1 );
         switch( lua_type( L, 1 ) ){
             case LUA_TUSERDATA:
-                iov = lauxh_checkudata( L, 1, IOVEC_MT );
+                lauxh_checkudata( L, 1, IOVEC_MT );
                 ref = lauxh_ref( L );
                 goto ALLOC_MSGHDR;
 
@@ -111,7 +110,7 @@ static int new_lua( lua_State *L )
     }
 
     // alloc iovec
-    if( !( iov = lls_iovec_alloc( L, nvec ) ) ){
+    if( !lls_iovec_alloc( L, nvec ) ){
         lua_pushnil( L );
         lua_pushstring( L, strerror( errno ) );
         return 2;
@@ -125,8 +124,7 @@ ALLOC_MSGHDR:
             .name_ref = LUA_NOREF,
             .iov_ref = ref,
             .control_ref = LUA_NOREF,
-            .flags = 0,
-            .iov = iov
+            .flags = 0
         };
 
         lauxh_setmetatable( L, MSGHDR_MT );
