@@ -54,13 +54,20 @@ static int name_lua( lua_State *L )
 
     if( lua_gettop( L ) > 1 )
     {
-        // release current ref
-        msg->name_ref = lauxh_unref( L, msg->name_ref );
         // check argument
         lua_settop( L, 2 );
-        if( !lauxh_isnil( L, 2 ) ){
+        if( !lauxh_isnil( L, 2 ) )
+        {
             lauxh_checkudata( L, 2, ADDRINFO_MT );
+            // release current ref
+            if( lauxh_isref( msg->name_ref ) ){
+                lauxh_unref( L, msg->name_ref );
+            }
             msg->name_ref = lauxh_ref( L );
+        }
+        // release ref
+        else if( lauxh_isref( msg->name_ref ) ){
+            msg->name_ref = lauxh_unref( L, msg->name_ref );
         }
     }
 
