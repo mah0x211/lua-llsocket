@@ -76,74 +76,18 @@ static int get_lua( lua_State *L )
 }
 
 
-static int addn_lua( lua_State *L )
+static inline int addstr_lua( lua_State *L, liovec_t *iov )
 {
-    liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
-    lua_Integer n = lauxh_checkinteger( L, 2 );
-    int used = iov->used + 1;
-
-    // check argument
-    lauxh_argcheck(
-        L, n > 0, 2, "1 or more integer expected, got less than 1"
-    );
-
-    lua_settop( L, 0 );
-    if( used > IOV_MAX ){
-        lua_pushinteger( L, -ENOBUFS );
-        return 1;
-    }
-    else if( iov->nvec < used )
-    {
-        // increase vec
-        void *new = realloc( (void*)iov->data, sizeof( struct iovec ) * used );
-
-        if( !new ){
-            lua_pushnil( L );
-            lua_pushstring( L, strerror( errno ) );
-            return 2;
-        }
-        iov->data = (struct iovec*)new;
-
-        // increase refs
-        new = realloc( (void*)iov->refs, sizeof( int ) * used );
-        if( !new ){
-            lua_pushnil( L );
-            lua_pushstring( L, strerror( errno ) );
-            return 2;
-        }
-        iov->refs = (int*)new;
-
-        // update size of vector
-        iov->nvec = used;
-    }
-
-    // create buffer
-    lauxh_pushbuffer( L, n );
-    // maintain result string
-    iov->data[iov->used] = (struct iovec){
-        .iov_base = (void*)lua_tostring( L, -1 ),
-        .iov_len = n
-    };
-    iov->refs[iov->used] = lauxh_ref( L );
-    lua_pushinteger( L, iov->used );
-
-    iov->used = used;
-
-    return 1;
-}
-
-
-static int add_lua( lua_State *L )
-{
-    liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
     size_t len = 0;
     const char *str = lauxh_checklstring( L, 2, &len );
     int used = iov->used + 1;
 
     lua_settop( L, 2 );
     if( used > IOV_MAX ){
-        lua_pushinteger( L, -ENOBUFS );
-        return 1;
+        errno = ENOBUFS;
+        lua_pushnil( L );
+        lua_pushstring( L, strerror( errno ) );
+        return 2;
     }
     else if( iov->nvec < used )
     {
@@ -170,6 +114,7 @@ static int add_lua( lua_State *L )
         iov->nvec = used;
     }
 
+    // maintain string
     iov->refs[iov->used] = lauxh_ref( L );
     iov->data[iov->used] = (struct iovec){
         .iov_base = (void*)str,
@@ -180,6 +125,32 @@ static int add_lua( lua_State *L )
     iov->used = used;
 
     return 1;
+}
+
+
+static int addn_lua( lua_State *L )
+{
+    liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
+    lua_Integer n = lauxh_checkinteger( L, 2 );
+
+    // check argument
+    lauxh_argcheck(
+        L, n > 0, 2, "1 or more integer expected, got less than 1"
+    );
+
+    lua_settop( L, 1 );
+    // create buffer
+    lauxh_pushbuffer( L, n );
+
+    return addstr_lua( L, iov );
+}
+
+
+static int add_lua( lua_State *L )
+{
+    liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
+
+    return addstr_lua( L, iov );
 }
 
 
