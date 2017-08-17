@@ -86,6 +86,11 @@ static int addn_lua( lua_State *L )
     int used = iov->used + 1;
     luaL_Buffer B;
 
+    // check argument
+    lauxh_argcheck(
+        L, n > 0, 2, "1 or more integer expected, got less than 1"
+    );
+
     lua_settop( L, 0 );
     if( used > IOV_MAX ){
         lua_pushinteger( L, -ENOBUFS );
