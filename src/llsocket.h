@@ -90,6 +90,7 @@ typedef struct {
 
 typedef struct {
     int ref;
+    struct cmsghdr *data;
 } lcmsghdr_t;
 
 

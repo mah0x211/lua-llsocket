@@ -39,11 +39,16 @@ static int socket_lua( lua_State *L )
         if( !lauxh_isnil( L, 2 ) )
         {
             size_t bytes = sizeof( int ) * nsock;
-            unsigned char *data = lua_newuserdata( L, CMSG_SPACE( bytes ) );
-            struct cmsghdr *hdr = (struct cmsghdr*)data;
-            int *ptr = (int*)CMSG_DATA( hdr );
+            unsigned char *buf = lua_newuserdata( L, CMSG_SPACE( bytes ) );
+            struct cmsghdr *data = (struct cmsghdr*)buf;
+            int *ptr = (int*)CMSG_DATA( data );
             int i = 0;
 
+            // set properties
+            data->cmsg_len = CMSG_LEN( bytes );
+            data->cmsg_level = SOL_SOCKET;
+            data->cmsg_type = SCM_RIGHTS;
+            // set sockets
             for(; i < nsock; i++ ){
                 ptr[i] = lauxh_checkinteger( L, i + 2 );
             }
@@ -53,32 +58,28 @@ static int socket_lua( lua_State *L )
                 lauxh_unref( L, cmsg->ref );
             }
 
-            // set new data
+            // maintain new data
             cmsg->ref = lauxh_ref( L );
-            hdr->cmsg_len = CMSG_LEN( bytes );
-            hdr->cmsg_level = SOL_SOCKET;
-            hdr->cmsg_type = SCM_RIGHTS;
+            cmsg->data = data;
         }
         // release current data
         else if( lauxh_isref( cmsg->ref ) ){
             cmsg->ref = lauxh_unref( L, cmsg->ref );
+            cmsg->data = NULL;
         }
 
         return nsock;
     }
     else if( lauxh_isref( cmsg->ref ) )
     {
-        struct cmsghdr *hdr = NULL;
-
-        lauxh_pushref( L, cmsg->ref );
-        hdr = (struct cmsghdr*)lua_touserdata( L, -1 );
         // return sockets
-        if( hdr->cmsg_level == SOL_SOCKET && hdr->cmsg_type == SCM_RIGHTS )
+        if( cmsg->data->cmsg_level == SOL_SOCKET &&
+            cmsg->data->cmsg_type == SCM_RIGHTS )
         {
-            int *ptr = (int*)CMSG_DATA( hdr );
+            int *ptr = (int*)CMSG_DATA( cmsg->data );
             int i = 0;
 
-            nsock = ( hdr->cmsg_len - CMSG_LEN(0) ) / sizeof( int );
+            nsock = ( cmsg->data->cmsg_len - CMSG_LEN(0) ) / sizeof( int );
             for(; i < nsock; i++ ){
                 lua_pushinteger( L, ptr[i] );
             }
@@ -118,6 +119,7 @@ static int new_lua( lua_State *L )
 
     if( cmsg ){
         cmsg->ref = LUA_NOREF;
+        cmsg->data = NULL;
         lauxh_setmetatable( L, CMSGHDR_MT );
         return 1;
     }
