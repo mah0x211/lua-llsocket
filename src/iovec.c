@@ -98,7 +98,6 @@ static int add_lua( lua_State *L )
             lua_pushstring( L, strerror( errno ) );
             return 2;
         }
-        iov->nvec = used;
         iov->data = (struct iovec*)new;
 
         // increase refs
@@ -109,6 +108,9 @@ static int add_lua( lua_State *L )
             return 2;
         }
         iov->refs = (int*)new;
+
+        // update size of vector
+        iov->nvec = used;
     }
 
     iov->refs[iov->used] = lauxh_ref( L );
