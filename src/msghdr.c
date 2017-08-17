@@ -98,7 +98,9 @@ static int gc_lua( lua_State *L )
 {
     lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
 
+    lauxh_unref( L, msg->name_ref );
     lauxh_unref( L, msg->iov_ref );
+    lauxh_unref( L, msg->control_ref );
 
     return 0;
 }
