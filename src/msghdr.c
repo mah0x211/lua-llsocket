@@ -38,52 +38,102 @@ static int flags_lua( lua_State *L )
 }
 
 
-static inline int ref_lua( lua_State *L, int *ref, const char *tname )
+static int control_lua( lua_State *L )
 {
+    lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
+
     if( lua_gettop( L ) > 1 )
     {
         // check argument
         lua_settop( L, 2 );
         if( !lauxh_isnil( L, 2 ) )
         {
-            lauxh_checkudata( L, 2, tname );
+            lcmsghdr_t *cmsg = lauxh_checkudata( L, 2, CMSGHDR_MT );
+
             // release current ref
-            if( lauxh_isref( *ref ) ){
-                lauxh_unref( L, *ref );
+            if( lauxh_isref( msg->control_ref ) ){
+                lauxh_unref( L, msg->control_ref );
             }
-            *ref = lauxh_ref( L );
+            msg->control_ref = lauxh_ref( L );
+            msg->control = cmsg;
         }
         // release ref
-        else if( lauxh_isref( *ref ) ){
-            *ref = lauxh_unref( L, *ref );
+        else if( lauxh_isref( msg->control_ref ) ){
+            msg->control_ref = lauxh_unref( L, msg->control_ref );
+            msg->control = NULL;
         }
     }
 
     // push ref
-    lauxh_pushref( L, *ref );
+    lauxh_pushref( L, msg->control_ref );
 
     return 1;
-}
-
-
-static int control_lua( lua_State *L )
-{
-    lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
-    return ref_lua( L, &msg->control_ref, CMSGHDR_MT );
 }
 
 
 static int iov_lua( lua_State *L )
 {
     lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
-    return ref_lua( L, &msg->iov_ref, IOVEC_MT );
+
+    if( lua_gettop( L ) > 1 )
+    {
+        // check argument
+        lua_settop( L, 2 );
+        if( !lauxh_isnil( L, 2 ) )
+        {
+            liovec_t *iov = lauxh_checkudata( L, 2, IOVEC_MT );
+
+            // release current ref
+            if( lauxh_isref( msg->iov_ref ) ){
+                lauxh_unref( L, msg->iov_ref );
+            }
+            msg->iov_ref = lauxh_ref( L );
+            msg->iov = iov;
+        }
+        // release ref
+        else if( lauxh_isref( msg->iov_ref ) ){
+            msg->iov_ref = lauxh_unref( L, msg->iov_ref );
+            msg->iov = NULL;
+        }
+    }
+
+    // push ref
+    lauxh_pushref( L, msg->iov_ref );
+
+    return 1;
 }
 
 
 static int name_lua( lua_State *L )
 {
     lmsghdr_t *msg = lauxh_checkudata( L, 1, MSGHDR_MT );
-    return ref_lua( L, &msg->name_ref, ADDRINFO_MT );
+
+    if( lua_gettop( L ) > 1 )
+    {
+        // check argument
+        lua_settop( L, 2 );
+        if( !lauxh_isnil( L, 2 ) )
+        {
+            struct addrinfo *info = lauxh_checkudata( L, 2, ADDRINFO_MT );
+
+            // release current ref
+            if( lauxh_isref( msg->name_ref ) ){
+                lauxh_unref( L, msg->name_ref );
+            }
+            msg->name_ref = lauxh_ref( L );
+            msg->name = info;
+        }
+        // release ref
+        else if( lauxh_isref( msg->name_ref ) ){
+            msg->name_ref = lauxh_unref( L, msg->name_ref );
+            msg->name = NULL;
+        }
+    }
+
+    // push ref
+    lauxh_pushref( L, msg->name_ref );
+
+    return 1;
 }
 
 
@@ -115,7 +165,10 @@ static int new_lua( lua_State *L )
             .name_ref = LUA_NOREF,
             .iov_ref = LUA_NOREF,
             .control_ref = LUA_NOREF,
-            .flags = 0
+            .flags = 0,
+            .name = NULL,
+            .iov = NULL,
+            .control = NULL
         };
 
         lauxh_setmetatable( L, MSGHDR_MT );

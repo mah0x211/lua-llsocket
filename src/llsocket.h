@@ -103,6 +103,10 @@ typedef struct {
     int control_ref;
     // msg_flags
     int flags;
+    // data pointers
+    struct addrinfo *name;
+    liovec_t *iov;
+    lcmsghdr_t *control;
 } lmsghdr_t;
 
 
