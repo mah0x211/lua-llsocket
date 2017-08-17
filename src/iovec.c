@@ -190,6 +190,28 @@ static int add_lua( lua_State *L )
 }
 
 
+static int concat_lua( lua_State *L )
+{
+    liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
+
+    lua_settop( L, 0 );
+    if( iov->used > 0 )
+    {
+        int i = 0;
+
+        for(; i < iov->used; i++ ){
+            lauxh_pushref( L, iov->refs[i] );
+        }
+        lua_concat( L, iov->used );
+    }
+    else {
+        lua_pushstring( L, "" );
+    }
+
+    return 1;
+}
+
+
 static int len_lua( lua_State *L )
 {
     liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
@@ -251,6 +273,7 @@ LUALIB_API int luaopen_llsocket_iovec( lua_State *L )
             { NULL, NULL }
         };
         struct luaL_Reg method[] = {
+            { "concat", concat_lua },
             { "add", add_lua },
             { "addn", addn_lua },
             { "get", get_lua },
