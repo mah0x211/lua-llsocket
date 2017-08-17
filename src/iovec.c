@@ -120,11 +120,11 @@ static int addn_lua( lua_State *L )
     // create buffer
     lauxh_pushbuffer( L, n );
     // maintain result string
-    iov->refs[iov->used] = lauxh_ref( L );
     iov->data[iov->used] = (struct iovec){
         .iov_base = (void*)lua_tostring( L, -1 ),
         .iov_len = n
     };
+    iov->refs[iov->used] = lauxh_ref( L );
     lua_pushinteger( L, iov->used );
 
     iov->used = used;
