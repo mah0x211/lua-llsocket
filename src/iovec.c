@@ -76,6 +76,70 @@ static int get_lua( lua_State *L )
 }
 
 
+static int addn_lua( lua_State *L )
+{
+    liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
+    lua_Integer n = lauxh_checkinteger( L, 2 );
+    lua_Integer nbuf = n / LUAL_BUFFERSIZE;
+    lua_Integer remain = n % LUAL_BUFFERSIZE;
+    lua_Integer i = 0;
+    int used = iov->used + 1;
+    luaL_Buffer B;
+
+    lua_settop( L, 0 );
+    if( used > IOV_MAX ){
+        lua_pushinteger( L, -ENOBUFS );
+        return 1;
+    }
+    else if( iov->nvec < used )
+    {
+        // increase vec
+        void *new = realloc( (void*)iov->data, sizeof( struct iovec ) * used );
+
+        if( !new ){
+            lua_pushnil( L );
+            lua_pushstring( L, strerror( errno ) );
+            return 2;
+        }
+        iov->nvec = used;
+        iov->data = (struct iovec*)new;
+
+        // increase refs
+        new = realloc( (void*)iov->refs, sizeof( int ) * used );
+        if( !new ){
+            lua_pushnil( L );
+            lua_pushstring( L, strerror( errno ) );
+            return 2;
+        }
+        iov->refs = (int*)new;
+    }
+
+    // create buffer
+    luaL_buffinit( L, &B );
+    for(; i < nbuf; i++ ){
+        luaL_prepbuffer( &B );
+        luaL_addsize( &B, LUAL_BUFFERSIZE );
+    }
+    if( remain ){
+        luaL_prepbuffer( &B );
+        luaL_addsize( &B, remain );
+    }
+    luaL_pushresult( &B );
+
+    // maintain result string
+    iov->refs[iov->used] = lauxh_ref( L );
+    iov->data[iov->used] = (struct iovec){
+        .iov_base = (void*)lua_tostring( L, -1 ),
+        .iov_len = n
+    };
+    lua_pushinteger( L, iov->used );
+
+    iov->used = used;
+
+    return 1;
+}
+
+
 static int add_lua( lua_State *L )
 {
     liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
@@ -188,6 +252,7 @@ LUALIB_API int luaopen_llsocket_iovec( lua_State *L )
         };
         struct luaL_Reg method[] = {
             { "add", add_lua },
+            { "addn", addn_lua },
             { "get", get_lua },
             { "del", del_lua },
             { NULL, NULL }
