@@ -42,9 +42,9 @@ static int del_lua( lua_State *L )
         {
             // move the last data to idx to fill in hole of array
             iov->refs[idx] = iov->refs[iov->used];
-            iov->vec[idx] = (struct iovec){
-                .iov_base = iov->vec[iov->used].iov_base,
-                .iov_len = iov->vec[iov->used].iov_len
+            iov->data[idx] = (struct iovec){
+                .iov_base = iov->data[iov->used].iov_base,
+                .iov_len = iov->data[iov->used].iov_len
             };
             lua_pushinteger( L, iov->used );
 
@@ -91,7 +91,7 @@ static int add_lua( lua_State *L )
     else if( iov->nvec < used )
     {
         // increase vec
-        void *new = realloc( (void*)iov->vec, sizeof( struct iovec ) * used );
+        void *new = realloc( (void*)iov->data, sizeof( struct iovec ) * used );
 
         if( !new ){
             lua_pushnil( L );
@@ -99,7 +99,7 @@ static int add_lua( lua_State *L )
             return 2;
         }
         iov->nvec = used;
-        iov->vec = (struct iovec*)new;
+        iov->data = (struct iovec*)new;
 
         // increase refs
         new = realloc( (void*)iov->refs, sizeof( int ) * used );
@@ -112,7 +112,7 @@ static int add_lua( lua_State *L )
     }
 
     iov->refs[iov->used] = lauxh_ref( L );
-    iov->vec[iov->used] = (struct iovec){
+    iov->data[iov->used] = (struct iovec){
         .iov_base = (void*)str,
         .iov_len = len
     };
@@ -147,7 +147,7 @@ static int gc_lua( lua_State *L )
     int *refs = iov->refs;
     int i = 0;
 
-    free( iov->vec );
+    free( iov->data );
     for(; i < iov->used; i++ ){
         lauxh_unref( L, refs[i] );
     }
