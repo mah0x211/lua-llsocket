@@ -997,10 +997,6 @@ static int send_lua( lua_State *L )
     rv = send( s->fd, buf, len, flg );
     switch( rv )
     {
-        // closed by peer
-        case 0:
-            return 0;
-
         // got error
         case -1:
             // again
@@ -1048,10 +1044,6 @@ static int sendto_lua( lua_State *L )
                  info->ai_addrlen );
     switch( rv )
     {
-        // closed by peer
-        case 0:
-            return 0;
-
         // got error
         case -1:
             // again
@@ -1263,10 +1255,6 @@ static int sendfile_lua( lua_State *L )
     free( buf );
     switch( nbytes )
     {
-        // closed by peer
-        case 0:
-            return 0;
-
         // got error
         case -1:
             // again
