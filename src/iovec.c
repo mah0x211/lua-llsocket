@@ -80,11 +80,7 @@ static int addn_lua( lua_State *L )
 {
     liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
     lua_Integer n = lauxh_checkinteger( L, 2 );
-    lua_Integer nbuf = n / LUAL_BUFFERSIZE;
-    lua_Integer remain = n % LUAL_BUFFERSIZE;
-    lua_Integer i = 0;
     int used = iov->used + 1;
-    luaL_Buffer B;
 
     // check argument
     lauxh_argcheck(
@@ -120,17 +116,7 @@ static int addn_lua( lua_State *L )
     }
 
     // create buffer
-    luaL_buffinit( L, &B );
-    for(; i < nbuf; i++ ){
-        luaL_prepbuffer( &B );
-        luaL_addsize( &B, LUAL_BUFFERSIZE );
-    }
-    if( remain ){
-        luaL_prepbuffer( &B );
-        luaL_addsize( &B, remain );
-    }
-    luaL_pushresult( &B );
-
+    lauxh_pushbuffer( L, n );
     // maintain result string
     iov->refs[iov->used] = lauxh_ref( L );
     iov->data[iov->used] = (struct iovec){
