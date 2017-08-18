@@ -163,12 +163,14 @@ static int concat_lua( lua_State *L )
     lua_settop( L, 0 );
     if( iov->used > 0 )
     {
+        int *refs = iov->refs;
+        int used = iov->used;
         int i = 0;
 
-        for(; i < iov->used; i++ ){
-            lauxh_pushref( L, iov->refs[i] );
+        for(; i < used; i++ ){
+            lauxh_pushref( L, refs[i] );
         }
-        lua_concat( L, iov->used );
+        lua_concat( L, used );
     }
     else {
         lua_pushstring( L, "" );
@@ -209,13 +211,14 @@ static int gc_lua( lua_State *L )
 {
     liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
     int *refs = iov->refs;
+    int used = iov->used;
     int i = 0;
 
     free( iov->data );
-    for(; i < iov->used; i++ ){
+    for(; i < used; i++ ){
         lauxh_unref( L, refs[i] );
     }
-    free( iov->refs );
+    free( refs );
 
     return 0;
 }
