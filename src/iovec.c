@@ -178,6 +178,16 @@ static int concat_lua( lua_State *L )
 }
 
 
+static int bytes_lua( lua_State *L )
+{
+    liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
+
+    lua_pushinteger( L, iov->bytes );
+
+    return 1;
+}
+
+
 static int len_lua( lua_State *L )
 {
     liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
@@ -239,6 +249,7 @@ LUALIB_API int luaopen_llsocket_iovec( lua_State *L )
             { NULL, NULL }
         };
         struct luaL_Reg method[] = {
+            { "bytes", bytes_lua },
             { "concat", concat_lua },
             { "add", add_lua },
             { "addn", addn_lua },
