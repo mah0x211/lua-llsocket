@@ -37,6 +37,7 @@ static int del_lua( lua_State *L )
     {
         lauxh_pushref( L, iov->refs[idx] );
         lauxh_unref( L, iov->refs[idx] );
+        iov->bytes -= iov->data[idx].iov_len;
         iov->used--;
         if( iov->used != idx )
         {
@@ -123,6 +124,7 @@ static inline int addstr_lua( lua_State *L, liovec_t *iov )
     lua_pushinteger( L, iov->used );
 
     iov->used = used;
+    iov->bytes += len;
 
     return 1;
 }

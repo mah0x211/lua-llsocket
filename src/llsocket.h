@@ -83,6 +83,7 @@ LUALIB_API int luaopen_llsocket_msghdr( lua_State *L );
 typedef struct {
     int nvec;
     int used;
+    size_t bytes;
     struct iovec *data;
     int *refs;
 } liovec_t;
@@ -129,6 +130,7 @@ static inline liovec_t *lls_iovec_alloc( lua_State *L, int nvec )
         if( ( iov->refs = (int*)malloc( sizeof( int ) * nvec ) ) ){
             iov->used = 0;
             iov->nvec = nvec;
+            iov->bytes = 0;
             lauxh_setmetatable( L, IOVEC_MT );
             return iov;
         }
