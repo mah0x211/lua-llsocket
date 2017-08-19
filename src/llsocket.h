@@ -86,6 +86,7 @@ typedef struct {
     size_t bytes;
     struct iovec *data;
     int *refs;
+    size_t *lens;
 } liovec_t;
 
 
@@ -127,12 +128,16 @@ static inline liovec_t *lls_iovec_alloc( lua_State *L, int nvec )
     iov = lua_newuserdata( L, sizeof( liovec_t ) );
     if( iov && ( iov->data = malloc( sizeof( struct iovec ) * nvec ) ) )
     {
-        if( ( iov->refs = (int*)malloc( sizeof( int ) * nvec ) ) ){
+        if( ( iov->refs = (int*)malloc( sizeof( int ) * nvec ) ) &&
+            ( iov->lens = (size_t*)malloc( sizeof( size_t ) * nvec ) ) ){
             iov->used = 0;
             iov->nvec = nvec;
             iov->bytes = 0;
             lauxh_setmetatable( L, IOVEC_MT );
             return iov;
+        }
+        else if( iov->refs ){
+            free( (void*)iov->refs );
         }
         free( (void*)iov->data );
     }

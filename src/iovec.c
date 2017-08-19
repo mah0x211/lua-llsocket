@@ -39,16 +39,12 @@ static int del_lua( lua_State *L )
         lauxh_unref( L, iov->refs[idx] );
         iov->bytes -= iov->data[idx].iov_len;
         iov->used--;
-        if( iov->used != idx )
-        {
+        if( iov->used != idx ){
             // move the last data to idx to fill in hole of array
             iov->refs[idx] = iov->refs[iov->used];
-            iov->data[idx] = (struct iovec){
-                .iov_base = iov->data[iov->used].iov_base,
-                .iov_len = iov->data[iov->used].iov_len
-            };
+            iov->lens[idx] = iov->lens[iov->used];
+            iov->data[idx] = iov->data[iov->used];
             lua_pushinteger( L, iov->used );
-
             return 2;
         }
 
@@ -66,8 +62,14 @@ static int get_lua( lua_State *L )
     liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
     lua_Integer idx = lauxh_checkinteger( L, 2 );
 
-    if( idx >= 0 && idx < iov->used ){
-        lauxh_pushref( L, iov->refs[idx] );
+    if( idx >= 0 && idx < iov->used )
+    {
+        if( iov->lens[idx] == iov->data[idx].iov_len ){
+            lauxh_pushref( L, iov->refs[idx] );
+        }
+        else {
+            lua_pushlstring( L, iov->data[idx].iov_base, iov->lens[idx] );
+        }
     }
     else {
         lua_pushnil( L );
@@ -111,12 +113,22 @@ static inline int addstr_lua( lua_State *L, liovec_t *iov )
         }
         iov->refs = (int*)new;
 
+        // increase lens
+        new = realloc( (void*)iov->lens, sizeof( size_t ) * used );
+        if( !new ){
+            lua_pushnil( L );
+            lua_pushstring( L, strerror( errno ) );
+            return 2;
+        }
+        iov->lens = (size_t*)new;
+
         // update size of vector
         iov->nvec = used;
     }
 
     // maintain string
     iov->refs[iov->used] = lauxh_ref( L );
+    iov->lens[iov->used] = len;
     iov->data[iov->used] = (struct iovec){
         .iov_base = (void*)str,
         .iov_len = len
@@ -164,11 +176,19 @@ static int concat_lua( lua_State *L )
     if( iov->used > 0 )
     {
         int *refs = iov->refs;
+        size_t *lens = iov->lens;
+        struct iovec *data = iov->data;
         int used = iov->used;
         int i = 0;
 
-        for(; i < used; i++ ){
-            lauxh_pushref( L, refs[i] );
+        for(; i < used; i++ )
+        {
+            if( lens[i] == data[i].iov_len ){
+                lauxh_pushref( L, refs[i] );
+            }
+            else {
+                lua_pushlstring( L, data[i].iov_base, lens[i] );
+            }
         }
         lua_concat( L, used );
     }
@@ -214,6 +234,7 @@ static int gc_lua( lua_State *L )
     int used = iov->used;
     int i = 0;
 
+    free( iov->lens );
     free( iov->data );
     for(; i < used; i++ ){
         lauxh_unref( L, refs[i] );
