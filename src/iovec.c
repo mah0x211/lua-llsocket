@@ -200,6 +200,79 @@ static int concat_lua( lua_State *L )
 }
 
 
+static int consume_lua( lua_State *L )
+{
+    liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
+    lua_Integer n = lauxh_checkinteger( L, 2 );
+
+    // check argument
+    lauxh_argcheck(
+        L, n >= 0, 2, "unsigned integer expected, got signed integer"
+    );
+
+    if( (size_t)n >= iov->bytes )
+    {
+        int *refs = iov->refs;
+        int used = iov->used;
+        int i = 0;
+
+        for(; i < used; i++ ){
+            lauxh_unref( L, refs[i] );
+        }
+        iov->used = 0;
+        iov->bytes = 0;
+    }
+    else if( n )
+    {
+        struct iovec *data = iov->data;
+        int *refs = iov->refs;
+        size_t *lens = iov->lens;
+        int used = iov->used;
+        int head = 0;
+        size_t len = 0;
+
+        iov->bytes -= n;
+
+        while( n > 0 )
+        {
+            len = lens[head];
+            // update refenrece
+            if( len > (size_t)n ){
+                char *ptr = data[head].iov_base;
+
+                len -= n;
+                memmove( ptr, ptr + n, len );
+                ptr[len] = 0;
+                lens[head] = len;
+                break;
+            }
+
+            // remove refenrece
+            n -= lens[head];
+            lauxh_unref( L, refs[head] );
+            head++;
+        }
+
+        iov->used = used - head;
+        // update references
+        if( head && head != used )
+        {
+            int i = 0;
+
+            for(; head < used; head++ ){
+                data[i] = data[head];
+                refs[i] = refs[head];
+                lens[i] = lens[head];
+                i++;
+            }
+        }
+    }
+
+    lua_pushinteger( L, iov->bytes );
+    return 1;
+}
+
+
 static int bytes_lua( lua_State *L )
 {
     liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
@@ -274,6 +347,7 @@ LUALIB_API int luaopen_llsocket_iovec( lua_State *L )
         };
         struct luaL_Reg method[] = {
             { "bytes", bytes_lua },
+            { "consume", consume_lua },
             { "concat", concat_lua },
             { "add", add_lua },
             { "addn", addn_lua },
