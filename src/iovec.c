@@ -37,7 +37,7 @@ static int del_lua( lua_State *L )
     {
         lauxh_pushref( L, iov->refs[idx] );
         lauxh_unref( L, iov->refs[idx] );
-        iov->bytes -= iov->data[idx].iov_len;
+        iov->bytes -= iov->lens[idx];
         iov->used--;
         if( iov->used != idx ){
             // move the last data to idx to fill in hole of array
