@@ -64,11 +64,13 @@ static int get_lua( lua_State *L )
 
     if( idx >= 0 && idx < iov->used )
     {
-        if( iov->lens[idx] == iov->data[idx].iov_len ){
+        size_t pos = iov->data[idx].iov_len - iov->lens[idx];
+
+        if( !pos ){
             lauxh_pushref( L, iov->refs[idx] );
         }
         else {
-            lua_pushlstring( L, iov->data[idx].iov_base, iov->lens[idx] );
+            lua_pushlstring( L, iov->data[idx].iov_base + pos, iov->lens[idx] );
         }
     }
     else {
@@ -179,15 +181,17 @@ static int concat_lua( lua_State *L )
         size_t *lens = iov->lens;
         struct iovec *data = iov->data;
         int used = iov->used;
+        size_t pos = 0;
         int i = 0;
 
         for(; i < used; i++ )
         {
-            if( lens[i] == data[i].iov_len ){
+            pos = data[i].iov_len - lens[i];
+            if( !pos ){
                 lauxh_pushref( L, refs[i] );
             }
             else {
-                lua_pushlstring( L, data[i].iov_base, lens[i] );
+                lua_pushlstring( L, data[i].iov_base + pos, lens[i] );
             }
         }
         lua_concat( L, used );
@@ -238,12 +242,7 @@ static int consume_lua( lua_State *L )
             len = lens[head];
             // update refenrece
             if( len > (size_t)n ){
-                char *ptr = data[head].iov_base;
-
-                len -= n;
-                memmove( ptr, ptr + n, len );
-                ptr[len] = 0;
-                lens[head] = len;
+                lens[head] -= n;
                 break;
             }
 
