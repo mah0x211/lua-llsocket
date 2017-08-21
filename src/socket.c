@@ -1081,6 +1081,7 @@ static int sendmsg_lua( lua_State *L )
 {
     lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
     lmsghdr_t *lmsg = lauxh_checkudata( L, 2, MSGHDR_MT );
+    int flg = lauxh_optflags( L, 3 );
     // init data
     struct msghdr data = {
         .msg_name = NULL,
@@ -1114,7 +1115,7 @@ static int sendmsg_lua( lua_State *L )
         len += clen;
     }
 
-    rv = sendmsg( s->fd, &data, 0 );
+    rv = sendmsg( s->fd, &data, flg );
     lmsg->flags = data.msg_flags;
     switch( rv )
     {
