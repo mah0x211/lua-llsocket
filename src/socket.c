@@ -29,6 +29,12 @@
 
 #define DEFAULT_RECVSIZE    4096
 
+static struct iovec EMPTY_IOV = {
+    .iov_base = NULL,
+    .iov_len = 0
+};
+
+
 typedef struct {
     int fd;
     int family;
@@ -1071,6 +1077,82 @@ static int sendto_lua( lua_State *L )
 }
 
 
+static int sendmsg_lua( lua_State *L )
+{
+    lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
+    lmsghdr_t *lmsg = lauxh_checkudata( L, 2, MSGHDR_MT );
+    // init data
+    struct msghdr data = {
+        .msg_name = NULL,
+        .msg_namelen = 0,
+        .msg_iov = &EMPTY_IOV,
+        .msg_iovlen = 1,
+        .msg_control = NULL,
+        .msg_controllen = 0,
+        .msg_flags = 0
+    };
+    size_t len = 0;
+    ssize_t rv = 0;
+    size_t clen = 0;
+
+    // set msg_name
+    if( lmsg->name ){
+        data.msg_name = (void*)&(lmsg->name->ai_addr);
+        data.msg_namelen = lmsg->name->ai_addrlen;
+    }
+    // set msg_iov
+    if( lmsg->iov ){
+        len = lmsg->iov->bytes;
+        data.msg_iov = lmsg->iov->data;
+        data.msg_iovlen = lmsg->iov->used;
+    }
+    // set msg_control
+    if( lmsg->control ){
+        data.msg_control = lmsg->control->data;
+        data.msg_controllen = lmsg->control->data->cmsg_len;
+        clen = data.msg_controllen;
+        len += clen;
+    }
+
+    rv = sendmsg( s->fd, &data, 0 );
+    lmsg->flags = data.msg_flags;
+    switch( rv )
+    {
+        // got error
+        case -1:
+            // again
+            if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+                lua_pushinteger( L, clen );
+                lua_pushnil( L );
+                lua_pushboolean( L, 1 );
+                return 3;
+            }
+            // send buffer is insufficient
+            else if( errno == EMSGSIZE ){
+                lua_pushinteger( L, -1 );
+                lua_pushnil( L );
+                lua_pushboolean( L, 1 );
+                return 3;
+            }
+            // closed by peer
+            else if( errno == EPIPE || errno == ECONNRESET ){
+                return 0;
+            }
+            // got error
+            lua_pushnil( L );
+            lua_pushstring( L, strerror( errno ) );
+            return 2;
+
+        default:
+            rv += clen;
+            lua_pushinteger( L, rv );
+            lua_pushnil( L );
+            lua_pushboolean( L, len - (size_t)rv );
+            return 3;
+    }
+}
+
+
 #if defined(HAVE_SENDFILE)
 
 #if defined(__linux__)
@@ -1769,6 +1851,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
             { "accept", accept_lua },
             { "send", send_lua },
             { "sendto", sendto_lua },
+            { "sendmsg", sendmsg_lua },
             { "sendfile", sendfile_lua },
             { "recv", recv_lua },
             { "recvfrom", recvfrom_lua },
