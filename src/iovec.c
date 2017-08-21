@@ -57,21 +57,24 @@ static int del_lua( lua_State *L )
 }
 
 
+static inline void pushstr( lua_State *L, liovec_t *iov, int idx )
+{
+    if( iov->data[idx].iov_len - iov->lens[idx] ){
+        lua_pushlstring( L, iov->data[idx].iov_base, iov->lens[idx] );
+    }
+    else {
+        lauxh_pushref( L, iov->refs[idx] );
+    }
+}
+
+
 static int get_lua( lua_State *L )
 {
     liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
     lua_Integer idx = lauxh_checkinteger( L, 2 );
 
-    if( idx >= 0 && idx < iov->used )
-    {
-        size_t pos = iov->data[idx].iov_len - iov->lens[idx];
-
-        if( !pos ){
-            lauxh_pushref( L, iov->refs[idx] );
-        }
-        else {
-            lua_pushlstring( L, iov->data[idx].iov_base + pos, iov->lens[idx] );
-        }
+    if( idx >= 0 && idx < iov->used ){
+        pushstr( L, iov, idx );
     }
     else {
         lua_pushnil( L );
@@ -177,22 +180,11 @@ static int concat_lua( lua_State *L )
     lua_settop( L, 0 );
     if( iov->used > 0 )
     {
-        int *refs = iov->refs;
-        size_t *lens = iov->lens;
-        struct iovec *data = iov->data;
         int used = iov->used;
-        size_t pos = 0;
         int i = 0;
 
-        for(; i < used; i++ )
-        {
-            pos = data[i].iov_len - lens[i];
-            if( !pos ){
-                lauxh_pushref( L, refs[i] );
-            }
-            else {
-                lua_pushlstring( L, data[i].iov_base + pos, lens[i] );
-            }
+        for(; i < used; i++ ){
+            pushstr( L, iov, i );
         }
         lua_concat( L, used );
     }
@@ -240,9 +232,14 @@ static int consume_lua( lua_State *L )
         while( n > 0 )
         {
             len = lens[head];
-            // update refenrece
+            // update the last data block
             if( len > (size_t)n ){
-                lens[head] -= n;
+                char *ptr = data[head].iov_base;
+
+                len -= n;
+                memmove( ptr, ptr + n, len );
+                ptr[len] = 0;
+                lens[head] = len;
                 break;
             }
 
