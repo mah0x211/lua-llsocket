@@ -1094,7 +1094,6 @@ static int sendmsg_lua( lua_State *L )
     };
     size_t len = 0;
     ssize_t rv = 0;
-    size_t clen = 0;
 
     // set msg_name
     if( lmsg->name ){
@@ -1111,8 +1110,6 @@ static int sendmsg_lua( lua_State *L )
     if( lmsg->control ){
         data.msg_control = lmsg->control->data;
         data.msg_controllen = lmsg->control->data->cmsg_len;
-        clen = data.msg_controllen;
-        len += clen;
     }
 
     rv = sendmsg( s->fd, &data, flg );
@@ -1123,7 +1120,7 @@ static int sendmsg_lua( lua_State *L )
         case -1:
             // again
             if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
-                lua_pushinteger( L, clen );
+                lua_pushinteger( L, 0 );
                 lua_pushnil( L );
                 lua_pushboolean( L, 1 );
                 return 3;
@@ -1145,7 +1142,6 @@ static int sendmsg_lua( lua_State *L )
             return 2;
 
         default:
-            rv += clen;
             lua_pushinteger( L, rv );
             lua_pushnil( L );
             lua_pushboolean( L, len - (size_t)rv );
