@@ -188,7 +188,7 @@ static inline struct addrinfo *lls_addrinfo_alloc( lua_State *L,
         // copy member fields
         if( ( !src->ai_canonname ||
             ( info->ai_canonname = strdup( src->ai_canonname ) ) ) &&
-            ( info->ai_addr = malloc( src->ai_addrlen ) ) ){
+            ( info->ai_addr = malloc( sizeof( struct sockaddr_storage ) ) ) ){
             info->ai_addrlen = src->ai_addrlen;
             memcpy( (void*)info->ai_addr, (void*)src->ai_addr,
                     src->ai_addrlen );
