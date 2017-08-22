@@ -77,14 +77,16 @@ static int del_lua( lua_State *L )
 }
 
 
-static inline void pushstr( lua_State *L, liovec_t *iov, int idx )
+static inline int pushstr( lua_State *L, liovec_t *iov, int idx )
 {
+    // copy string if actual length is not equal to allocated size
     if( iov->data[idx].iov_len - iov->lens[idx] ){
         lua_pushlstring( L, iov->data[idx].iov_base, iov->lens[idx] );
+        return 1;
     }
-    else {
-        lauxh_pushref( L, iov->refs[idx] );
-    }
+
+    lauxh_pushref( L, iov->refs[idx] );
+    return 0;
 }
 
 
