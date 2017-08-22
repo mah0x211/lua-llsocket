@@ -33,6 +33,7 @@ static struct iovec EMPTY_IOV = {
     .iov_base = NULL,
     .iov_len = 0
 };
+static struct iovec *EMPTY_IOV_PTR = &EMPTY_IOV;
 
 
 typedef struct {
@@ -1086,7 +1087,7 @@ static int sendmsg_lua( lua_State *L )
     struct msghdr data = {
         .msg_name = NULL,
         .msg_namelen = 0,
-        .msg_iov = &EMPTY_IOV,
+        .msg_iov = EMPTY_IOV_PTR,
         .msg_iovlen = 1,
         .msg_control = NULL,
         .msg_controllen = 0,
