@@ -205,8 +205,9 @@ static int concat_lua( lua_State *L )
         int used = iov->used;
         int i = 0;
 
-        for(; i < used; i++ ){
-            pushstr( L, iov, i );
+        // push actual used values
+        while( i < used && pushstr( L, iov, i ) == 0 ){
+            i++;
         }
         lua_concat( L, used );
     }
