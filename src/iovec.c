@@ -39,12 +39,32 @@ static int del_lua( lua_State *L )
         lauxh_unref( L, iov->refs[idx] );
         iov->bytes -= iov->lens[idx];
         iov->used--;
+
+        // swap index
+        // used: 6
+        //  del: 4: -> 0, 1, 2, 3, '4', 5
+        //          -> 0, 1, 2, 3, [5]
+        // used: 5
+        //  del: 2: -> 0, 1, '2', 3, 4
+        //          -> 0, 1, [3], 3, 5
+        //          -> 0, 1, 3, [5]
+        // used: 4
+        //  del: 3: -> 0, 1, 3, '4'
+        //          -> 0, 1, 3
+        // used: 3
+        //  del: 0: -> '0', 1, 3
+        //          -> [1], 1, 3
+        //          -> 1, [3]
         if( iov->used != idx ){
-            // move the last data to idx to fill in hole of array
-            iov->refs[idx] = iov->refs[iov->used];
-            iov->lens[idx] = iov->lens[iov->used];
-            iov->data[idx] = iov->data[iov->used];
-            lua_pushinteger( L, iov->used );
+            lua_pushinteger( L, iov->used - 1 );
+            // fill holes in array
+            iov->refs[idx] = iov->refs[iov->used - 1];
+            iov->lens[idx] = iov->lens[iov->used - 1];
+            iov->data[idx] = iov->data[iov->used - 1];
+            // move last data
+            iov->refs[iov->used - 1] = iov->refs[iov->used];
+            iov->lens[iov->used - 1] = iov->lens[iov->used];
+            iov->data[iov->used - 1] = iov->data[iov->used];
             return 2;
         }
 
