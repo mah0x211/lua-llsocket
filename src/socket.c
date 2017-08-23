@@ -1512,6 +1512,7 @@ static int recvmsg_lua( lua_State *L )
 {
     lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
     lmsghdr_t *lmsg = lauxh_checkudata( L, 2, MSGHDR_MT );
+    int flg = lauxh_optflags( L, 3 );
     unsigned char control[CMSG_SPACE(0)] = {0};
     struct msghdr data = (struct msghdr){
         .msg_name = NULL,
@@ -1540,7 +1541,7 @@ static int recvmsg_lua( lua_State *L )
         data.msg_controllen = lmsg->control->data->cmsg_len;
     }
 
-    rv = recvmsg( s->fd, &data, 0 );
+    rv = recvmsg( s->fd, &data, flg );
     switch( rv )
     {
         // got error
