@@ -1558,27 +1558,31 @@ static int recvmsg_lua( lua_State *L )
 
         default:
             lua_pushinteger( L, rv );
-            lmsg->iov->bytes = (size_t)rv;
 
             // update last item length
-            if( rv )
+            if( data.msg_iov != EMPTY_IOV_PTR )
             {
-                size_t bytes = lmsg->iov->bytes;
-                size_t *lens = lmsg->iov->lens;
-                int used = lmsg->iov->used;
-                int i = 0;
+                lmsg->iov->bytes = (size_t)rv;
 
-                for(; i < used; i++ )
+                if( rv )
                 {
-                    if( bytes < lens[i] ){
-                        lens[i] = bytes;
-                        break;
+                    size_t bytes = lmsg->iov->bytes;
+                    size_t *lens = lmsg->iov->lens;
+                    int used = lmsg->iov->used;
+                    int i = 0;
+
+                    for(; i < used; i++ )
+                    {
+                        if( bytes < lens[i] ){
+                            lens[i] = bytes;
+                            break;
+                        }
+                        bytes -= lens[i];
                     }
-                    bytes -= lens[i];
                 }
-            }
-            else if( data.msg_iov != EMPTY_IOV_PTR ){
-                lmsg->iov->lens[0] = 0;
+                else {
+                    lmsg->iov->lens[0] = 0;
+                }
             }
             return 1;
     }
