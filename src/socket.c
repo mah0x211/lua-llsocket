@@ -1387,11 +1387,8 @@ static int recv_lua( lua_State *L )
     }
 
     rv = recv( s->fd, buf, (size_t)len, flg );
-    switch( rv ){
-        // close by peer
-        case 0:
-        break;
-
+    switch( rv )
+    {
         // got error
         case -1:
             lua_pushnil( L );
@@ -1407,6 +1404,13 @@ static int recv_lua( lua_State *L )
                 rv = 2;
             }
         break;
+
+        case 0:
+            // close by peer
+            if( s->socktype != SOCK_DGRAM && s->socktype != SOCK_RAW ){
+                break;
+            }
+            // fall through
 
         default:
             lua_pushlstring( L, buf, rv );
@@ -1446,11 +1450,8 @@ static int recvfrom_lua( lua_State *L )
     }
 
     rv = recvfrom( s->fd, buf, (size_t)len, flg, (struct sockaddr*)&src, &slen );
-    switch( rv ){
-        // close by peer
-        case 0:
-        break;
-
+    switch( rv )
+    {
         // got error
         case -1:
             lua_pushnil( L );
@@ -1467,6 +1468,13 @@ static int recvfrom_lua( lua_State *L )
                 rv = 3;
             }
         break;
+
+        case 0:
+            // close by peer
+            if( s->socktype != SOCK_DGRAM && s->socktype != SOCK_RAW ){
+                break;
+            }
+            // fall-through
 
         default:
             lua_pushlstring( L, buf, rv );
