@@ -1508,6 +1508,83 @@ static int recvfrom_lua( lua_State *L )
 }
 
 
+static int recvmsg_lua( lua_State *L )
+{
+    lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
+    lmsghdr_t *lmsg = lauxh_checkudata( L, 2, MSGHDR_MT );
+    unsigned char control[CMSG_SPACE(0)] = {0};
+    struct msghdr data = (struct msghdr){
+        .msg_name = NULL,
+        .msg_namelen = 0,
+        .msg_iov = EMPTY_IOV_PTR,
+        .msg_iovlen = 1,
+        .msg_control = control,
+        .msg_controllen = sizeof( control ),
+        .msg_flags = 0
+    };
+    ssize_t rv = 0;
+
+    // set msg_name
+    if( lmsg->name ){
+        data.msg_name = (void*)&(lmsg->name->ai_addr);
+        data.msg_namelen = sizeof( struct sockaddr_storage );
+    }
+    // set msg_iov
+    if( lmsg->iov && lmsg->iov->used > 0 ){
+        data.msg_iov = lmsg->iov->data;
+        data.msg_iovlen = lmsg->iov->used;
+    }
+    // set msg_control
+    if( lmsg->control ){
+        data.msg_control = lmsg->control->data;
+        data.msg_controllen = lmsg->control->data->cmsg_len;
+    }
+
+    rv = recvmsg( s->fd, &data, 0 );
+    switch( rv )
+    {
+        // got error
+        case -1:
+            lua_pushnil( L );
+            // again
+            if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+                lua_pushnil( L );
+                lua_pushboolean( L, 1 );
+                return 3;
+            }
+            // got error
+            lua_pushstring( L, strerror( errno ) );
+            return 2;
+
+        default:
+            lua_pushinteger( L, rv );
+            lmsg->iov->bytes = (size_t)rv;
+
+            // update last item length
+            if( rv )
+            {
+                size_t bytes = lmsg->iov->bytes;
+                size_t *lens = lmsg->iov->lens;
+                int used = lmsg->iov->used;
+                int i = 0;
+
+                for(; i < used; i++ )
+                {
+                    if( bytes < lens[i] ){
+                        lens[i] = bytes;
+                        break;
+                    }
+                    bytes -= lens[i];
+                }
+            }
+            else if( data.msg_iov != EMPTY_IOV_PTR ){
+                lmsg->iov->lens[0] = 0;
+            }
+            return 1;
+    }
+}
+
+
 static int connect_lua( lua_State *L )
 {
     lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
@@ -1853,6 +1930,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
             { "sendfile", sendfile_lua },
             { "recv", recv_lua },
             { "recvfrom", recvfrom_lua },
+            { "recvmsg", recvmsg_lua },
 
             // state
             { "atmark", atmark_lua },
