@@ -65,6 +65,8 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
     lua_rawset( L, -3 );
 
     // constants
+    lauxh_pushint2tbl( L, "IOV_MAX", IOV_MAX );
+
     // for shutdown
     lauxh_pushnum2tbl( L, "SHUT_RD", SHUT_RD );
     lauxh_pushnum2tbl( L, "SHUT_WR", SHUT_WR );
