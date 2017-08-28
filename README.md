@@ -90,6 +90,187 @@ get hostname and service name.
     - `err:string`: error string.
 
 
+
+## llsocket.iovec Module
+
+`llsocket.iovec` module has the following functions.
+
+
+### iov, err = iovec.new( [nvec] )
+
+create an instance of llsocket.iovec.
+
+**NOTE:** llsocket.iovec can hold maximum [IOV_MAX](#misc) elements.
+
+- **Parameters**
+    - `nvec:number`: number of vector.
+- **Returns**
+    - `iov:llsocket.iovec`: instance of [iovec](#llsocketiovec-instance-methods).
+    - `err:string`: error string.
+
+
+## llsocket.iovec Instance Methods
+
+`llsocket.iovec` instance has following methods.
+
+### bytes = iov:bytes()
+
+delete a number of bytes used.
+
+- **Returns**
+    - `bytes:number`: number of bytes used.
+
+
+### bytes = iov:consume( bytes )
+
+delete the data of specified number of bytes.
+
+- **Parameters**
+    - `bytes:number`: number of bytes.
+- **Returns**
+    - `bytes:number`: number of bytes used.
+
+
+### str = iov:concat()
+
+concatenate all data of elements in use into a string.
+
+- **Returns**
+    - `str:string`: string.
+    - `err:string`: error string.
+
+
+### used, err = iov:add( str )
+
+add an element with specified string.
+
+- **Parameters**
+    - `str:string`: string.
+- **Returns**
+    - `used:number`: number of used elements.
+    - `err:string`: error string.
+
+
+### used, err = iov:addn( bytes )
+
+add an element that size of specified number of bytes.
+
+- **Parameters**
+    - `bytes:number`: number of bytes.
+- **Returns**
+    - `used:number`: number of used elements.
+    - `err:string`: error string.
+
+
+### str = iov:get()
+
+get a string of element at specified index.
+
+- **Returns**
+    - `str:string`: string of element.
+
+
+### str = iov:del( idx )
+
+delete an element at specified index.
+
+- **Parameters**
+    - `idx:number`: index of vector.
+- **Returns**
+    - `str:string`: string of deleted element.
+
+
+
+## llsocket.cmsghdr Module
+
+`llsocket.cmsghdr` module has the following functions.
+
+
+### cmh, err = cmsghdr.new()
+
+create an instance of llsocket.cmsghdr.
+
+- **Returns**
+    - `cmh:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
+    - `err:string`: error string.
+
+
+## llsocket.cmsghdr Instance Methods
+
+`llsocket.cmsghdr` instance has following methods.
+
+
+### fd, ... = cmh:socket( [fd, [...]] )
+
+get the socket file descriptors, or change it to specified socket file descriptors. if argument is nil, remove associated socket file descriptors.
+
+- **Parameters**
+    - `fd:number`: socket file descriptor.
+    - `...`: socket file descriptors.
+- **Returns**
+    - `fd:number`: socket file descriptor.
+    - `...`: socket file descriptors.
+
+
+
+## llsocket.msghdr Module
+
+`llsocket.msghdr` module has the following functions.
+
+
+### mh, err = msghdr.new()
+
+create an instance of llsocket.msghdr.
+
+- **Returns**
+    - `mh:llsocket.msghdr`: instance of [msghdr](#llsocketmsghdr-instance-methods).
+    - `err:string`: error string.
+
+
+## llsocket.msghdr Instance Methods
+
+`llsocket.msghdr` instance has following methods.
+
+
+### ai = mh:name( [ai] )
+
+get the address-info, or change it to specified address-info. if argument is a nil, remove associated address-info.
+
+- **Parameters**
+    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+- **Returns**
+    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+
+
+### iov = mh:iov( [iov] )
+
+get the iovec, or change it to specified iovec. if argument is nil, remove the associated iovec.
+
+- **Parameters**
+    - `iov:llsocket.iovec`: instance of [iovec](#llsocketiovec-instance-methods).
+- **Returns**
+    - `iov:llsocket.iovec`: instance of [iovec](#llsocketiovec-instance-methods).
+
+
+### cmh = mh:control( [cmh] )
+
+get the cmsghdr, or change it to specified cmsghdr. if argument is nil, remove the associated cmsghdr.
+
+- **Parameters**
+    - `cmh:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
+- **Returns**
+    - `cmh:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
+
+
+### flags = mh:flags()
+
+get the flags.
+
+- **Returns**
+    - `flag:...`: [MSG_* flags](#msg_-flags) constants.
+
+
+
 ## llsocket.socket Module
 
 `llsocket.socket` module has the following functions.
@@ -280,6 +461,21 @@ send a message to specified destination address.
 **NOTE:** all return values will be nil if closed by peer.
 
 
+### len, err, again = sock:sendmsg( mh [, flag, ...] )
+
+send multiple messages including auxiliary data at once.
+
+- **Parameters**
+    - `mh:msghdr`: instance of [msghdr](#llsocketmsghdr-instance-methods).
+    - `flag:...`: [MSG_* flags](#msg_-flags) constants.
+- **Returns**
+    - `len:number`: the number of bytes sent, or `-1` if errno is EMSGSIZE(send buffer is insufficient).
+    - `err:string`: error string.
+    - `again:bool`: true if len != `mh:bytes()`, or errno is EAGAIN, EWOULDBLOCK or EINTR.
+
+**NOTE:** all return values will be nil if closed by peer.
+
+
 ### len, err, again = sock:sendfile( fd, bytes [, offset] )
 
 send a file.
@@ -323,6 +519,21 @@ receive message and address info.
     - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
     - `err:string`: error string.
     - `again:bool`: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
+
+**NOTE:** all return values will be nil if closed by peer.
+
+
+### len, err, again = sock:recvmsg( mh [, flag, ...] )
+
+receive multiple messages including auxiliary data at once.
+
+- **Parameters**
+    - `mh:msghdr`: instance of [msghdr](#llsocketmsghdr-instance-methods).
+    - `flag:...`: [MSG_* flags](#msg_-flags) constants.
+- **Returns**
+    - `len:number`: the number of bytes sent.
+    - `err:string`: error string.
+    - `again:bool`: true if len != `mh:bytes()`, or errno is EAGAIN, EWOULDBLOCK or EINTR.
 
 **NOTE:** all return values will be nil if closed by peer.
 
@@ -939,13 +1150,7 @@ these constants defined at the `llsocket.*`
 - `SHUT_WR`: shut down the writing side
 - `SHUT_RDWR`: shut down both sides
 
+### Misc.
 
-***
-
-# TODO
-
-## Implementation
-
-- sendmsg
-- recvmsg
+- `IOV_MAX`: maximum size of an iovec.
 
