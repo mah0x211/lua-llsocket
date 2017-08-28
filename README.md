@@ -115,7 +115,7 @@ create an instance of llsocket.iovec.
 
 ### bytes = iov:bytes()
 
-delete a number of bytes used.
+get a number of bytes used.
 
 - **Returns**
     - `bytes:number`: number of bytes used.
@@ -123,7 +123,7 @@ delete a number of bytes used.
 
 ### bytes = iov:consume( bytes )
 
-delete the data of specified number of bytes.
+remove data for the specified number of bytes.
 
 - **Parameters**
     - `bytes:number`: number of bytes.
@@ -162,10 +162,12 @@ add an element that size of specified number of bytes.
     - `err:string`: error string.
 
 
-### str = iov:get()
+### str = iov:get( idx )
 
 get a string of element at specified index.
 
+- **Parameters**
+    - `idx:number`: index of element.
 - **Returns**
     - `str:string`: string of element.
 
@@ -175,7 +177,7 @@ get a string of element at specified index.
 delete an element at specified index.
 
 - **Parameters**
-    - `idx:number`: index of vector.
+    - `idx:number`: index of element.
 - **Returns**
     - `str:string`: string of deleted element.
 
