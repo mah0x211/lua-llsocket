@@ -1075,7 +1075,7 @@ static int sendmsg_lua( lua_State *L )
         data.msg_iovlen = lmsg->iov->used;
     }
     // set msg_control
-    if( lmsg->control ){
+    if( lmsg->control && lmsg->control->data ){
         data.msg_control = lmsg->control->data;
         data.msg_controllen = lmsg->control->data->cmsg_len;
     }
