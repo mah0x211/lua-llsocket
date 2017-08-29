@@ -137,7 +137,6 @@ concatenate all data of elements in use into a string.
 
 - **Returns**
     - `str:string`: string.
-    - `err:string`: error string.
 
 
 ### used, err = iov:add( str )
@@ -172,7 +171,7 @@ get a string of element at specified index.
     - `str:string`: string of element.
 
 
-### str = iov:del( idx )
+### str, midx = iov:del( idx )
 
 delete an element at specified index.
 
@@ -180,6 +179,7 @@ delete an element at specified index.
     - `idx:number`: index of element.
 - **Returns**
     - `str:string`: string of deleted element.
+    - `midx:number`: index of moved element.
 
 
 
@@ -202,16 +202,14 @@ create an instance of llsocket.cmsghdr.
 `llsocket.cmsghdr` instance has following methods.
 
 
-### fd, ... = cmh:socket( [fd, [...]] )
+### ... = cmh:socket( [fd, ...] )
 
 get the socket file descriptors, or change it to specified socket file descriptors. if argument is nil, remove associated socket file descriptors.
 
 - **Parameters**
-    - `fd:number`: socket file descriptor.
-    - `...`: socket file descriptors.
+    - `fd:...`: socket file descriptor.
 - **Returns**
-    - `fd:number`: socket file descriptor.
-    - `...`: socket file descriptors.
+    - `fd:...`: socket file descriptor.
 
 
 
