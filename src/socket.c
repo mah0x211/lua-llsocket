@@ -29,6 +29,9 @@
 
 #define DEFAULT_RECVSIZE    4096
 
+static const char *const SA_STORAGE_BUF[sizeof(struct sockaddr_storage)] = {0};
+#define SOCKADDR_STORAGE_INITIALIZER *((struct sockaddr_storage*)SA_STORAGE_BUF)
+
 static struct iovec EMPTY_IOV = {
     .iov_base = NULL,
     .iov_len = 0
@@ -781,9 +784,8 @@ static int getpeername_lua( lua_State *L )
 {
     lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
     socklen_t len = sizeof( struct sockaddr_storage );
-    struct sockaddr_storage addr;
+    struct sockaddr_storage addr = SOCKADDR_STORAGE_INITIALIZER;
 
-    memset( (void*)&addr, 0, len );
     if( getpeername( s->fd, (struct sockaddr*)&addr, &len ) == 0 )
     {
         struct addrinfo wrap = {
@@ -910,12 +912,10 @@ static inline int acceptfd( int sfd, struct sockaddr *addr, socklen_t *addrlen )
 static int accept_lua( lua_State *L )
 {
     lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
-    struct sockaddr_storage addr;
+    struct sockaddr_storage addr = SOCKADDR_STORAGE_INITIALIZER;
     socklen_t addrlen = sizeof( struct sockaddr_storage );
     int fd = -1;
 
-    // clear addr
-    memset( (void*)&addr, 0, addrlen );
     fd = acceptfd( s->fd, (struct sockaddr*)&addr, &addrlen );
     if( fd != -1 )
     {
@@ -1396,11 +1396,10 @@ static int recvfrom_lua( lua_State *L )
     lua_Integer len = lauxh_optinteger( L, 2, DEFAULT_RECVSIZE );
     int flg = lauxh_optflags( L, 3 );
     socklen_t slen = sizeof( struct sockaddr_storage );
-    struct sockaddr_storage src;
+    struct sockaddr_storage src = SOCKADDR_STORAGE_INITIALIZER;
     ssize_t rv = 0;
     char *buf = NULL;
 
-    memset( (void*)&src, 0, slen );
     // invalid length
     if( len <= 0 ){
         lua_pushnil( L );
@@ -1828,12 +1827,9 @@ static int pair_lua( lua_State *L )
     int socktype = (int)lauxh_checkinteger( L, 1 );
     int nonblock = lauxh_optboolean( L, 2, 0 );
     int protocol = (int)lauxh_optinteger( L, 3, 0 );
-    struct sockaddr_storage addr;
+    struct sockaddr_storage addr = SOCKADDR_STORAGE_INITIALIZER;
     socklen_t addrlen = sizeof( struct sockaddr_storage );
     int fds[2];
-
-
-    memset( (void*)&addr, 0, addrlen );
 
     if( socketpair( AF_UNIX, socktype, protocol, fds ) == 0 )
     {
