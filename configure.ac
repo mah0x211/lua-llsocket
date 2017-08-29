@@ -97,7 +97,7 @@ AC_CHECK_TYPES([
     #include <netinet/tcp.h>
     #include <arpa/inet.h>
     #include <net/if.h>
-    #include <sys/ioctl.h> 
+    #include <sys/ioctl.h>
     #include <ifaddrs.h>]
 )
 AC_CHECK_TYPES([ \
