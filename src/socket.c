@@ -881,7 +881,6 @@ static int listen_lua( lua_State *L )
 
 static inline int acceptfd( int sfd, struct sockaddr *addr, socklen_t *addrlen )
 {
-#if defined(__linux__)
     int flg = fcntl( sfd, F_GETFL );
 
     if( flg != -1 )
@@ -905,10 +904,6 @@ static inline int acceptfd( int sfd, struct sockaddr *addr, socklen_t *addrlen )
     }
 
     return -1;
-
-#else
-    return accept( sfd, addr, addrlen );
-#endif
 }
 
 
