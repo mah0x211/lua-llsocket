@@ -879,29 +879,49 @@ static int listen_lua( lua_State *L )
 }
 
 
+static inline int acceptfd( int sfd, struct sockaddr *addr, socklen_t *addrlen )
+{
+#if defined(__linux__)
+    int flg = fcntl( sfd, F_GETFL );
+
+    if( flg != -1 )
+    {
+#if defined(HAVE_ACCEPT4)
+        flg = SOCK_CLOEXEC | ( ( flg & O_NONBLOCK ) ? SOCK_NONBLOCK : 0 );
+        return accept4( sfd, addr, addrlen, flg );
+
+#else
+        int fd = accept( sfd, addr, addrlen );
+
+        if( fd != -1 )
+        {
+            if( fcntl( fd, F_SETFD, FD_CLOEXEC ) == 0 &&
+                fcntl( fd, F_SETFL, flg ) == 0 ){
+                return fd;
+            }
+            close( fd );
+        }
+#endif
+    }
+
+    return -1;
+
+#else
+    return accept( sfd, addr, addrlen );
+#endif
+}
+
+
 static int accept_lua( lua_State *L )
 {
     lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
-    int fd = 0;
     struct sockaddr_storage addr;
     socklen_t addrlen = sizeof( struct sockaddr_storage );
+    int fd = -1;
 
     // clear addr
     memset( (void*)&addr, 0, addrlen );
-
-#if defined(__linux__)
-    int flg = fcntl( s->fd, F_GETFL );
-
-    // got error
-    if( flg == -1 ){
-        lua_pushnil( L );
-        lua_pushstring( L, strerror( errno ) );
-        return 2;
-    }
-
-#if defined(HAVE_ACCEPT4)
-    flg = SOCK_CLOEXEC | ( ( flg & O_NONBLOCK ) ? SOCK_NONBLOCK : 0 );
-    fd = accept4( s->fd, (struct sockaddr*)&addr, &addrlen, flg );
+    fd = acceptfd( s->fd, (struct sockaddr*)&addr, &addrlen );
     if( fd != -1 )
     {
         lls_socket_t *cs = lua_newuserdata( L, sizeof( lls_socket_t ) );
@@ -920,54 +940,6 @@ static int accept_lua( lua_State *L )
         }
         close( fd );
     }
-#else
-    fd = accept( s->fd, (struct sockaddr*)&addr, &addrlen );
-    if( fd != -1 )
-    {
-        lls_socket_t *cs = lua_newuserdata( L, sizeof( lls_socket_t ) );
-
-        if( cs &&
-            fcntl( fd, F_SETFD, FD_CLOEXEC ) == 0 &&
-            fcntl( fd, F_SETFL, flg ) == 0 ){
-            lauxh_setmetatable( L, SOCKET_MT );
-            cs->fd = fd;
-            cs->family = s->family;
-            cs->socktype = s->socktype;
-            cs->protocol = s->protocol;
-            cs->addrlen = addrlen;
-            // copy sockaddr
-            memcpy( (void*)&cs->addr, (void*)&addr, addrlen );
-
-            return 1;
-        }
-        close( fd );
-    }
-#endif
-
-
-#else
-    fd = accept( s->fd, (struct sockaddr*)&addr, &addrlen );
-    if( fd != -1 )
-    {
-        lls_socket_t *cs = lua_newuserdata( L, sizeof( lls_socket_t ) );
-
-        if( cs ){
-            lauxh_setmetatable( L, SOCKET_MT );
-            cs->fd = fd;
-            cs->family = s->family;
-            cs->socktype = s->socktype;
-            cs->protocol = s->protocol;
-            cs->addrlen = addrlen;
-            // copy sockaddr
-            memcpy( (void*)&cs->addr, (void*)&addr, addrlen );
-
-            return 1;
-        }
-
-        close( fd );
-    }
-
-#endif
 
     // check errno
     if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ||
