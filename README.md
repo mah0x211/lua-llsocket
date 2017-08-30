@@ -531,7 +531,7 @@ receive multiple messages including auxiliary data at once.
     - `mh:msghdr`: instance of [msghdr](#llsocketmsghdr-instance-methods).
     - `flag:...`: [MSG_* flags](#msg_-flags) constants.
 - **Returns**
-    - `len:number`: the number of bytes sent.
+    - `len:number`: the number of bytes received.
     - `err:string`: error string.
     - `again:bool`: true if len != `mh:bytes()`, or errno is EAGAIN, EWOULDBLOCK or EINTR.
 
