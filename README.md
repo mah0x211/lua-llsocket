@@ -139,25 +139,25 @@ concatenate all data of elements in use into a string.
     - `str:string`: string.
 
 
-### used, err = iov:add( str )
+### idx, err = iov:add( str )
 
 add an element with specified string.
 
 - **Parameters**
     - `str:string`: string.
 - **Returns**
-    - `used:number`: number of used elements.
+    - `idx:number`: index number of added element.
     - `err:string`: error string.
 
 
-### used, err = iov:addn( bytes )
+### idx, err = iov:addn( bytes )
 
 add an element that size of specified number of bytes.
 
 - **Parameters**
     - `bytes:number`: number of bytes.
 - **Returns**
-    - `used:number`: number of used elements.
+    - `idx:number`: index number of added element.
     - `err:string`: error string.
 
 
