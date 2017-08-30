@@ -207,10 +207,8 @@ static int concat_lua( lua_State *L )
         int i = 0;
 
         // push actual used values
-        while( i < used && pushstr( L, iov, i ) == 0 ){
-            i++;
-        }
-        lua_concat( L, used );
+        while( i < used && pushstr( L, iov, i++ ) == 0 ){}
+        lua_concat( L, i );
     }
     else {
         lua_pushstring( L, "" );
