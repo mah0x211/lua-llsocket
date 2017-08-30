@@ -1069,7 +1069,7 @@ static int sendmsg_lua( lua_State *L )
         data.msg_namelen = lmsg->name->ai_addrlen;
     }
     // set msg_iov
-    if( lmsg->iov ){
+    if( lmsg->iov && lmsg->iov->bytes ){
         len = lmsg->iov->bytes;
         data.msg_iov = lmsg->iov->data;
         data.msg_iovlen = lmsg->iov->used;
