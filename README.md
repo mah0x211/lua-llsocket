@@ -123,7 +123,7 @@ get a number of bytes used.
 
 ### bytes = iov:consume( bytes )
 
-remove data for the specified number of bytes.
+delete the specified number of bytes of data.
 
 - **Parameters**
     - `bytes:number`: number of bytes.
@@ -204,7 +204,7 @@ create an instance of llsocket.cmsghdr.
 
 ### ... = cmh:socket( [fd, ...] )
 
-get the socket file descriptors, or change it to specified socket file descriptors. if argument is nil, remove associated socket file descriptors.
+get the socket file descriptors, or change it to specified socket file descriptors. if argument is nil, the associated socket file descriptors will be removed.
 
 - **Parameters**
     - `fd:...`: socket file descriptor.
@@ -234,7 +234,7 @@ create an instance of llsocket.msghdr.
 
 ### ai = mh:name( [ai] )
 
-get the address-info, or change it to specified address-info. if argument is a nil, remove associated address-info.
+get the address-info, or change it to specified address-info. if argument is a nil, the associated address-info will be removed.
 
 - **Parameters**
     - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
@@ -244,7 +244,7 @@ get the address-info, or change it to specified address-info. if argument is a n
 
 ### iov = mh:iov( [iov] )
 
-get the iovec, or change it to specified iovec. if argument is nil, remove the associated iovec.
+get the iovec, or change it to specified iovec. if argument is nil, the associated iovec will be removed.
 
 - **Parameters**
     - `iov:llsocket.iovec`: instance of [iovec](#llsocketiovec-instance-methods).
@@ -254,7 +254,7 @@ get the iovec, or change it to specified iovec. if argument is nil, remove the a
 
 ### cmh = mh:control( [cmh] )
 
-get the cmsghdr, or change it to specified cmsghdr. if argument is nil, remove the associated cmsghdr.
+get the cmsghdr, or change it to specified cmsghdr. if argument is nil, the associated cmsghdr will be removed.
 
 - **Parameters**
     - `cmh:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
