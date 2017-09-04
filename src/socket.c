@@ -32,12 +32,6 @@
 static const char *const SA_STORAGE_BUF[sizeof(struct sockaddr_storage)] = {0};
 #define SOCKADDR_STORAGE_INITIALIZER *((struct sockaddr_storage*)SA_STORAGE_BUF)
 
-static struct iovec EMPTY_IOV = {
-    .iov_base = NULL,
-    .iov_len = 0
-};
-static struct iovec *EMPTY_IOV_PTR = &EMPTY_IOV;
-
 
 typedef struct {
     int fd;
@@ -1051,10 +1045,14 @@ static int sendmsg_lua( lua_State *L )
     lmsghdr_t *lmsg = lauxh_checkudata( L, 2, MSGHDR_MT );
     int flg = lauxh_optflags( L, 3 );
     // init data
+    struct iovec empty_iov = {
+        .iov_base = NULL,
+        .iov_len = 0
+    };
     struct msghdr data = {
         .msg_name = NULL,
         .msg_namelen = 0,
-        .msg_iov = EMPTY_IOV_PTR,
+        .msg_iov = &empty_iov,
         .msg_iovlen = 1,
         .msg_control = NULL,
         .msg_controllen = 0,
@@ -1488,10 +1486,15 @@ static int recvmsg_lua( lua_State *L )
     lmsghdr_t *lmsg = lauxh_checkudata( L, 2, MSGHDR_MT );
     int flg = lauxh_optflags( L, 3 );
     unsigned char control[CMSG_SPACE(0)] = {0};
+    char empty_iov_base = 0;
+    struct iovec empty_iov = {
+        .iov_base = &empty_iov_base,
+        .iov_len = sizeof( empty_iov_base )
+    };
     struct msghdr data = (struct msghdr){
         .msg_name = NULL,
         .msg_namelen = 0,
-        .msg_iov = EMPTY_IOV_PTR,
+        .msg_iov = &empty_iov,
         .msg_iovlen = 1,
         .msg_control = control,
         .msg_controllen = sizeof( control ),
@@ -1535,7 +1538,7 @@ static int recvmsg_lua( lua_State *L )
             lua_pushinteger( L, rv );
 
             // update last item length
-            if( data.msg_iov != EMPTY_IOV_PTR )
+            if( data.msg_iov != &empty_iov )
             {
                 lmsg->iov->bytes = (size_t)rv;
 
