@@ -66,6 +66,7 @@
 #define SOCKET_MT   "llsocket.socket"
 #define ADDRINFO_MT "llsocket.addrinfo"
 #define IOVEC_MT    "llsocket.iovec"
+#define CMSGHDR_MT  "llsocket.cmsghdr"
 #define CMSGHDRS_MT "llsocket.cmsghdrs"
 #define MSGHDR_MT   "llsocket.msghdr"
 
@@ -76,6 +77,7 @@ LUALIB_API int luaopen_llsocket_device( lua_State *L );
 LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L );
 LUALIB_API int luaopen_llsocket_socket( lua_State *L );
 LUALIB_API int luaopen_llsocket_iovec( lua_State *L );
+LUALIB_API int luaopen_llsocket_cmsghdr( lua_State *L );
 LUALIB_API int luaopen_llsocket_cmsghdrs( lua_State *L );
 LUALIB_API int luaopen_llsocket_msghdr( lua_State *L );
 
@@ -88,6 +90,18 @@ typedef struct {
     int *refs;
     size_t *lens;
 } liovec_t;
+
+
+typedef struct {
+    int ref;
+    // originating protocol
+    int level;
+    // protocol-specific type
+    int type;
+    // data byte count, not including header
+    int len;
+    const char *data;
+} cmsghdr_t;
 
 
 typedef struct {
@@ -110,6 +124,32 @@ typedef struct {
     liovec_t *iov;
     cmsghdrs_t *control;
 } lmsghdr_t;
+
+
+
+static inline cmsghdr_t *lls_cmsghdr_alloc( lua_State *L, int level, int type )
+{
+    int top = lua_gettop( L );
+    size_t len = 0;
+    const char *data = lauxh_checklstring( L, -1, &len );
+    cmsghdr_t *cmsg = lua_newuserdata( L, sizeof( cmsghdr_t ) );
+
+    if( cmsg ){
+        lua_pushvalue( L, -2 );
+        cmsg->ref = lauxh_ref( L );
+        cmsg->level = level;
+        cmsg->type = type;
+        cmsg->len = len;
+        cmsg->data = data;
+        lauxh_setmetatable( L, CMSGHDR_MT );
+        return cmsg;
+    }
+
+    // got error
+    lua_settop( L, top );
+
+    return NULL;
+}
 
 
 static inline liovec_t *lls_iovec_alloc( lua_State *L, int nvec )
