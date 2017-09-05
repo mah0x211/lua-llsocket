@@ -1546,6 +1546,71 @@ static int recvfrom_lua( lua_State *L )
 }
 
 
+static int recvfd_lua( lua_State *L )
+{
+    lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
+    int flg = lauxh_optflags( L, 2 );
+    char empty_iov_base = 0;
+    struct iovec empty_iov = {
+        .iov_base = &empty_iov_base,
+        .iov_len = sizeof( empty_iov_base )
+    };
+    union {
+        unsigned char buf[CMSG_SPACE( sizeof( int ) )];
+        struct cmsghdr data;
+    } ctrl = {
+        .data.cmsg_len = CMSG_LEN( sizeof( int ) ),
+        .data.cmsg_level = 0,
+        .data.cmsg_type = 0
+    };
+    struct msghdr data = (struct msghdr){
+        .msg_name = NULL,
+        .msg_namelen = 0,
+        .msg_iov = &empty_iov,
+        .msg_iovlen = 1,
+        .msg_control = &ctrl.data,
+        .msg_controllen = ctrl.data.cmsg_len,
+        .msg_flags = 0
+    };
+    ssize_t rv = recvmsg( s->fd, &data, flg );
+
+    switch( rv )
+    {
+        // got error
+        case -1:
+            lua_pushnil( L );
+            // again
+            if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
+                lua_pushnil( L );
+                lua_pushboolean( L, 1 );
+                return 3;
+            }
+            // got error
+            lua_pushstring( L, strerror( errno ) );
+            return 2;
+
+        default:
+            if( ctrl.data.cmsg_level == SOL_SOCKET &&
+                ctrl.data.cmsg_type == SCM_RIGHTS ){
+                lua_pushinteger( L, *(int*)CMSG_DATA( &ctrl.data ) );
+                return 1;
+            }
+            // close by peer
+            else if( !rv && s->socktype != SOCK_DGRAM &&
+                     s->socktype != SOCK_RAW ){
+                return 0;
+            }
+
+            // again - discard received messages
+            lua_pushnil( L );
+            lua_pushnil( L );
+            lua_pushboolean( L, 1 );
+
+            return 3;
+    }
+}
+
+
 static int recvmsg_lua( lua_State *L )
 {
     lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
@@ -1976,6 +2041,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
             { "sendfile", sendfile_lua },
             { "recv", recv_lua },
             { "recvfrom", recvfrom_lua },
+            { "recvfd", recvfd_lua },
             { "recvmsg", recvmsg_lua },
 
             // state
