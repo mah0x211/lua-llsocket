@@ -1039,6 +1039,72 @@ static int sendto_lua( lua_State *L )
 }
 
 
+static int sendfd_lua( lua_State *L )
+{
+    lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
+    lua_Integer fd = lauxh_checkinteger( L, 2 );
+    struct addrinfo *info = lauxh_optudata( L, 3, ADDRINFO_MT, NULL );
+    int flg = lauxh_optflags( L, 4 );
+    // init data
+    struct iovec empty_iov = {
+        .iov_base = NULL,
+        .iov_len = 0
+    };
+    union {
+        unsigned char buf[CMSG_SPACE( sizeof( int ) )];
+        struct cmsghdr data;
+    } ctrl = {
+        .data.cmsg_len = CMSG_LEN( sizeof( int ) ),
+        .data.cmsg_level = SOL_SOCKET,
+        .data.cmsg_type = SCM_RIGHTS
+    };
+    struct msghdr data = {
+        .msg_name = NULL,
+        .msg_namelen = 0,
+        .msg_iov = &empty_iov,
+        .msg_iovlen = 1,
+        .msg_control = &ctrl.data,
+        .msg_controllen = ctrl.data.cmsg_len,
+        .msg_flags = 0
+    };
+
+    // set fd
+    *(int*)CMSG_DATA( &ctrl.data ) = fd;
+
+    // set msg_name
+    if( info ){
+        data.msg_name = (void*)&(info->ai_addr);
+        data.msg_namelen = info->ai_addrlen;
+    }
+
+    switch( sendmsg( s->fd, &data, flg ) )
+    {
+        // got error
+        case -1:
+            // again
+            if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ||
+                errno == EMSGSIZE ){
+                lua_pushinteger( L, 0 );
+                lua_pushnil( L );
+                lua_pushboolean( L, 1 );
+                return 3;
+            }
+            // closed by peer
+            else if( errno == EPIPE || errno == ECONNRESET ){
+                return 0;
+            }
+            // got error
+            lua_pushnil( L );
+            lua_pushstring( L, strerror( errno ) );
+            return 2;
+
+        default:
+            lua_pushinteger( L, 0 );
+            return 1;
+    }
+}
+
+
 static int sendmsg_lua( lua_State *L )
 {
     lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
@@ -1905,6 +1971,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
             { "accept", accept_lua },
             { "send", send_lua },
             { "sendto", sendto_lua },
+            { "sendfd", sendfd_lua },
             { "sendmsg", sendmsg_lua },
             { "sendfile", sendfile_lua },
             { "recv", recv_lua },
