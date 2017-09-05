@@ -19,7 +19,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  *
- *  cmsghdr.c
+ *  cmsghdrs.c
  *  lua-llsocket
  *
  *  Created by Masatoshi Teruya on 17/08/16.
@@ -30,7 +30,7 @@
 
 static int socket_lua( lua_State *L )
 {
-    lcmsghdr_t *cmsg = lauxh_checkudata( L, 1, CMSGHDR_MT );
+    cmsghdrs_t *cmsg = lauxh_checkudata( L, 1, CMSGHDRS_MT );
     int nsock = lua_gettop( L ) - 1;
 
     // check arguments
@@ -96,14 +96,14 @@ static int socket_lua( lua_State *L )
 
 static int tostring_lua( lua_State *L )
 {
-    lua_pushfstring( L, CMSGHDR_MT ": %p", lua_touserdata( L, 1 ) );
+    lua_pushfstring( L, CMSGHDRS_MT ": %p", lua_touserdata( L, 1 ) );
     return 1;
 }
 
 
 static int gc_lua( lua_State *L )
 {
-    lcmsghdr_t *cmsg = lauxh_checkudata( L, 1, CMSGHDR_MT );
+    cmsghdrs_t *cmsg = lauxh_checkudata( L, 1, CMSGHDRS_MT );
 
     if( lauxh_isref( cmsg->ref ) ){
         lauxh_unref( L, cmsg->ref );
@@ -115,12 +115,12 @@ static int gc_lua( lua_State *L )
 
 static int new_lua( lua_State *L )
 {
-    lcmsghdr_t *cmsg = lua_newuserdata( L, sizeof( lcmsghdr_t ) );
+    cmsghdrs_t *cmsg = lua_newuserdata( L, sizeof( cmsghdrs_t ) );
 
     if( cmsg ){
         cmsg->ref = LUA_NOREF;
         cmsg->data = NULL;
-        lauxh_setmetatable( L, CMSGHDR_MT );
+        lauxh_setmetatable( L, CMSGHDRS_MT );
         return 1;
     }
 
@@ -132,10 +132,10 @@ static int new_lua( lua_State *L )
 }
 
 
-LUALIB_API int luaopen_llsocket_cmsghdr( lua_State *L )
+LUALIB_API int luaopen_llsocket_cmsghdrs( lua_State *L )
 {
     // create metatable
-    if( luaL_newmetatable( L, CMSGHDR_MT ) )
+    if( luaL_newmetatable( L, CMSGHDRS_MT ) )
     {
         struct luaL_Reg mmethod[] = {
             { "__gc", gc_lua },

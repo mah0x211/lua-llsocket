@@ -66,7 +66,7 @@
 #define SOCKET_MT   "llsocket.socket"
 #define ADDRINFO_MT "llsocket.addrinfo"
 #define IOVEC_MT    "llsocket.iovec"
-#define CMSGHDR_MT  "llsocket.cmsghdr"
+#define CMSGHDRS_MT "llsocket.cmsghdrs"
 #define MSGHDR_MT   "llsocket.msghdr"
 
 
@@ -76,7 +76,7 @@ LUALIB_API int luaopen_llsocket_device( lua_State *L );
 LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L );
 LUALIB_API int luaopen_llsocket_socket( lua_State *L );
 LUALIB_API int luaopen_llsocket_iovec( lua_State *L );
-LUALIB_API int luaopen_llsocket_cmsghdr( lua_State *L );
+LUALIB_API int luaopen_llsocket_cmsghdrs( lua_State *L );
 LUALIB_API int luaopen_llsocket_msghdr( lua_State *L );
 
 
@@ -93,7 +93,7 @@ typedef struct {
 typedef struct {
     int ref;
     struct cmsghdr *data;
-} lcmsghdr_t;
+} cmsghdrs_t;
 
 
 typedef struct {
@@ -108,7 +108,7 @@ typedef struct {
     // data pointers
     struct addrinfo *name;
     liovec_t *iov;
-    lcmsghdr_t *control;
+    cmsghdrs_t *control;
 } lmsghdr_t;
 
 

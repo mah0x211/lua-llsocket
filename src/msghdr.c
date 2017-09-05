@@ -48,7 +48,7 @@ static int control_lua( lua_State *L )
         lua_settop( L, 2 );
         if( !lauxh_isnil( L, 2 ) )
         {
-            lcmsghdr_t *cmsg = lauxh_checkudata( L, 2, CMSGHDR_MT );
+            cmsghdrs_t *cmsg = lauxh_checkudata( L, 2, CMSGHDRS_MT );
 
             // release current ref
             if( lauxh_isref( msg->control_ref ) ){
