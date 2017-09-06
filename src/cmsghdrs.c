@@ -28,67 +28,91 @@
 #include "llsocket.h"
 
 
-static int socket_lua( lua_State *L )
+static int pop_lua( lua_State *L )
 {
     cmsghdrs_t *cmsg = lauxh_checkudata( L, 1, CMSGHDRS_MT );
-    int nsock = lua_gettop( L ) - 1;
+    struct msghdr msg = {
+        .msg_name = NULL,
+        .msg_namelen = 0,
+        .msg_iov = NULL,
+        .msg_iovlen = 0,
+        .msg_control = cmsg->data,
+        .msg_controllen = cmsg->len,
+        .msg_flags = 0
+    };
+    struct cmsghdr *item = CMSG_FIRSTHDR( &msg );
 
-    // check arguments
-    if( nsock )
+    if( item )
     {
-        if( !lauxh_isnil( L, 2 ) )
+        size_t len = item->cmsg_len - CMSG_LEN(0);
+
+        lua_settop( L, 0 );
+        // create cmsghdr
+        lua_pushlstring( L, (void*)CMSG_DATA( item ), len );
+        if( lls_cmsghdr_alloc( L, item->cmsg_level, item->cmsg_type ) )
         {
-            size_t bytes = sizeof( int ) * nsock;
-            unsigned char *buf = lua_newuserdata( L, CMSG_SPACE( bytes ) );
-            struct cmsghdr *data = (struct cmsghdr*)buf;
-            int *ptr = (int*)CMSG_DATA( data );
-            int i = 0;
-
-            // set properties
-            data->cmsg_len = CMSG_LEN( bytes );
-            data->cmsg_level = SOL_SOCKET;
-            data->cmsg_type = SCM_RIGHTS;
-            // set sockets
-            for(; i < nsock; i++ ){
-                ptr[i] = lauxh_checkinteger( L, i + 2 );
+            // remove first header
+            cmsg->len -= CMSG_SPACE( len );
+            if( cmsg->len ){
+                memmove( cmsg->data, cmsg->data + CMSG_SPACE( len ), cmsg->len );
             }
 
-            // release current data
-            if( lauxh_isref( cmsg->ref ) ){
-                lauxh_unref( L, cmsg->ref );
-            }
+            return 1;
+        }
 
-            // maintain new data
+        // got error
+        lua_pushnil( L );
+        lua_pushstring( L, strerror( errno ) );
+
+        return 2;
+    }
+
+    // not found
+    lua_pushnil( L );
+
+    return 1;
+}
+
+
+static int push_lua( lua_State *L )
+{
+    cmsghdrs_t *cmsg = lauxh_checkudata( L, 1, CMSGHDRS_MT );
+    cmsghdr_t *item = lauxh_checkudata( L, 2, CMSGHDR_MT );
+    char *data = cmsg->data;
+    size_t len = cmsg->len + CMSG_SPACE( item->len );
+
+    if( len > cmsg->bytes )
+    {
+        if( ( data = lua_newuserdata( L, len ) ) ){
+            memset( data, 0, len );
+            // copy current and new data
+            memcpy( data, cmsg->data, cmsg->len );
+
+            // release old data
+            lauxh_unref( L, cmsg->ref );
             cmsg->ref = lauxh_ref( L );
             cmsg->data = data;
+            cmsg->bytes = len;
         }
-        // release current data
-        else if( lauxh_isref( cmsg->ref ) ){
-            cmsg->ref = lauxh_unref( L, cmsg->ref );
-            cmsg->data = NULL;
-        }
+        // got error
+        else {
+            lua_pushboolean( L, 0 );
+            lua_pushstring( L, strerror( errno ) );
 
-        return nsock;
-    }
-    else if( lauxh_isref( cmsg->ref ) )
-    {
-        // return sockets
-        if( cmsg->data->cmsg_level == SOL_SOCKET &&
-            cmsg->data->cmsg_type == SCM_RIGHTS )
-        {
-            int *ptr = (int*)CMSG_DATA( cmsg->data );
-            int i = 0;
-
-            nsock = ( cmsg->data->cmsg_len - CMSG_LEN(0) ) / sizeof( int );
-            for(; i < nsock; i++ ){
-                lua_pushinteger( L, ptr[i] );
-            }
-
-            return nsock;
+            return 2;
         }
     }
 
-    lua_pushnil( L );
+    // set properties
+    *(struct cmsghdr*)(data + cmsg->len) = (struct cmsghdr){
+        .cmsg_level = item->level,
+        .cmsg_type = item->type,
+        .cmsg_len = CMSG_LEN( item->len )
+    };
+    memcpy( data + cmsg->len + CMSG_LEN(0), item->data, item->len );
+    cmsg->len = len;
+
+    lua_pushboolean( L, 1 );
 
     return 1;
 }
@@ -120,6 +144,8 @@ static int new_lua( lua_State *L )
     if( cmsg ){
         cmsg->ref = LUA_NOREF;
         cmsg->data = NULL;
+        cmsg->len = 0;
+        cmsg->bytes = 0;
         lauxh_setmetatable( L, CMSGHDRS_MT );
         return 1;
     }
@@ -143,7 +169,8 @@ LUALIB_API int luaopen_llsocket_cmsghdrs( lua_State *L )
             { NULL, NULL }
         };
         struct luaL_Reg method[] = {
-            { "socket", socket_lua },
+            { "push", push_lua },
+            { "pop", pop_lua },
             { NULL, NULL }
         };
         struct luaL_Reg *ptr = mmethod;

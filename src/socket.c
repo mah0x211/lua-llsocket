@@ -1139,9 +1139,9 @@ static int sendmsg_lua( lua_State *L )
         data.msg_iovlen = lmsg->iov->used;
     }
     // set msg_control
-    if( lmsg->control && lmsg->control->data ){
+    if( lmsg->control && lmsg->control->len ){
         data.msg_control = lmsg->control->data;
-        data.msg_controllen = lmsg->control->data->cmsg_len;
+        data.msg_controllen = lmsg->control->len;
     }
 
     rv = sendmsg( s->fd, &data, flg );
@@ -1644,9 +1644,9 @@ static int recvmsg_lua( lua_State *L )
         data.msg_iovlen = lmsg->iov->used;
     }
     // set msg_control
-    if( lmsg->control && lmsg->control->data ){
+    if( lmsg->control && lmsg->control->len ){
         data.msg_control = lmsg->control->data;
-        data.msg_controllen = lmsg->control->data->cmsg_len;
+        data.msg_controllen = lmsg->control->len;
     }
 
     rv = recvmsg( s->fd, &data, flg );

@@ -106,7 +106,9 @@ typedef struct {
 
 typedef struct {
     int ref;
-    struct cmsghdr *data;
+    size_t bytes;
+    size_t len;
+    char *data;
 } cmsghdrs_t;
 
 
