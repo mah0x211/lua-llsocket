@@ -188,12 +188,26 @@ delete an element at specified index.
 `llsocket.cmsghdr` module has the following functions.
 
 
-### cmh, err = cmsghdr.new()
+### cmsg, err = cmsghdr.new( sol, scm, data )
 
 create an instance of llsocket.cmsghdr.
 
+- **Parameters**
+    - `sol:number`: socket option level - [Socket Option Levels](#socket-option-levels).
+    - `scm:number`: socket-level control message type - [Socket-level Control Message Types](#socket-level-control-message-types).
+    - `data:string`: ancillary data.
 - **Returns**
-    - `cmh:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
+    - `cmsg:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
+    - `err:string`: error string.
+
+### cmsg, err = cmsghdr.rights( fd [, ...] )
+
+create an instance of llsocket.cmsghdr with file descriptors.
+
+- **Parameters**
+    - `fd:..`: file descriptors.
+- **Returns**
+    - `cmsg:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
     - `err:string`: error string.
 
 
@@ -202,14 +216,67 @@ create an instance of llsocket.cmsghdr.
 `llsocket.cmsghdr` instance has following methods.
 
 
-### ... = cmh:socket( [fd, ...] )
+### sol = cmsg:level()
 
-get the socket file descriptors, or change it to specified socket file descriptors. if argument is nil, the associated socket file descriptors will be removed.
+get a socket option level.
+
+- **Returns**
+    - `sol:number`: socket option level.
+
+
+### scm = cmsg:type()
+
+get a socket-level control message type.
+
+- **Returns**
+    - `scm:number`: socket-level control message type.
+
+
+### ... = cmsg:data()
+
+get ancillary data.
+
+- **Returns**
+    - `...`: ancillary data, or file descriptors if protocol-specific type socket.
+
+
+
+## llsocket.cmsghdrs Module
+
+`llsocket.cmsghdrs` module has the following functions.
+
+
+### cmsgs, err = cmsghdrs.new()
+
+create an instance of llsocket.cmsghdrs.
+
+- **Returns**
+    - `cmsgs:llsocket.cmsghdrs`: instance of [cmsghdrs](#llsocketcmsghdrs-instance-methods).
+    - `err:string`: error string.
+
+
+## llsocket.cmsghdrs Instance Methods
+
+`llsocket.cmsghdrs` instance has following methods.
+
+
+### ok, err = cmsgs:push( cmsg )
+
+push cmsg into cmsgs.
 
 - **Parameters**
-    - `fd:...`: socket file descriptor.
+    - `cmsg:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
 - **Returns**
-    - `fd:...`: socket file descriptor.
+    - `ok:boolean`: originating protocol.
+    - `err:string`: error string.
+
+
+### cmsg, err = cmsgs:shift()
+
+remove the first cmsghdr from cmsghdrs and returns that cmsghdr.
+
+- **Returns**
+    - `cmsg:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
 
 
 
@@ -252,14 +319,14 @@ get the iovec, or change it to specified iovec. if argument is nil, the associat
     - `iov:llsocket.iovec`: instance of [iovec](#llsocketiovec-instance-methods).
 
 
-### cmh = mh:control( [cmh] )
+### cmsgs = mh:control( [cmsgs] )
 
-get the cmsghdr, or change it to specified cmsghdr. if argument is nil, the associated cmsghdr will be removed.
+get the cmsghdrs, or change it to specified cmsghdr. if argument is nil, the associated cmsghdrs will be removed.
 
 - **Parameters**
-    - `cmh:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
+    - `cmsgs:llsocket.cmsghdrs`: instance of [cmsghdrs](#llsocketcmsghdrs-instance-methods).
 - **Returns**
-    - `cmh:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
+    - `cmsgs:llsocket.cmsghdrs`: instance of [cmsghdrs](#llsocketcmsghdrs-instance-methods).
 
 
 ### flags = mh:flags()
@@ -451,12 +518,28 @@ send a message to specified destination address.
 
 - **Parameters**
     - `msg:string`: message string.
-    - `addr:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
     - `flag:...`: [MSG_* flags](#msg_-flags) constants.
 - **Returns**
     - `len:number`: the number of bytes sent.
     - `err:string`: error string.
     - `again:bool`: true if len != #msg, or errno is EAGAIN, EWOULDBLOCK or EINTR.
+
+**NOTE:** all return values will be nil if closed by peer.
+
+
+### len, err, again = sock:sendfd( fd, [ai, [flag, ...]] )
+
+send file descriptors along unix domain sockets.
+
+- **Parameters**
+    - `fd:number`: file descriptor.
+    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `flag:...`: [MSG_* flags](#msg_-flags) constants.
+- **Returns**
+    - `len:number`: the number of bytes sent (always zero).
+    - `err:string`: error string.
+    - `again:bool`: true if errno is EAGAIN, EWOULDBLOCK, EINTR or EMSGSIZE.
 
 **NOTE:** all return values will be nil if closed by peer.
 
@@ -519,6 +602,20 @@ receive message and address info.
     - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
     - `err:string`: error string.
     - `again:bool`: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
+
+**NOTE:** all return values will be nil if closed by peer.
+
+
+### fd, err, again = sock:recvfd( [flag, ...] )
+
+receive file descriptors along unix domain sockets.
+
+- **Parameters**
+    - `flag:...`: [MSG_* flags](#msg_-flags) constants.
+- **Returns**
+    - `fd:number`: file descriptor.
+    - `err:string`: error string.
+    - `again:bool`: true either if errno is EAGAIN, EWOULDBLOCK or EINTR, or if socket type is SOCK_DGRAM or SOCK_RAW.
 
 **NOTE:** all return values will be nil if closed by peer.
 
@@ -1150,7 +1247,21 @@ these constants defined at the `llsocket.*`
 - `SHUT_WR`: shut down the writing side
 - `SHUT_RDWR`: shut down both sides
 
+
+### Socket Option Levels.
+
+- `SOL_SOCKET`: options for socket level.
+
+
+### Socket-level Control Message Types
+
+- `SCM_CREDS`: process creds (struct cmsgcred)
+- `SCM_RIGHTS`: access rights (array of int)
+- `SCM_SECURIT`: security label
+- `SCM_TIMESTAMP`: timestamp (struct timeval)
+- `SCM_TIMESTAMP_MONOTONIC`: timestamp (uint64_t)
+
+
 ### Misc.
 
 - `IOV_MAX`: maximum size of an iovec.
-
