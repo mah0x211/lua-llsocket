@@ -134,9 +134,7 @@ static int rights_lua( lua_State *L )
 
         // check arguments
         for(; i <= argc; i++ ){
-            *fds = lauxh_checkinteger( L, i );
-            printf("fds <- %d\n", *fds);
-            fds++;
+            fds[i - 1] = lauxh_checkinteger( L, i );
         }
         lua_replace( L, 1 );
         lua_settop( L, 1 );
