@@ -91,6 +91,15 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
     // cmsg_levels
 #define GEN_SOL_LEVELS_DECL
 
+    // cmsg_types
+#if defined(SCM_CREDENTIALS)
+    lauxh_pushnum2tbl( L, "SCM_CREDS", SCM_CREDENTIALS );
+#elif defined(SCM_CREDS)
+    lauxh_pushnum2tbl( L, "SCM_CREDS", SCM_CREDS );
+#endif
+
+#define GEN_SCM_TYPES_DECL
+
 
     return 1;
 }
