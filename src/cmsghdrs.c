@@ -28,7 +28,7 @@
 #include "llsocket.h"
 
 
-static int pop_lua( lua_State *L )
+static int shift_lua( lua_State *L )
 {
     cmsghdrs_t *cmsg = lauxh_checkudata( L, 1, CMSGHDRS_MT );
     struct msghdr msg = {
@@ -170,7 +170,7 @@ LUALIB_API int luaopen_llsocket_cmsghdrs( lua_State *L )
         };
         struct luaL_Reg method[] = {
             { "push", push_lua },
-            { "pop", pop_lua },
+            { "shift", shift_lua },
             { NULL, NULL }
         };
         struct luaL_Reg *ptr = mmethod;
