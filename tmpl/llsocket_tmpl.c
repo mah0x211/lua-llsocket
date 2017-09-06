@@ -88,6 +88,8 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
 #define GEN_AI_FLAG_DECL
     // ni_flags
 #define GEN_NI_FLAG_DECL
+    // cmsg_levels
+#define GEN_SOL_LEVELS_DECL
 
 
     return 1;
