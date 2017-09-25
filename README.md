@@ -381,6 +381,28 @@ create an instance of socket
     - `err:string`: error string.
 
 
+### err = socket.shutdown( fd, [flag] )
+
+shut down part of a full-duplex connection.
+
+- **Parameters**
+    - `fd:number`: socket file descriptor.
+    - `flag:number`: [SHUT_* flag](#shut_-flags) constants.
+- **Returns**
+    - `err:string`: error string.
+
+
+### err = socket.close( fd, [flag] )
+
+close a file descriptor.
+
+- **Parameters**
+    - `fd:number`: socket file descriptor.
+    - `flag:number`: [SHUT_* flag](#shut_-flags) constants.
+- **Returns**
+    - `err:string`: error string.
+
+
 
 ## llsocket.socket Instance Methods
 
@@ -493,6 +515,16 @@ accept a connection.
 
 - **Returns**
     - `sock:socket`: instance of [socket](#llsocketsocket-instance-methods).
+    - `err:string`: error string.
+    - `again:bool`: true if errno is EAGAIN, EWOULDBLOCK, EINTR or ECONNABORTED.
+
+
+### fd, err, again = sock:acceptfd()
+
+accept a connection.
+
+- **Returns**
+    - `fd:number`: socket file descriptor.
     - `err:string`: error string.
     - `again:bool`: true if errno is EAGAIN, EWOULDBLOCK, EINTR or ECONNABORTED.
 
