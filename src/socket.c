@@ -918,14 +918,40 @@ static inline int acceptfd( int sfd, struct sockaddr *addr, socklen_t *addrlen )
 }
 
 
+static int acceptfd_lua( lua_State *L )
+{
+    lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
+    int fd = acceptfd( s->fd, NULL, NULL );
+
+    if( fd != -1 ){
+        lua_pushinteger( L, fd );
+        return 1;
+    }
+
+    // check errno
+    if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ||
+        errno == ECONNABORTED ){
+        lua_pushnil( L );
+        lua_pushnil( L );
+        lua_pushboolean( L, 1 );
+        return 3;
+    }
+
+    // got error
+    lua_pushnil( L );
+    lua_pushstring( L, strerror( errno ) );
+
+    return 2;
+}
+
+
 static int accept_lua( lua_State *L )
 {
     lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
     struct sockaddr_storage addr = SOCKADDR_STORAGE_INITIALIZER;
     socklen_t addrlen = sizeof( struct sockaddr_storage );
-    int fd = -1;
+    int fd = acceptfd( s->fd, (struct sockaddr*)&addr, &addrlen );
 
-    fd = acceptfd( s->fd, (struct sockaddr*)&addr, &addrlen );
     if( fd != -1 )
     {
         lls_socket_t *cs = lua_newuserdata( L, sizeof( lls_socket_t ) );
@@ -2065,6 +2091,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
             { "close", close_lua },
             { "listen", listen_lua },
             { "accept", accept_lua },
+            { "acceptfd", acceptfd_lua },
             { "send", send_lua },
             { "sendto", sendto_lua },
             { "sendfd", sendfd_lua },
