@@ -830,7 +830,7 @@ static int shutdown_lua( lua_State *L )
 }
 
 
-static int closefd( lua_State *L, int fd )
+static inline int closefd( lua_State *L, int fd )
 {
     int how = (int)lauxh_optinteger( L, 2, -1 );
     int rc = 0;
