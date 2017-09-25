@@ -830,31 +830,39 @@ static int shutdown_lua( lua_State *L )
 }
 
 
+static int closefd( lua_State *L, int fd )
+{
+    int how = (int)lauxh_optinteger( L, 2, -1 );
+    int rc = 0;
+
+    switch( how ){
+        case SHUT_RD:
+        case SHUT_WR:
+        case SHUT_RDWR:
+            rc = shutdown( fd, how );
+
+        default:
+            rc += close( fd );
+    }
+
+    // got error
+    if( rc ){
+        lua_pushstring( L, strerror( errno ) );
+        return 1;
+    }
+
+    return 0;
+}
+
 
 static int close_lua( lua_State *L )
 {
     lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
+    int fd = s->fd;
 
-    if( s->fd != -1 )
-    {
-        int how = (int)lauxh_optinteger( L, 2, -1 );
-        int fd = s->fd;
-        int rc = 0;
-
+    if( fd != -1 ){
         s->fd = -1;
-        switch( how ){
-            case SHUT_RD:
-            case SHUT_WR:
-            case SHUT_RDWR:
-                rc = shutdown( fd, how );
-            break;
-        }
-
-        // got error
-        if( ( rc + close( fd ) ) ){
-            lua_pushstring( L, strerror( errno ) );
-            return 1;
-        }
+        return closefd( L, fd );
     }
 
     return 0;
@@ -2026,6 +2034,13 @@ static int shutdownfd_lua( lua_State *L )
 }
 
 
+static int closefd_lua( lua_State *L )
+{
+    int fd = (int)lauxh_checkinteger( L, 1 );
+
+    return closefd( L, fd );
+}
+
 
 LUALIB_API int luaopen_llsocket_socket( lua_State *L )
 {
@@ -2134,6 +2149,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
     lauxh_pushfn2tbl( L, "new", new_lua );
     lauxh_pushfn2tbl( L, "wrap", wrap_lua );
     lauxh_pushfn2tbl( L, "pair", pair_lua );
+    lauxh_pushfn2tbl( L, "close", closefd_lua );
     lauxh_pushfn2tbl( L, "shutdown", shutdownfd_lua );
 
     return 1;
