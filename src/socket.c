@@ -808,12 +808,9 @@ static int getpeername_lua( lua_State *L )
 
 // MARK: method
 
-static int shutdown_lua( lua_State *L )
+static inline int shutdownfd( lua_State *L, int fd, int how )
 {
-    lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
-    int how = (int)lauxh_checkinteger( L, 2 );
-
-    if( shutdown( s->fd, how ) == 0 ){
+    if( shutdown( fd, how ) == 0 ){
         return 0;
     }
 
@@ -822,6 +819,16 @@ static int shutdown_lua( lua_State *L )
 
     return 1;
 }
+
+
+static int shutdown_lua( lua_State *L )
+{
+    lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
+    int how = (int)lauxh_checkinteger( L, 2 );
+
+    return shutdownfd( L, s->fd, how );
+}
+
 
 
 static int close_lua( lua_State *L )
@@ -2010,6 +2017,15 @@ FAILED:
 }
 
 
+static int shutdownfd_lua( lua_State *L )
+{
+    int fd = (int)lauxh_checkinteger( L, 1 );
+    int how = (int)lauxh_checkinteger( L, 2 );
+
+    return shutdownfd( L, fd, how );
+}
+
+
 
 LUALIB_API int luaopen_llsocket_socket( lua_State *L )
 {
@@ -2118,6 +2134,7 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
     lauxh_pushfn2tbl( L, "new", new_lua );
     lauxh_pushfn2tbl( L, "wrap", wrap_lua );
     lauxh_pushfn2tbl( L, "pair", pair_lua );
+    lauxh_pushfn2tbl( L, "shutdown", shutdownfd_lua );
 
     return 1;
 }
