@@ -42,37 +42,29 @@ static int del_lua( lua_State *L )
 
         // swap index
         // used: 6
-        //  del: 4: -> 0, 1, 2, 3, '4', 5
-        //          -> 0, 1, 2, 3, [4], 5
-        //          -> 0, 1, 2, 3, [5]
+        //  del: i4: -> 0, 1, 2, 3, '4', 5
+        //           -> 0, 1, 2, 3, [5]
         // used: 5
-        //  del: 2: -> 0, 1, '2', 3, 5
-        //          -> 0, 1, [3], 3, 5
-        //          -> 0, 1, 3, [5]
+        //  del: i2: -> 0, 1, '2', 3, 5
+        //           -> 0, 1, [5], 3
         // used: 4
-        //  del: 0: -> '0', 1, 3, 5
-        //          -> [3], 1, 3, 5
-        //          -> 3, 1, [5]
+        //  del: i0: -> '0', 1, 5, 3
+        //           -> [3], 1, 5
         // used: 3
-        //  del: 2: -> 3, 1, '5'
-        //          -> 3, 1
+        //  del: i2: -> 3, 1, '5'
+        //           -> 3, 1
         if( iov->used != idx ){
-            lua_pushinteger( L, iov->used - 1 );
-            // fill holes in array
-            iov->refs[idx] = iov->refs[iov->used - 1];
-            iov->lens[idx] = iov->lens[iov->used - 1];
-            iov->data[idx] = iov->data[iov->used - 1];
-            // move last data
-            iov->refs[iov->used - 1] = iov->refs[iov->used];
-            iov->lens[iov->used - 1] = iov->lens[iov->used];
-            iov->data[iov->used - 1] = iov->data[iov->used];
+            lua_pushinteger( L, iov->used );
+            // fill holes in array by last data
+            iov->refs[idx] = iov->refs[iov->used];
+            iov->lens[idx] = iov->lens[iov->used];
+            iov->data[idx] = iov->data[iov->used];
             return 2;
         }
-
-        return 1;
     }
-
-    lua_pushnil( L );
+    else {
+        lua_pushnil( L );
+    }
 
     return 1;
 }
