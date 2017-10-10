@@ -99,6 +99,39 @@ static int get_lua( lua_State *L )
 }
 
 
+static int set_lua( lua_State *L )
+{
+    liovec_t *iov = lauxh_checkudata( L, 1, IOVEC_MT );
+    size_t len = 0;
+    const char *str = lauxh_checklstring( L, 2, &len );
+    lua_Integer idx = lauxh_checkinteger( L, 3 );
+
+    if( idx >= 0 && idx <= iov->used )
+    {
+        // release current string
+        iov->bytes -= iov->lens[idx];
+        lauxh_unref( L, iov->refs[idx] );
+
+        // maintain string
+        lua_settop( L, 2 );
+        iov->refs[idx] = lauxh_ref( L );
+        iov->lens[idx] = len;
+        iov->data[idx] = (struct iovec){
+            .iov_base = (void*)str,
+            .iov_len = len
+        };
+        iov->bytes += len;
+        lua_pushboolean( L, 1 );
+    }
+    // not found
+    else {
+        lua_pushboolean( L, 0 );
+    }
+
+    return 1;
+}
+
+
 static inline int addstr_lua( lua_State *L, liovec_t *iov )
 {
     size_t len = 0;
@@ -361,6 +394,7 @@ LUALIB_API int luaopen_llsocket_iovec( lua_State *L )
             { "concat", concat_lua },
             { "add", add_lua },
             { "addn", addn_lua },
+            { "set", set_lua },
             { "get", get_lua },
             { "del", del_lua },
             { NULL, NULL }
