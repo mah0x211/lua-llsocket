@@ -188,7 +188,7 @@ delete an element at specified index.
 `llsocket.cmsghdr` module has the following functions.
 
 
-### cmsg, err = cmsghdr.new( sol, scm, data )
+### cmsg = cmsghdr.new( sol, scm, data )
 
 create an instance of llsocket.cmsghdr.
 
@@ -198,9 +198,9 @@ create an instance of llsocket.cmsghdr.
     - `data:string`: ancillary data.
 - **Returns**
     - `cmsg:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
-    - `err:string`: error string.
 
-### cmsg, err = cmsghdr.rights( fd [, ...] )
+
+### cmsg = cmsghdr.rights( fd [, ...] )
 
 create an instance of llsocket.cmsghdr with file descriptors.
 
@@ -208,7 +208,6 @@ create an instance of llsocket.cmsghdr with file descriptors.
     - `fd:..`: file descriptors.
 - **Returns**
     - `cmsg:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
-    - `err:string`: error string.
 
 
 ## llsocket.cmsghdr Instance Methods
@@ -246,13 +245,12 @@ get ancillary data.
 `llsocket.cmsghdrs` module has the following functions.
 
 
-### cmsgs, err = cmsghdrs.new()
+### cmsgs = cmsghdrs.new()
 
 create an instance of llsocket.cmsghdrs.
 
 - **Returns**
     - `cmsgs:llsocket.cmsghdrs`: instance of [cmsghdrs](#llsocketcmsghdrs-instance-methods).
-    - `err:string`: error string.
 
 
 ## llsocket.cmsghdrs Instance Methods
@@ -260,18 +258,15 @@ create an instance of llsocket.cmsghdrs.
 `llsocket.cmsghdrs` instance has following methods.
 
 
-### ok, err = cmsgs:push( cmsg )
+### cmsgs:push( cmsg )
 
 push cmsg into cmsgs.
 
 - **Parameters**
     - `cmsg:llsocket.cmsghdr`: instance of [cmsghdr](#llsocketcmsghdr-instance-methods).
-- **Returns**
-    - `ok:boolean`: originating protocol.
-    - `err:string`: error string.
 
 
-### cmsg, err = cmsgs:shift()
+### cmsg = cmsgs:shift()
 
 remove the first cmsghdr from cmsghdrs and returns that cmsghdr.
 
@@ -285,13 +280,12 @@ remove the first cmsghdr from cmsghdrs and returns that cmsghdr.
 `llsocket.msghdr` module has the following functions.
 
 
-### mh, err = msghdr.new()
+### mh = msghdr.new()
 
 create an instance of llsocket.msghdr.
 
 - **Returns**
     - `mh:llsocket.msghdr`: instance of [msghdr](#llsocketmsghdr-instance-methods).
-    - `err:string`: error string.
 
 
 ## llsocket.msghdr Instance Methods
