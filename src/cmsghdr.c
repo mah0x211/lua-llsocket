@@ -108,15 +108,9 @@ static int new_lua( lua_State *L )
     int type = lauxh_checkinteger( L, 2 );
 
     lua_settop( L, 3 );
-    if( lls_cmsghdr_alloc( L, level, type ) ){
-        return 1;
-    }
+    lls_cmsghdr_alloc( L, level, type );
 
-    // got error
-    lua_pushnil( L );
-    lua_pushstring( L, strerror( errno ) );
-
-    return 2;
+    return 1;
 }
 
 
@@ -138,16 +132,9 @@ static int rights_lua( lua_State *L )
         }
         lua_replace( L, 1 );
         lua_settop( L, 1 );
+        lls_cmsghdr_alloc( L, SOL_SOCKET, SCM_RIGHTS );
 
-        if( lls_cmsghdr_alloc( L, SOL_SOCKET, SCM_RIGHTS ) ){
-            return 1;
-        }
-
-        // got error
-        lua_pushnil( L );
-        lua_pushstring( L, strerror( errno ) );
-
-        return 2;
+        return 1;
     }
 
     lua_pushnil( L );

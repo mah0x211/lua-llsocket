@@ -131,26 +131,19 @@ typedef struct {
 
 static inline cmsghdr_t *lls_cmsghdr_alloc( lua_State *L, int level, int type )
 {
-    int top = lua_gettop( L );
     size_t len = 0;
     const char *data = lauxh_checklstring( L, -1, &len );
     cmsghdr_t *cmsg = lua_newuserdata( L, sizeof( cmsghdr_t ) );
 
-    if( cmsg ){
-        lua_pushvalue( L, -2 );
-        cmsg->ref = lauxh_ref( L );
-        cmsg->level = level;
-        cmsg->type = type;
-        cmsg->len = len;
-        cmsg->data = data;
-        lauxh_setmetatable( L, CMSGHDR_MT );
-        return cmsg;
-    }
+    lua_pushvalue( L, -2 );
+    cmsg->ref = lauxh_ref( L );
+    cmsg->level = level;
+    cmsg->type = type;
+    cmsg->len = len;
+    cmsg->data = data;
+    lauxh_setmetatable( L, CMSGHDR_MT );
 
-    // got error
-    lua_settop( L, top );
-
-    return NULL;
+    return cmsg;
 }
 
 
@@ -168,7 +161,7 @@ static inline liovec_t *lls_iovec_alloc( lua_State *L, int nvec )
     }
 
     iov = lua_newuserdata( L, sizeof( liovec_t ) );
-    if( iov && ( iov->data = malloc( sizeof( struct iovec ) * nvec ) ) )
+    if( ( iov->data = malloc( sizeof( struct iovec ) * nvec ) ) )
     {
         if( ( iov->refs = (int*)malloc( sizeof( int ) * nvec ) ) &&
             ( iov->lens = (size_t*)malloc( sizeof( size_t ) * nvec ) ) ){
@@ -223,29 +216,24 @@ static inline struct addrinfo *lls_addrinfo_alloc( lua_State *L,
 {
     struct addrinfo *info = lua_newuserdata( L, sizeof( struct addrinfo ) );
 
-    if( info )
-    {
-        memcpy( (void*)info, (void*)src, sizeof( struct addrinfo ) );
-        info->ai_canonname = NULL;
-        // copy member fields
-        if( ( !src->ai_canonname ||
-            ( info->ai_canonname = strdup( src->ai_canonname ) ) ) &&
-            ( info->ai_addr = malloc( sizeof( struct sockaddr_storage ) ) ) ){
-            info->ai_addrlen = src->ai_addrlen;
-            memcpy( (void*)info->ai_addr, (void*)src->ai_addr,
-                    src->ai_addrlen );
-            // set metatable
-            lauxh_setmetatable( L, ADDRINFO_MT );
-            return info;
-        }
-        else if( info->ai_canonname ){
-            free( (void*)info->ai_canonname );
-        }
-
-        info = NULL;
+    memcpy( (void*)info, (void*)src, sizeof( struct addrinfo ) );
+    info->ai_canonname = NULL;
+    // copy member fields
+    if( ( !src->ai_canonname ||
+        ( info->ai_canonname = strdup( src->ai_canonname ) ) ) &&
+        ( info->ai_addr = malloc( sizeof( struct sockaddr_storage ) ) ) ){
+        info->ai_addrlen = src->ai_addrlen;
+        memcpy( (void*)info->ai_addr, (void*)src->ai_addr,
+                src->ai_addrlen );
+        // set metatable
+        lauxh_setmetatable( L, ADDRINFO_MT );
+        return info;
+    }
+    else if( info->ai_canonname ){
+        free( (void*)info->ai_canonname );
     }
 
-    return info;
+    return NULL;
 }
 
 

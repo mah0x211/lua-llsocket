@@ -160,26 +160,18 @@ static int new_lua( lua_State *L )
 {
     lmsghdr_t *msg = lua_newuserdata( L, sizeof( lmsghdr_t ) );
 
-    if( msg ){
-        *msg = (lmsghdr_t){
-            .name_ref = LUA_NOREF,
-            .iov_ref = LUA_NOREF,
-            .control_ref = LUA_NOREF,
-            .flags = 0,
-            .name = NULL,
-            .iov = NULL,
-            .control = NULL
-        };
+    *msg = (lmsghdr_t){
+        .name_ref = LUA_NOREF,
+        .iov_ref = LUA_NOREF,
+        .control_ref = LUA_NOREF,
+        .flags = 0,
+        .name = NULL,
+        .iov = NULL,
+        .control = NULL
+    };
+    lauxh_setmetatable( L, MSGHDR_MT );
 
-        lauxh_setmetatable( L, MSGHDR_MT );
-        return 1;
-    }
-
-    // got error
-    lua_pushnil( L );
-    lua_pushstring( L, strerror( errno ) );
-
-    return 2;
+    return 1;
 }
 
 

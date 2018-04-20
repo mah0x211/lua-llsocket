@@ -49,22 +49,14 @@ static int shift_lua( lua_State *L )
         lua_settop( L, 0 );
         // create cmsghdr
         lua_pushlstring( L, (void*)CMSG_DATA( item ), len );
-        if( lls_cmsghdr_alloc( L, item->cmsg_level, item->cmsg_type ) )
-        {
-            // remove first header
-            cmsg->len -= CMSG_SPACE( len );
-            if( cmsg->len ){
-                memmove( cmsg->data, cmsg->data + CMSG_SPACE( len ), cmsg->len );
-            }
-
-            return 1;
+        lls_cmsghdr_alloc( L, item->cmsg_level, item->cmsg_type );
+        // remove first header
+        cmsg->len -= CMSG_SPACE( len );
+        if( cmsg->len ){
+            memmove( cmsg->data, cmsg->data + CMSG_SPACE( len ), cmsg->len );
         }
 
-        // got error
-        lua_pushnil( L );
-        lua_pushstring( L, strerror( errno ) );
-
-        return 2;
+        return 1;
     }
 
     // not found
@@ -81,26 +73,17 @@ static int push_lua( lua_State *L )
     char *data = cmsg->data;
     size_t len = cmsg->len + CMSG_SPACE( item->len );
 
-    if( len > cmsg->bytes )
-    {
-        if( ( data = lua_newuserdata( L, len ) ) ){
-            memset( data, 0, len );
-            // copy current and new data
-            memcpy( data, cmsg->data, cmsg->len );
+    if( len > cmsg->bytes ){
+        data = lua_newuserdata( L, len );
+        memset( data, 0, len );
+        // copy current and new data
+        memcpy( data, cmsg->data, cmsg->len );
 
-            // release old data
-            lauxh_unref( L, cmsg->ref );
-            cmsg->ref = lauxh_ref( L );
-            cmsg->data = data;
-            cmsg->bytes = len;
-        }
-        // got error
-        else {
-            lua_pushboolean( L, 0 );
-            lua_pushstring( L, strerror( errno ) );
-
-            return 2;
-        }
+        // release old data
+        lauxh_unref( L, cmsg->ref );
+        cmsg->ref = lauxh_ref( L );
+        cmsg->data = data;
+        cmsg->bytes = len;
     }
 
     // set properties
@@ -112,9 +95,7 @@ static int push_lua( lua_State *L )
     memcpy( data + cmsg->len + CMSG_LEN(0), item->data, item->len );
     cmsg->len = len;
 
-    lua_pushboolean( L, 1 );
-
-    return 1;
+    return 0;
 }
 
 
@@ -141,20 +122,13 @@ static int new_lua( lua_State *L )
 {
     cmsghdrs_t *cmsg = lua_newuserdata( L, sizeof( cmsghdrs_t ) );
 
-    if( cmsg ){
-        cmsg->ref = LUA_NOREF;
-        cmsg->data = NULL;
-        cmsg->len = 0;
-        cmsg->bytes = 0;
-        lauxh_setmetatable( L, CMSGHDRS_MT );
-        return 1;
-    }
+    cmsg->ref = LUA_NOREF;
+    cmsg->data = NULL;
+    cmsg->len = 0;
+    cmsg->bytes = 0;
+    lauxh_setmetatable( L, CMSGHDRS_MT );
 
-    // got error
-    lua_pushnil( L );
-    lua_pushstring( L, strerror( errno ) );
-
-    return 2;
+    return 1;
 }
 
 

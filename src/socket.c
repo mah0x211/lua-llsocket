@@ -952,23 +952,19 @@ static int accept_lua( lua_State *L )
     socklen_t addrlen = sizeof( struct sockaddr_storage );
     int fd = acceptfd( s->fd, (struct sockaddr*)&addr, &addrlen );
 
-    if( fd != -1 )
-    {
+    if( fd != -1 ){
         lls_socket_t *cs = lua_newuserdata( L, sizeof( lls_socket_t ) );
 
-        if( cs ){
-            lauxh_setmetatable( L, SOCKET_MT );
-            cs->fd = fd;
-            cs->family = s->family;
-            cs->socktype = s->socktype;
-            cs->protocol = s->protocol;
-            cs->addrlen = addrlen;
-            // copy sockaddr
-            memcpy( (void*)&cs->addr, (void*)&addr, addrlen );
+        cs->fd = fd;
+        cs->family = s->family;
+        cs->socktype = s->socktype;
+        cs->protocol = s->protocol;
+        cs->addrlen = addrlen;
+        // copy sockaddr
+        memcpy( (void*)&cs->addr, (void*)&addr, addrlen );
+        lauxh_setmetatable( L, SOCKET_MT );
 
-            return 1;
-        }
-        close( fd );
+        return 1;
     }
 
     // check errno
@@ -1874,9 +1870,8 @@ static int dup_lua( lua_State *L )
     {
         lls_socket_t *sd = NULL;
 
-        if( fcntl( fd, F_SETFD, FD_CLOEXEC ) != -1 &&
-            ( sd = lua_newuserdata( L, sizeof( lls_socket_t ) ) ) ){
-            lauxh_setmetatable( L, SOCKET_MT );
+        if( fcntl( fd, F_SETFD, FD_CLOEXEC ) != -1 ){
+            sd = lua_newuserdata( L, sizeof( lls_socket_t ) );
             *sd = (lls_socket_t){
                 .fd = fd,
                 .family = ptr->ai_family,
@@ -1886,6 +1881,7 @@ static int dup_lua( lua_State *L )
             };
             // copy sockaddr
             memcpy( (void*)&sd->addr, (void*)&ptr->ai_addr, ptr->ai_addrlen );
+            lauxh_setmetatable( L, SOCKET_MT );
             return 1;
         }
 
@@ -1928,8 +1924,8 @@ static int wrap_lua( lua_State *L )
 #endif
 
     lua_settop( L, 1 );
-    if( ( s = lua_newuserdata( L, sizeof( lls_socket_t ) ) ) &&
-        getsockname( fd, (void*)&s->addr, &addrlen ) == 0 &&
+    s = lua_newuserdata( L, sizeof( lls_socket_t ) );
+    if( getsockname( fd, (void*)&s->addr, &addrlen ) == 0 &&
 #if defined(SO_PROTOCOL)
         getsockopt( fd, SOL_SOCKET, SO_PROTOCOL, &s->protocol, &protolen ) == 0 &&
 #endif
@@ -1965,13 +1961,11 @@ static int new_lua( lua_State *L )
         int fl = 0;
 
         lua_settop( L, 1 );
-        // alloc
-        if( ( s = lua_newuserdata( L, sizeof( lls_socket_t ) ) ) &&
-            // set cloexec and nonblock flag
-            fcntl( fd, F_SETFD, FD_CLOEXEC ) != -1 &&
+        // set cloexec and nonblock flag
+        if( fcntl( fd, F_SETFD, FD_CLOEXEC ) != -1 &&
             ( !nonblock || ( ( fl = fcntl( fd, F_GETFL ) ) != -1 &&
               fcntl( fd, F_SETFL, fl|O_NONBLOCK ) != -1 ) ) ){
-            lauxh_setmetatable( L, SOCKET_MT );
+            s = lua_newuserdata( L, sizeof( lls_socket_t ) );
             *s = (lls_socket_t){
                 .fd = fd,
                 .family = info->ai_family,
@@ -1981,6 +1975,7 @@ static int new_lua( lua_State *L )
             };
             // copy sockaddr
             memcpy( (void*)&s->addr, (void*)info->ai_addr, info->ai_addrlen );
+            lauxh_setmetatable( L, SOCKET_MT );
 
             return 1;
         }
@@ -2017,8 +2012,8 @@ static int pair_lua( lua_State *L )
             // set flags
             if( getsockname( fds[i], (void*)&addr, &addrlen ) == 0 &&
                 fcntl( fds[i], F_SETFD, FD_CLOEXEC ) != -1 &&
-                ( !nonblock || fcntl( fds[i], F_SETFL, O_NONBLOCK ) != -1 ) &&
-                ( s = lua_newuserdata( L, sizeof( lls_socket_t ) ) ) ){
+                ( !nonblock || fcntl( fds[i], F_SETFL, O_NONBLOCK ) != -1 ) ){
+                s = lua_newuserdata( L, sizeof( lls_socket_t ) );
                 *s = (lls_socket_t){
                     .fd = fds[i],
                     .family = AF_UNIX,
