@@ -523,6 +523,19 @@ accept a connection.
     - `again:bool`: true if errno is EAGAIN, EWOULDBLOCK, EINTR or ECONNABORTED.
 
 
+### sec, err = sock:sendable( [msec [, exception]] )
+
+wait until socket can be sendable within specified timeout milliseconds.
+
+- **Parameters**
+    - `msec:number`: timeout milliseconds. (default `0`)
+    - `exception:boolean`: enable exception waiting. (default `false`)
+- **Returns**
+    - `ok:boolean`: if `true`, socket is ready to send.
+    - `err:string`: error string.
+    - `timeout:boolean`: timed-out.
+
+
 ### len, err, again = sock:send( msg [, flag, ...] )
 
 send a message from a socket.
@@ -599,6 +612,19 @@ send a file.
     - `again:bool`: true if len != #bytes, or errno is EAGAIN or EINTR.
 
 **NOTE:** all return values will be nil if closed by peer.
+
+
+### sec, err = sock:recvable( [msec [, exception]] )
+
+wait until the socket can be receivable within specified timeout milliseconds.
+
+- **Parameters**
+    - `msec:number`: timeout milliseconds. (default `0`)
+    - `exception:boolean`: enable exception waiting. (default `false`)
+- **Returns**
+    - `ok:boolean`: if `true`, socket is ready to receive.
+    - `err:string`: error string.
+    - `timeout:boolean`: timed-out.
 
 
 ### msg, err, again = sock:recv( [bufsize [, flag, ...]] )
