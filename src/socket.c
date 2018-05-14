@@ -1765,6 +1765,78 @@ static int connect_lua( lua_State *L )
 }
 
 
+static inline int select_lua( lua_State *L, int receivable, int sendable )
+{
+    lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
+    lua_Integer msec = luaL_optinteger( L, 2, 0 );
+    int except = lauxh_optboolean( L, 3, 0 );
+    struct timeval timeout = {
+        .tv_sec = 0,
+        .tv_usec = 0
+    };
+    fd_set rfds;
+    fd_set wfds;
+    fd_set efds;
+    fd_set *rptr = NULL;
+    fd_set *wptr = NULL;
+    fd_set *eptr = NULL;
+
+    lua_settop( L, 0 );
+    if( msec > 0 ){
+        timeout.tv_sec = msec / 1000;
+        timeout.tv_usec = msec % 1000 * 1000;
+    }
+
+    // select receivable
+    if( receivable ){
+        rptr = &rfds;
+        FD_ZERO( rptr );
+        FD_SET( s->fd, rptr );
+    }
+    // select sendable
+    if( sendable ){
+        wptr = &wfds;
+        FD_ZERO( wptr );
+        FD_SET( s->fd, wptr );
+    }
+    // select exception
+    if( except ){
+        eptr = &efds;
+        FD_ZERO( eptr );
+        FD_SET( s->fd, eptr );
+    }
+
+    // wait until usable or exceeded timeout
+    switch( select( s->fd + 1, rptr, wptr, eptr, &timeout ) ){
+        // timeout
+        case 0:
+            lua_pushboolean( L, 0 );
+            lua_pushnil( L );
+            lua_pushboolean( L, 1 );
+            return 3;
+
+        case -1:
+            lua_pushboolean( L, 0 );
+            lua_pushstring( L, strerror( errno ) );
+            return 2;
+
+        // selected
+        default:
+            lua_pushboolean( L, 1 );
+            return 1;
+    }
+}
+
+static int sendable_lua( lua_State *L )
+{
+    return select_lua( L, 0, 1 );
+}
+
+static int recvable_lua( lua_State *L )
+{
+    return select_lua( L, 1, 0 );
+}
+
 static int bind_lua( lua_State *L )
 {
     lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
@@ -2081,6 +2153,8 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
             { "socktype", socktype_lua },
             { "protocol", protocol_lua },
             { "bind", bind_lua },
+            { "recvable", recvable_lua },
+            { "sendable", sendable_lua },
             { "connect", connect_lua },
             { "shutdown", shutdown_lua },
             { "close", close_lua },
