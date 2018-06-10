@@ -171,6 +171,17 @@ get a string of element at specified index.
     - `str:string`: string of element.
 
 
+### ok = iov:set( str, idx )
+
+replace a string of element at specified index.
+
+- **Parameters**
+    - `str:string`: string.
+    - `idx:number`: index of element.
+- **Returns**
+    - `ok:boolean`: if the specified index does not exist, it returns `false`.
+
+
 ### str, midx = iov:del( idx )
 
 delete an element at specified index.
@@ -610,6 +621,21 @@ send a file.
     - `len:number`: the number of bytes sent.
     - `err:string`: error string.
     - `again:bool`: true if len != #bytes, or errno is EAGAIN or EINTR.
+
+**NOTE:** all return values will be nil if closed by peer.
+
+
+### len, err, again = sock:writev( iov [, offset] )
+
+send iovec messages at once.
+
+- **Parameters**
+    - `iov:llsocket.iovec`: instance of [iovec](#llsocketiovec-instance-methods).
+    - `offset:numbger`: offset at which the output operation is to be performed.
+- **Returns**
+    - `len:number`: the number of bytes sent.
+    - `err:string`: error string.
+    - `again:bool`: true if all data has not been sent.
 
 **NOTE:** all return values will be nil if closed by peer.
 
