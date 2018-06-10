@@ -50,10 +50,8 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <ifaddrs.h>
+#include <sys/uio.h>
 // lualib
-#include <lauxlib.h>
-#include <lualib.h>
-
 #include "lauxhlib.h"
 #include "config.h"
 
