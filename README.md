@@ -526,7 +526,7 @@ send a file.
 send iovec messages at once.
 
 - **Parameters**
-    - `iov:llsocket.iovec`: instance of [iovec](https://github.com/mah0x211/lua-iovec).
+    - `iov:iovec`: instance of [iovec](https://github.com/mah0x211/lua-iovec).
     - `offset:numbger`: offset at which the output operation is to be performed.
 - **Returns**
     - `len:number`: the number of bytes sent.
