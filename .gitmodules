@@ -1,3 +1,6 @@
 [submodule "deps/lauxhlib"]
 	path = deps/lauxhlib
 	url = https://github.com/mah0x211/lauxhlib.git
+[submodule "deps/lua-iovec"]
+	path = deps/lua-iovec
+	url = https://github.com/mah0x211/lua-iovec.git
