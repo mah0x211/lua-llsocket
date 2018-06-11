@@ -521,6 +521,21 @@ send a file.
 **NOTE:** all return values will be nil if closed by peer.
 
 
+### len, err, again = sock:writev( iov [, offset] )
+
+send iovec messages at once.
+
+- **Parameters**
+    - `iov:llsocket.iovec`: instance of [iovec](https://github.com/mah0x211/lua-iovec).
+    - `offset:numbger`: offset at which the output operation is to be performed.
+- **Returns**
+    - `len:number`: the number of bytes sent.
+    - `err:string`: error string.
+    - `again:bool`: true if all data has not been sent.
+
+**NOTE:** all return values will be nil if closed by peer.
+
+
 ### sec, err = sock:recvable( [msec [, exception]] )
 
 wait until the socket can be receivable within specified timeout milliseconds.
