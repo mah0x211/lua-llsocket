@@ -1433,80 +1433,6 @@ static int sendfile_lua( lua_State *L )
 #endif
 
 
-static int writev_lua( lua_State *L )
-{
-    lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
-    liovec_t *liov = lauxh_checkudata( L, 2, IOVEC_MT );
-    uint64_t offset = lauxh_optuint64( L, 3, 0 );
-    size_t len = liov->bytes - offset;
-    ssize_t rv = 0;
-
-    if( offset < liov->bytes )
-    {
-        struct iovec *vec = liov->data;
-        struct iovec src = *vec;
-        int nvec = liov->used;
-
-        if( offset )
-        {
-            int idx = 0;
-
-            for(; idx < liov->used; idx++ )
-            {
-                if( vec[0].iov_len > offset ){
-                    src = vec[0];
-                    vec[0].iov_base += offset;
-                    vec[0].iov_len -= offset;
-                    break;
-                }
-                offset -= vec[0].iov_len;
-                vec++;
-                nvec--;
-            }
-        }
-
-        rv = writev( s->fd, vec, nvec );
-        *vec = src;
-    }
-    else {
-        struct iovec empty_iov = {
-            .iov_base = NULL,
-            .iov_len = 0
-        };
-
-        len = 0;
-        rv = writev( s->fd, &empty_iov, 1 );
-    }
-
-    switch( rv )
-    {
-        // got error
-        case -1:
-            // again
-            if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
-                lua_pushinteger( L, 0 );
-                lua_pushnil( L );
-                lua_pushboolean( L, 1 );
-                return 3;
-            }
-            // closed by peer
-            else if( errno == EPIPE || errno == ECONNRESET ){
-                return 0;
-            }
-            // got error
-            lua_pushnil( L );
-            lua_pushstring( L, strerror( errno ) );
-            return 2;
-
-        default:
-            lua_pushinteger( L, rv );
-            lua_pushnil( L );
-            lua_pushboolean( L, len - (size_t)rv );
-            return 3;
-    }
-}
-
-
 static int recv_lua( lua_State *L )
 {
     lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
@@ -2240,7 +2166,6 @@ LUALIB_API int luaopen_llsocket_socket( lua_State *L )
             { "sendfd", sendfd_lua },
             { "sendmsg", sendmsg_lua },
             { "sendfile", sendfile_lua },
-            { "writev", writev_lua },
             { "recv", recv_lua },
             { "recvfrom", recvfrom_lua },
             { "recvfd", recvfd_lua },

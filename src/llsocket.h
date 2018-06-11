@@ -53,17 +53,12 @@
 #include <sys/uio.h>
 // lualib
 #include "lauxhlib.h"
+#include "lua_iovec.h"
 #include "config.h"
-
-
-#if !defined(IOV_MAX)
-#define IOV_MAX 1024
-#endif
 
 
 #define SOCKET_MT   "llsocket.socket"
 #define ADDRINFO_MT "llsocket.addrinfo"
-#define IOVEC_MT    "llsocket.iovec"
 #define CMSGHDR_MT  "llsocket.cmsghdr"
 #define CMSGHDRS_MT "llsocket.cmsghdrs"
 #define MSGHDR_MT   "llsocket.msghdr"
@@ -78,16 +73,6 @@ LUALIB_API int luaopen_llsocket_iovec( lua_State *L );
 LUALIB_API int luaopen_llsocket_cmsghdr( lua_State *L );
 LUALIB_API int luaopen_llsocket_cmsghdrs( lua_State *L );
 LUALIB_API int luaopen_llsocket_msghdr( lua_State *L );
-
-
-typedef struct {
-    int nvec;
-    int used;
-    size_t bytes;
-    struct iovec *data;
-    int *refs;
-    size_t *lens;
-} liovec_t;
 
 
 typedef struct {
@@ -121,7 +106,7 @@ typedef struct {
     int flags;
     // data pointers
     struct addrinfo *name;
-    liovec_t *iov;
+    lua_iovec_t *iov;
     cmsghdrs_t *control;
 } lmsghdr_t;
 
@@ -142,42 +127,6 @@ static inline cmsghdr_t *lls_cmsghdr_alloc( lua_State *L, int level, int type )
     lauxh_setmetatable( L, CMSGHDR_MT );
 
     return cmsg;
-}
-
-
-static inline liovec_t *lls_iovec_alloc( lua_State *L, int nvec )
-{
-    int top = lua_gettop( L );
-    liovec_t *iov = NULL;
-
-    if( nvec > IOV_MAX ){
-        errno = EOVERFLOW;
-        return NULL;
-    }
-    else if( nvec < 0 ){
-        nvec = 0;
-    }
-
-    iov = lua_newuserdata( L, sizeof( liovec_t ) );
-    if( ( iov->data = malloc( sizeof( struct iovec ) * nvec ) ) )
-    {
-        if( ( iov->refs = (int*)malloc( sizeof( int ) * nvec ) ) &&
-            ( iov->lens = (size_t*)malloc( sizeof( size_t ) * nvec ) ) ){
-            iov->used = 0;
-            iov->nvec = nvec;
-            iov->bytes = 0;
-            lauxh_setmetatable( L, IOVEC_MT );
-            return iov;
-        }
-        else if( iov->refs ){
-            free( (void*)iov->refs );
-        }
-        free( (void*)iov->data );
-    }
-
-    lua_settop( L, top );
-
-    return NULL;
 }
 
 

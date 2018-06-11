@@ -81,7 +81,7 @@ static int iov_lua( lua_State *L )
         lua_settop( L, 2 );
         if( !lauxh_isnil( L, 2 ) )
         {
-            liovec_t *iov = lauxh_checkudata( L, 2, IOVEC_MT );
+            lua_iovec_t *iov = lauxh_checkudata( L, 2, IOVEC_MT );
 
             // release current ref
             if( lauxh_isref( msg->iov_ref ) ){
