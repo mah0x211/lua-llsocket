@@ -90,110 +90,6 @@ get hostname and service name.
     - `err:string`: error string.
 
 
-
-## llsocket.iovec Module
-
-`llsocket.iovec` module has the following functions.
-
-
-### iov, err = iovec.new( [nvec] )
-
-create an instance of llsocket.iovec.
-
-**NOTE:** llsocket.iovec can hold maximum [IOV_MAX](#misc) elements.
-
-- **Parameters**
-    - `nvec:number`: number of vector.
-- **Returns**
-    - `iov:llsocket.iovec`: instance of [iovec](#llsocketiovec-instance-methods).
-    - `err:string`: error string.
-
-
-## llsocket.iovec Instance Methods
-
-`llsocket.iovec` instance has following methods.
-
-### bytes = iov:bytes()
-
-get a number of bytes used.
-
-- **Returns**
-    - `bytes:number`: number of bytes used.
-
-
-### bytes = iov:consume( bytes )
-
-delete the specified number of bytes of data.
-
-- **Parameters**
-    - `bytes:number`: number of bytes.
-- **Returns**
-    - `bytes:number`: number of bytes used.
-
-
-### str = iov:concat()
-
-concatenate all data of elements in use into a string.
-
-- **Returns**
-    - `str:string`: string.
-
-
-### idx, err = iov:add( str )
-
-add an element with specified string.
-
-- **Parameters**
-    - `str:string`: string.
-- **Returns**
-    - `idx:number`: index number of added element.
-    - `err:string`: error string.
-
-
-### idx, err = iov:addn( bytes )
-
-add an element that size of specified number of bytes.
-
-- **Parameters**
-    - `bytes:number`: number of bytes.
-- **Returns**
-    - `idx:number`: index number of added element.
-    - `err:string`: error string.
-
-
-### str = iov:get( idx )
-
-get a string of element at specified index.
-
-- **Parameters**
-    - `idx:number`: index of element.
-- **Returns**
-    - `str:string`: string of element.
-
-
-### ok = iov:set( str, idx )
-
-replace a string of element at specified index.
-
-- **Parameters**
-    - `str:string`: string.
-    - `idx:number`: index of element.
-- **Returns**
-    - `ok:boolean`: if the specified index does not exist, it returns `false`.
-
-
-### str, midx = iov:del( idx )
-
-delete an element at specified index.
-
-- **Parameters**
-    - `idx:number`: index of element.
-- **Returns**
-    - `str:string`: string of deleted element.
-    - `midx:number`: index of moved element.
-
-
-
 ## llsocket.cmsghdr Module
 
 `llsocket.cmsghdr` module has the following functions.
@@ -319,9 +215,9 @@ get the address-info, or change it to specified address-info. if argument is a n
 get the iovec, or change it to specified iovec. if argument is nil, the associated iovec will be removed.
 
 - **Parameters**
-    - `iov:llsocket.iovec`: instance of [iovec](#llsocketiovec-instance-methods).
+    - `iov:iovec`: instance of [iovec](https://github.com/mah0x211/lua-iovec).
 - **Returns**
-    - `iov:llsocket.iovec`: instance of [iovec](#llsocketiovec-instance-methods).
+    - `iov:iovec`: instance of [iovec](https://github.com/mah0x211/lua-iovec).
 
 
 ### cmsgs = mh:control( [cmsgs] )
@@ -621,21 +517,6 @@ send a file.
     - `len:number`: the number of bytes sent.
     - `err:string`: error string.
     - `again:bool`: true if len != #bytes, or errno is EAGAIN or EINTR.
-
-**NOTE:** all return values will be nil if closed by peer.
-
-
-### len, err, again = sock:writev( iov [, offset] )
-
-send iovec messages at once.
-
-- **Parameters**
-    - `iov:llsocket.iovec`: instance of [iovec](#llsocketiovec-instance-methods).
-    - `offset:numbger`: offset at which the output operation is to be performed.
-- **Returns**
-    - `len:number`: the number of bytes sent.
-    - `err:string`: error string.
-    - `again:bool`: true if all data has not been sent.
 
 **NOTE:** all return values will be nil if closed by peer.
 
@@ -1339,8 +1220,4 @@ these constants defined at the `llsocket.*`
 - `SCM_TIMESTAMP`: timestamp (struct timeval)
 - `SCM_TIMESTAMP_MONOTONIC`: timestamp (uint64_t)
 
-
-### Misc.
-
-- `IOV_MAX`: maximum size of an iovec.
 
