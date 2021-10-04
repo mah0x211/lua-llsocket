@@ -1,7 +1,8 @@
+rockspec_format = "3.0"
 package = "llsocket"
 version = "scm-1"
 source = {
-    url = "gitrec://github.com/mah0x211/lua-llsocket.git"
+    url = "git+https://github.com/mah0x211/lua-llsocket.git"
 }
 description = {
     summary = "low-level socket module",
@@ -11,7 +12,6 @@ description = {
 }
 dependencies = {
     "lua >= 5.1",
-    "luarocks-fetch-gitrec >= 0.2",
     "iovec >= 0.1.0",
 }
 build = {
