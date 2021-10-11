@@ -1,5 +1,5 @@
-/*
- *  Copyright (C) 2015 Masatoshi Teruya
+/**
+ *  Copyright (C) 2015-2021 Masatoshi Fukunaga
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a
  *  copy of this software and associated documentation files (the "Software"),
@@ -1148,14 +1148,11 @@ static int sendmsg_lua( lua_State *L )
     lmsghdr_t *lmsg = lauxh_checkudata( L, 2, MSGHDR_MT );
     int flg = lauxh_optflags( L, 3 );
     // init data
-    struct iovec empty_iov = {
-        .iov_base = NULL,
-        .iov_len = 0
-    };
+    struct iovec iov[IOV_MAX] = {0};
     struct msghdr data = {
         .msg_name = NULL,
         .msg_namelen = 0,
-        .msg_iov = &empty_iov,
+        .msg_iov = iov,
         .msg_iovlen = 1,
         .msg_control = NULL,
         .msg_controllen = 0,
@@ -1170,10 +1167,10 @@ static int sendmsg_lua( lua_State *L )
         data.msg_namelen = lmsg->name->ai_addrlen;
     }
     // set msg_iov
-    if( lmsg->iov && lmsg->iov->bytes ){
-        len = lmsg->iov->bytes;
-        data.msg_iov = lmsg->iov->data;
-        data.msg_iovlen = lmsg->iov->used;
+    if( lmsg->iov && lmsg->iov->nbyte ){
+        len = lmsg->iov->nbyte;
+        data.msg_iovlen = IOV_MAX;
+        lua_iovec_setv( lmsg->iov, iov, &data.msg_iovlen, 0, 0 );
     }
     // set msg_control
     if( lmsg->control && lmsg->control->len ){
@@ -1438,72 +1435,8 @@ static int writev_lua( lua_State *L )
     lls_socket_t *s = lauxh_checkudata( L, 1, SOCKET_MT );
     lua_iovec_t *iov = lauxh_checkudata( L, 2, IOVEC_MT );
     uint64_t offset = lauxh_optuint64( L, 3, 0 );
-    size_t len = iov->bytes - offset;
-    ssize_t rv = 0;
 
-    if( offset < iov->bytes )
-    {
-        struct iovec *vec = iov->data;
-        struct iovec src = *vec;
-        int nvec = iov->used;
-
-        if( offset )
-        {
-            int idx = 0;
-
-            for(; idx < iov->used; idx++ )
-            {
-                if( vec[0].iov_len > offset ){
-                    src = vec[0];
-                    vec[0].iov_base += offset;
-                    vec[0].iov_len -= offset;
-                    break;
-                }
-                offset -= vec[0].iov_len;
-                vec++;
-                nvec--;
-            }
-        }
-
-        rv = writev( s->fd, vec, nvec );
-        *vec = src;
-    }
-    else {
-        struct iovec empty_iov = {
-            .iov_base = NULL,
-            .iov_len = 0
-        };
-
-        len = 0;
-        rv = writev( s->fd, &empty_iov, 1 );
-    }
-
-    switch( rv )
-    {
-        // got error
-        case -1:
-            // again
-            if( errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ){
-                lua_pushinteger( L, 0 );
-                lua_pushnil( L );
-                lua_pushboolean( L, 1 );
-                return 3;
-            }
-            // closed by peer
-            else if( errno == EPIPE || errno == ECONNRESET ){
-                return 0;
-            }
-            // got error
-            lua_pushnil( L );
-            lua_pushstring( L, strerror( errno ) );
-            return 2;
-
-        default:
-            lua_pushinteger( L, rv );
-            lua_pushnil( L );
-            lua_pushboolean( L, len - (size_t)rv );
-            return 3;
-    }
+    return lua_iovec_writev( L, s->fd, iov, offset, 0 );
 }
 
 
@@ -1728,15 +1661,11 @@ static int recvmsg_lua( lua_State *L )
     lmsghdr_t *lmsg = lauxh_checkudata( L, 2, MSGHDR_MT );
     int flg = lauxh_optflags( L, 3 );
     unsigned char control[CMSG_SPACE(0)] = {0};
-    char empty_iov_base = 0;
-    struct iovec empty_iov = {
-        .iov_base = &empty_iov_base,
-        .iov_len = sizeof( empty_iov_base )
-    };
+    struct iovec iov[IOV_MAX] = {0};
     struct msghdr data = (struct msghdr){
         .msg_name = NULL,
         .msg_namelen = 0,
-        .msg_iov = &empty_iov,
+        .msg_iov = iov,
         .msg_iovlen = 1,
         .msg_control = control,
         .msg_controllen = sizeof( control ),
@@ -1750,9 +1679,9 @@ static int recvmsg_lua( lua_State *L )
         data.msg_namelen = sizeof( struct sockaddr_storage );
     }
     // set msg_iov
-    if( lmsg->iov && lmsg->iov->used > 0 ){
-        data.msg_iov = lmsg->iov->data;
-        data.msg_iovlen = lmsg->iov->used;
+    if( lmsg->iov && lmsg->iov->nbyte ){
+        data.msg_iovlen = IOV_MAX;
+        lua_iovec_setv( lmsg->iov, data.msg_iov, &data.msg_iovlen, 0, 0 );
     }
     // set msg_control
     if( lmsg->control && lmsg->control->len ){
@@ -1778,32 +1707,6 @@ static int recvmsg_lua( lua_State *L )
 
         default:
             lua_pushinteger( L, rv );
-
-            // update last item length
-            if( data.msg_iov != &empty_iov )
-            {
-                lmsg->iov->bytes = (size_t)rv;
-
-                if( rv )
-                {
-                    size_t bytes = lmsg->iov->bytes;
-                    size_t *lens = lmsg->iov->lens;
-                    int used = lmsg->iov->used;
-                    int i = 0;
-
-                    for(; i < used; i++ )
-                    {
-                        if( bytes < lens[i] ){
-                            lens[i] = bytes;
-                            break;
-                        }
-                        bytes -= lens[i];
-                    }
-                }
-                else {
-                    lmsg->iov->lens[0] = 0;
-                }
-            }
             return 1;
     }
 }
