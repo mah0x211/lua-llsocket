@@ -174,7 +174,7 @@ LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L )
             { "family", family_lua },
             { "socktype", socktype_lua },
             { "protocol", protocol_lua },
-            { "cannoname", canonname_lua },
+            { "canonname", canonname_lua },
             { "addr", addr_lua },
             { "getnameinfo", getnameinfo_lua },
             { NULL, NULL }
@@ -200,5 +200,3 @@ LUALIB_API int luaopen_llsocket_addrinfo( lua_State *L )
 
     return 0;
 }
-
-
