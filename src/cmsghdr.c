@@ -1,11 +1,11 @@
-/*
+/**
  *  Copyright (C) 2017 Masatoshi Teruya
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to deal
- *  in the Software without restriction, including without limitation the rights
- *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *  copies of the Software, and to permit persons to whom the Software is
+ *  of this software and associated documentation files (the "Software"), to
+ *  deal in the Software without restriction, including without limitation the
+ *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ *  sell copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
@@ -15,9 +15,9 @@
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
  *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- *  THE SOFTWARE.
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *  IN THE SOFTWARE.
  *
  *  cmsghdr.c
  *  lua-llsocket
@@ -27,22 +27,19 @@
 
 #include "llsocket.h"
 
-
-static int data_lua( lua_State *L )
+static int data_lua(lua_State *L)
 {
-    cmsghdr_t *cmsg = lauxh_checkudata( L, 1, CMSGHDR_MT );
+    cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
 
-    lauxh_pushref( L, cmsg->ref );
-    if( cmsg->level == SOL_SOCKET )
-    {
-        if( cmsg->type == SCM_RIGHTS )
-        {
-            int *fds = (int*)lua_tostring( L, -1 );
-            int nfd = cmsg->len / sizeof( int );
-            int i = 0;
+    lauxh_pushref(L, cmsg->ref);
+    if (cmsg->level == SOL_SOCKET) {
+        if (cmsg->type == SCM_RIGHTS) {
+            int *fds = (int *)lua_tostring(L, -1);
+            int nfd  = cmsg->len / sizeof(int);
+            int i    = 0;
 
-            for(; i < nfd; i++ ){
-                lua_pushinteger( L, fds[i] );
+            for (; i < nfd; i++) {
+                lua_pushinteger(L, fds[i]);
             }
 
             return nfd;
@@ -52,136 +49,126 @@ static int data_lua( lua_State *L )
     return 1;
 }
 
-
-static int type_lua( lua_State *L )
+static int type_lua(lua_State *L)
 {
-    cmsghdr_t *cmsg = lauxh_checkudata( L, 1, CMSGHDR_MT );
+    cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
 
-    lua_pushinteger( L, cmsg->type );
+    lua_pushinteger(L, cmsg->type);
 
     return 1;
 }
 
-
-static int level_lua( lua_State *L )
+static int level_lua(lua_State *L)
 {
-    cmsghdr_t *cmsg = lauxh_checkudata( L, 1, CMSGHDR_MT );
+    cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
 
-    lua_pushinteger( L, cmsg->level );
+    lua_pushinteger(L, cmsg->level);
 
     return 1;
 }
 
-
-static int len_lua( lua_State *L )
+static int len_lua(lua_State *L)
 {
-    cmsghdr_t *cmsg = lauxh_checkudata( L, 1, CMSGHDR_MT );
+    cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
 
-    lua_pushinteger( L, cmsg->len );
+    lua_pushinteger(L, cmsg->len);
 
     return 1;
 }
 
-
-static int tostring_lua( lua_State *L )
+static int tostring_lua(lua_State *L)
 {
-    lua_pushfstring( L, CMSGHDR_MT ": %p", lua_touserdata( L, 1 ) );
+    lua_pushfstring(L, CMSGHDR_MT ": %p", lua_touserdata(L, 1));
     return 1;
 }
 
-
-static int gc_lua( lua_State *L )
+static int gc_lua(lua_State *L)
 {
-    cmsghdr_t *cmsg = lauxh_checkudata( L, 1, CMSGHDR_MT );
+    cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
 
-    if( lauxh_isref( cmsg->ref ) ){
-        lauxh_unref( L, cmsg->ref );
+    if (lauxh_isref(cmsg->ref)) {
+        lauxh_unref(L, cmsg->ref);
     }
 
     return 0;
 }
 
-
-static int new_lua( lua_State *L )
+static int new_lua(lua_State *L)
 {
-    int level = lauxh_checkinteger( L, 1 );
-    int type = lauxh_checkinteger( L, 2 );
+    int level = lauxh_checkinteger(L, 1);
+    int type  = lauxh_checkinteger(L, 2);
 
-    lua_settop( L, 3 );
-    lls_cmsghdr_alloc( L, level, type );
+    lua_settop(L, 3);
+    lls_cmsghdr_alloc(L, level, type);
 
     return 1;
 }
 
-
-static int rights_lua( lua_State *L )
+static int rights_lua(lua_State *L)
 {
-    int argc = lua_gettop( L );
+    int argc = lua_gettop(L);
 
-    if( argc )
-    {
+    if (argc) {
         char b[sizeof(int)];
-        int *fd = (int*)b;
+        int *fd = (int *)b;
 
         // check arguments
-        for( int i = 1; i <= argc; i++ ){
-            *fd = (int)lauxh_checkinteger( L, i );
-            lua_pushlstring( L, b, sizeof(b) );
+        for (int i = 1; i <= argc; i++) {
+            *fd = (int)lauxh_checkinteger(L, i);
+            lua_pushlstring(L, b, sizeof(b));
         }
-        lua_concat( L, argc );
-        lua_replace( L, 1 );
-        lua_settop( L, 1 );
-        lls_cmsghdr_alloc( L, SOL_SOCKET, SCM_RIGHTS );
+        lua_concat(L, argc);
+        lua_replace(L, 1);
+        lua_settop(L, 1);
+        lls_cmsghdr_alloc(L, SOL_SOCKET, SCM_RIGHTS);
 
         return 1;
     }
 
-    lua_pushnil( L );
+    lua_pushnil(L);
 
     return 1;
 }
 
-
-LUALIB_API int luaopen_llsocket_cmsghdr( lua_State *L )
+LUALIB_API int luaopen_llsocket_cmsghdr(lua_State *L)
 {
     // create metatable
-    if( luaL_newmetatable( L, CMSGHDR_MT ) )
-    {
+    if (luaL_newmetatable(L, CMSGHDR_MT)) {
         struct luaL_Reg mmethod[] = {
-            { "__gc", gc_lua },
-            { "__tostring", tostring_lua },
-            { "__len", len_lua },
-            { NULL, NULL }
+            {"__gc",       gc_lua      },
+            {"__tostring", tostring_lua},
+            {"__len",      len_lua     },
+            {NULL,         NULL        }
         };
         struct luaL_Reg method[] = {
-            { "level", level_lua },
-            { "type", type_lua },
-            { "data", data_lua },
-            { NULL, NULL }
+            {"level", level_lua},
+            {"type",  type_lua },
+            {"data",  data_lua },
+            {NULL,    NULL     }
         };
         struct luaL_Reg *ptr = mmethod;
 
         // metamethods
         do {
-            lauxh_pushfn2tbl( L, ptr->name, ptr->func );
+            lauxh_pushfn2tbl(L, ptr->name, ptr->func);
             ptr++;
-        } while( ptr->name );
+        } while (ptr->name);
         // methods
-        lua_pushstring( L, "__index" );
-        lua_newtable( L );
+        lua_pushstring(L, "__index");
+        lua_newtable(L);
         ptr = method;
         do {
-            lauxh_pushfn2tbl( L, ptr->name, ptr->func );
+            lauxh_pushfn2tbl(L, ptr->name, ptr->func);
             ptr++;
-        } while( ptr->name );
-        lua_rawset( L, -3 );
+        } while (ptr->name);
+        lua_rawset(L, -3);
     }
-    lua_pop( L, 1 );
+    lua_pop(L, 1);
 
     // create module table
-    lua_newtable( L );
-    lauxh_pushfn2tbl( L, "new", new_lua );
-    lauxh_pushfn2tbl( L, "rights", rights_lua );
+    lua_newtable(L);
+    lauxh_pushfn2tbl(L, "new", new_lua);
+    lauxh_pushfn2tbl(L, "rights", rights_lua);
 
     return 1;
 }

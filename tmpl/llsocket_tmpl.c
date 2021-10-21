@@ -1,4 +1,4 @@
-/*
+/**
  *  Copyright (C) 2014 Masatoshi Teruya
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a
@@ -27,50 +27,49 @@
 
 #include "llsocket.h"
 
-
-LUALIB_API int luaopen_llsocket( lua_State *L )
+LUALIB_API int luaopen_llsocket(lua_State *L)
 {
     // register submodule
-    luaopen_llsocket_addrinfo( L );
+    luaopen_llsocket_addrinfo(L);
 
     // create table
-    lua_newtable( L );
+    lua_newtable(L);
     // add submodules
-    lua_pushstring( L, "socket" );
-    luaopen_llsocket_socket( L );
-    lua_rawset( L, -3 );
+    lua_pushstring(L, "socket");
+    luaopen_llsocket_socket(L);
+    lua_rawset(L, -3);
 
-    lua_pushstring( L, "cmsghdr" );
-    luaopen_llsocket_cmsghdr( L );
-    lua_rawset( L, -3 );
+    lua_pushstring(L, "cmsghdr");
+    luaopen_llsocket_cmsghdr(L);
+    lua_rawset(L, -3);
 
-    lua_pushstring( L, "cmsghdrs" );
-    luaopen_llsocket_cmsghdrs( L );
-    lua_rawset( L, -3 );
+    lua_pushstring(L, "cmsghdrs");
+    luaopen_llsocket_cmsghdrs(L);
+    lua_rawset(L, -3);
 
-    lua_pushstring( L, "msghdr" );
-    luaopen_llsocket_msghdr( L );
-    lua_rawset( L, -3 );
+    lua_pushstring(L, "msghdr");
+    luaopen_llsocket_msghdr(L);
+    lua_rawset(L, -3);
 
-    lua_pushstring( L, "inet" );
-    luaopen_llsocket_inet( L );
-    lua_rawset( L, -3 );
+    lua_pushstring(L, "inet");
+    luaopen_llsocket_inet(L);
+    lua_rawset(L, -3);
 
-    lua_pushstring( L, "unix" );
-    luaopen_llsocket_unix( L );
-    lua_rawset( L, -3 );
+    lua_pushstring(L, "unix");
+    luaopen_llsocket_unix(L);
+    lua_rawset(L, -3);
 
-    lua_pushstring( L, "device" );
-    luaopen_llsocket_device( L );
-    lua_rawset( L, -3 );
+    lua_pushstring(L, "device");
+    luaopen_llsocket_device(L);
+    lua_rawset(L, -3);
 
     // constants
-    lauxh_pushint2tbl( L, "IOV_MAX", IOV_MAX );
+    lauxh_pushint2tbl(L, "IOV_MAX", IOV_MAX);
 
     // for shutdown
-    lauxh_pushnum2tbl( L, "SHUT_RD", SHUT_RD );
-    lauxh_pushnum2tbl( L, "SHUT_WR", SHUT_WR );
-    lauxh_pushnum2tbl( L, "SHUT_RDWR", SHUT_RDWR );
+    lauxh_pushnum2tbl(L, "SHUT_RD", SHUT_RD);
+    lauxh_pushnum2tbl(L, "SHUT_WR", SHUT_WR);
+    lauxh_pushnum2tbl(L, "SHUT_RDWR", SHUT_RDWR);
 
     // for send/recv flags
 #define GEN_MSG_FLAGS_DECL
@@ -89,15 +88,12 @@ LUALIB_API int luaopen_llsocket( lua_State *L )
 
     // cmsg_types
 #if defined(SCM_CREDENTIALS)
-    lauxh_pushnum2tbl( L, "SCM_CREDS", SCM_CREDENTIALS );
+    lauxh_pushnum2tbl(L, "SCM_CREDS", SCM_CREDENTIALS);
 #elif defined(SCM_CREDS)
-    lauxh_pushnum2tbl( L, "SCM_CREDS", SCM_CREDS );
+    lauxh_pushnum2tbl(L, "SCM_CREDS", SCM_CREDS);
 #endif
 
 #define GEN_SCM_TYPES_DECL
 
-
     return 1;
 }
-
-
