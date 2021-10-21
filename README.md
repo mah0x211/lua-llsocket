@@ -588,13 +588,12 @@ determine whether socket is at out-of-band mark.
     - `err:string`: error string.
 
 
-### ai, err = sock:getsockname()
+### ai = sock:getsockname()
 
 get socket name.
 
 - **Returns**
     - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
-    - `err:string`: error string.
 
 
 ### ai, err = sock:getpeername()

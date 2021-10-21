@@ -104,6 +104,12 @@ typedef struct {
     lls_cmsghdrs_t *control;
 } lls_msghdr_t;
 
+typedef struct {
+    int ai_addr_ref;
+    int ai_canonname_ref;
+    struct addrinfo ai;
+} lls_addrinfo_t;
+
 static inline lls_cmsghdr_t *lls_cmsghdr_alloc(lua_State *L, int level,
                                                int type)
 {
@@ -148,27 +154,28 @@ static inline int lls_getaddrinfo(struct addrinfo **list, const char *node,
     return getaddrinfo(node, service, &hints, list);
 }
 
-static inline struct addrinfo *lls_addrinfo_alloc(lua_State *L,
-                                                  struct addrinfo *src)
+static inline lls_addrinfo_t *lls_addrinfo_alloc(lua_State *L,
+                                                 struct addrinfo *src)
 {
-    struct addrinfo *info = lua_newuserdata(L, sizeof(struct addrinfo));
+    lls_addrinfo_t *info = lua_newuserdata(L, sizeof(lls_addrinfo_t));
 
-    memcpy((void *)info, (void *)src, sizeof(struct addrinfo));
-    info->ai_canonname = NULL;
-    // copy member fields
-    if ((!src->ai_canonname ||
-         (info->ai_canonname = strdup(src->ai_canonname))) &&
-        (info->ai_addr = malloc(sizeof(struct sockaddr_storage)))) {
-        info->ai_addrlen = src->ai_addrlen;
-        memcpy((void *)info->ai_addr, (void *)src->ai_addr, src->ai_addrlen);
-        // set metatable
-        lauxh_setmetatable(L, ADDRINFO_MT);
-        return info;
-    } else if (info->ai_canonname) {
-        free((void *)info->ai_canonname);
+    // copy data
+    memcpy((void *)&info->ai, (void *)src, sizeof(struct addrinfo));
+    info->ai.ai_addr    = lua_newuserdata(L, sizeof(struct sockaddr_storage));
+    info->ai_addr_ref   = lauxh_ref(L);
+    info->ai.ai_addrlen = src->ai_addrlen;
+    memcpy((void *)info->ai.ai_addr, (void *)src->ai_addr, src->ai_addrlen);
+    info->ai.ai_canonname  = NULL;
+    info->ai_canonname_ref = LUA_NOREF;
+    if (!src->ai_canonname) {
+        lua_pushstring(L, src->ai_canonname);
+        info->ai.ai_canonname  = (char *)lua_tostring(L, -1);
+        info->ai_canonname_ref = lauxh_ref(L);
     }
+    // set metatable
+    lauxh_setmetatable(L, ADDRINFO_MT);
 
-    return NULL;
+    return info;
 }
 
 static inline void *lls_checkudata(lua_State *L, int idx, const char *tname)

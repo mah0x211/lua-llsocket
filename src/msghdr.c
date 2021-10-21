@@ -90,14 +90,14 @@ static int name_lua(lua_State *L)
     lauxh_pushref(L, msg->name_ref);
 
     if (lua_gettop(L) > 1) {
-        struct addrinfo *info = lauxh_optudata(L, 2, ADDRINFO_MT, NULL);
+        lls_addrinfo_t *info = lauxh_optudata(L, 2, ADDRINFO_MT, NULL);
 
         // release current ref
         msg->name_ref = lauxh_unref(L, msg->name_ref);
         msg->name     = NULL;
         if (info) {
             msg->name_ref = lauxh_refat(L, 2);
-            msg->name     = info;
+            msg->name     = &info->ai;
         }
     }
 
