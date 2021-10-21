@@ -56,11 +56,12 @@ static int nonblock_lua(lua_State *L)
 }
 
 // MARK: socket option
-#define sockopt_int_lua(L, level, optname, type)                               \
- ({                                                                            \
-lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);                            \
-lls_sockopt_int_lua(L, s->fd, level, optname, type);                            \
- })
+static inline int sockopt_int_lua(lua_State *L, int level, int optname,
+                                  int type)
+{
+    lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
+    return lls_sockopt_int_lua(L, s->fd, level, optname, type);
+}
 
 // multicast
 
