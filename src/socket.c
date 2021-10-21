@@ -1242,30 +1242,25 @@ static int sendfile_lua(lua_State *L)
     ssize_t nbytes  = 0;
     void *buf       = NULL;
 
+    lua_settop(L, 0);
+
     // invalid length
     if (!len) {
         lua_pushnil(L);
         lua_pushstring(L, strerror(EINVAL));
         return 2;
     }
-    // mem-error
-    else if (!(buf = malloc(sizeof(char) * len))) {
-        lua_pushnil(L);
-        lua_pushstring(L, strerror(errno));
-        return 2;
-    }
 
     // read data from file
+    buf    = lua_newuserdata(L, len);
     nbytes = pread(fd, buf, len, offset);
     // reached to end-of-file
     if (!nbytes) {
-        free(buf);
         lua_pushinteger(L, 0);
         return 1;
     }
     // got error
     else if (nbytes == -1) {
-        free(buf);
         // again
         if (errno == EAGAIN || errno == EINTR) {
             lua_pushinteger(L, 0);
@@ -1277,12 +1272,10 @@ static int sendfile_lua(lua_State *L)
         // got error
         lua_pushnil(L);
         lua_pushstring(L, strerror(errno));
-
         return 2;
     }
 
     nbytes = send(s->fd, buf, nbytes, 0);
-    free(buf);
     switch (nbytes) {
     // got error
     case -1:
@@ -1320,20 +1313,17 @@ static int recv_lua(lua_State *L)
     char *buf       = NULL;
     ssize_t rv      = 0;
 
+    lua_settop(L, 0);
+
     // invalid length
     if (len <= 0) {
         lua_pushnil(L);
         lua_pushstring(L, strerror(EINVAL));
         return 2;
     }
-    // mem-error
-    else if (!(buf = malloc(sizeof(char) * len))) {
-        lua_pushnil(L);
-        lua_pushstring(L, strerror(errno));
-        return 2;
-    }
 
-    rv = recv(s->fd, buf, (size_t)len, flg);
+    buf = lua_newuserdata(L, len);
+    rv  = recv(s->fd, buf, (size_t)len, flg);
     switch (rv) {
     // got error
     case -1:
@@ -1342,30 +1332,23 @@ static int recv_lua(lua_State *L)
         if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
             lua_pushnil(L);
             lua_pushboolean(L, 1);
-            rv = 3;
+            return 3;
         }
         // got error
-        else {
-            lua_pushstring(L, strerror(errno));
-            rv = 2;
-        }
-        break;
+        lua_pushstring(L, strerror(errno));
+        return 2;
 
     case 0:
         // close by peer
         if (s->socktype != SOCK_DGRAM && s->socktype != SOCK_RAW) {
-            break;
+            return 0;
         }
         // fall through
 
     default:
         lua_pushlstring(L, buf, rv);
-        rv = 1;
+        return 1;
     }
-
-    free(buf);
-
-    return rv;
 }
 
 static int recvfrom_lua(lua_State *L)
@@ -1385,14 +1368,8 @@ static int recvfrom_lua(lua_State *L)
         lua_pushstring(L, strerror(EINVAL));
         return 3;
     }
-    // mem-error
-    else if (!(buf = malloc(sizeof(char) * len))) {
-        lua_pushnil(L);
-        lua_pushnil(L);
-        lua_pushstring(L, strerror(errno));
-        return 3;
-    }
 
+    buf = lua_newuserdata(L, len);
     rv = recvfrom(s->fd, buf, (size_t)len, flg, (struct sockaddr *)&src, &slen);
     switch (rv) {
     // got error
@@ -1403,28 +1380,23 @@ static int recvfrom_lua(lua_State *L)
         if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
             lua_pushnil(L);
             lua_pushboolean(L, 1);
-            rv = 4;
+            return 4;
         }
         // got error
-        else {
-            lua_pushstring(L, strerror(errno));
-            rv = 3;
-        }
-        break;
+        lua_pushstring(L, strerror(errno));
+        return 3;
 
     case 0:
         // close by peer
         if (s->socktype != SOCK_DGRAM && s->socktype != SOCK_RAW) {
-            break;
+            return 0;
         }
         // fall-through
 
     default:
         lua_pushlstring(L, buf, rv);
-        // no addrinfo
-        if (slen == 0) {
-            rv = 1;
-        } else {
+        if (slen > 0) {
+            // with addrinfo
             struct addrinfo wrap = {.ai_flags     = 0,
                                     .ai_family    = s->family,
                                     .ai_socktype  = s->socktype,
@@ -1436,13 +1408,11 @@ static int recvfrom_lua(lua_State *L)
 
             // push llsocket.addr udata
             lls_addrinfo_alloc(L, &wrap);
-            rv = 2;
+            return 2;
         }
+        // no addrinfo
+        return 1;
     }
-
-    free(buf);
-
-    return rv;
 }
 
 static int recvfd_lua(lua_State *L)
