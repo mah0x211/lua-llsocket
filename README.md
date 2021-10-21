@@ -192,7 +192,7 @@ get the address-info, or change it to specified address-info. if argument is a n
 - **Parameters**
     - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 - **Returns**
-    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `ai:addrinfo`: previous instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 
 
 ### iov = mh:iov( [iov] )
@@ -202,7 +202,7 @@ get the iovec, or change it to specified iovec. if argument is nil, the associat
 - **Parameters**
     - `iov:iovec`: instance of [iovec](https://github.com/mah0x211/lua-iovec).
 - **Returns**
-    - `iov:iovec`: instance of [iovec](https://github.com/mah0x211/lua-iovec).
+    - `iov:iovec`: previous instance of [iovec](https://github.com/mah0x211/lua-iovec).
 
 
 ### cmsgs = mh:control( [cmsgs] )
@@ -212,7 +212,7 @@ get the cmsghdrs, or change it to specified cmsghdr. if argument is nil, the ass
 - **Parameters**
     - `cmsgs:llsocket.cmsghdrs`: instance of [cmsghdrs](#llsocketcmsghdrs-instance-methods).
 - **Returns**
-    - `cmsgs:llsocket.cmsghdrs`: instance of [cmsghdrs](#llsocketcmsghdrs-instance-methods).
+    - `cmsgs:llsocket.cmsghdrs`: previous instance of [cmsghdrs](#llsocketcmsghdrs-instance-methods).
 
 
 ### flags = mh:flags()
