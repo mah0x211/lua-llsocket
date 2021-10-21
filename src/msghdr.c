@@ -40,28 +40,21 @@ static int control_lua(lua_State *L)
 {
     lmsghdr_t *msg = lauxh_checkudata(L, 1, MSGHDR_MT);
 
-    if (lua_gettop(L) > 1) {
-        // check argument
-        lua_settop(L, 2);
-        if (!lauxh_isnil(L, 2)) {
-            cmsghdrs_t *cmsg = lauxh_checkudata(L, 2, CMSGHDRS_MT);
-
-            // release current ref
-            if (lauxh_isref(msg->control_ref)) {
-                lauxh_unref(L, msg->control_ref);
-            }
-            msg->control_ref = lauxh_ref(L);
-            msg->control     = cmsg;
-        }
-        // release ref
-        else if (lauxh_isref(msg->control_ref)) {
-            msg->control_ref = lauxh_unref(L, msg->control_ref);
-            msg->control     = NULL;
-        }
-    }
-
     // push ref
     lauxh_pushref(L, msg->control_ref);
+
+    if (lua_gettop(L) > 1) {
+        // check argument
+        cmsghdrs_t *cmsgs = lauxh_optudata(L, 2, CMSGHDRS_MT, NULL);
+
+        // release current ref
+        msg->control_ref = lauxh_unref(L, msg->control_ref);
+        msg->control     = NULL;
+        if (cmsgs) {
+            msg->control_ref = lauxh_refat(L, 2);
+            msg->control     = cmsgs;
+        }
+    }
 
     return 1;
 }

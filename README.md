@@ -212,7 +212,7 @@ get the cmsghdrs, or change it to specified cmsghdr. if argument is nil, the ass
 - **Parameters**
     - `cmsgs:llsocket.cmsghdrs`: instance of [cmsghdrs](#llsocketcmsghdrs-instance-methods).
 - **Returns**
-    - `cmsgs:llsocket.cmsghdrs`: instance of [cmsghdrs](#llsocketcmsghdrs-instance-methods).
+    - `cmsgs:llsocket.cmsghdrs`: previous instance of [cmsghdrs](#llsocketcmsghdrs-instance-methods).
 
 
 ### flags = mh:flags()
