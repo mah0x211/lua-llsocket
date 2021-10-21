@@ -202,7 +202,7 @@ get the iovec, or change it to specified iovec. if argument is nil, the associat
 - **Parameters**
     - `iov:iovec`: instance of [iovec](https://github.com/mah0x211/lua-iovec).
 - **Returns**
-    - `iov:iovec`: instance of [iovec](https://github.com/mah0x211/lua-iovec).
+    - `iov:iovec`: previous instance of [iovec](https://github.com/mah0x211/lua-iovec).
 
 
 ### cmsgs = mh:control( [cmsgs] )

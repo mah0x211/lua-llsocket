@@ -70,28 +70,21 @@ static int iov_lua(lua_State *L)
 {
     lmsghdr_t *msg = lauxh_checkudata(L, 1, MSGHDR_MT);
 
-    if (lua_gettop(L) > 1) {
-        // check argument
-        lua_settop(L, 2);
-        if (!lauxh_isnil(L, 2)) {
-            lua_iovec_t *iov = lauxh_checkudata(L, 2, IOVEC_MT);
-
-            // release current ref
-            if (lauxh_isref(msg->iov_ref)) {
-                lauxh_unref(L, msg->iov_ref);
-            }
-            msg->iov_ref = lauxh_ref(L);
-            msg->iov     = iov;
-        }
-        // release ref
-        else if (lauxh_isref(msg->iov_ref)) {
-            msg->iov_ref = lauxh_unref(L, msg->iov_ref);
-            msg->iov     = NULL;
-        }
-    }
-
     // push ref
     lauxh_pushref(L, msg->iov_ref);
+
+    if (lua_gettop(L) > 1) {
+        // check argument
+        lua_iovec_t *iov = lauxh_optudata(L, 2, IOVEC_MT, NULL);
+
+        // release current ref
+        msg->iov_ref = lauxh_unref(L, msg->iov_ref);
+        msg->name    = NULL;
+        if (iov) {
+            msg->iov_ref = lauxh_refat(L, 2);
+            msg->iov     = iov;
+        }
+    }
 
     return 1;
 }
