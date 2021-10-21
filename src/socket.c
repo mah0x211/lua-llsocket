@@ -606,11 +606,11 @@ static int sndlowat_lua(lua_State *L)
     return sockopt_int_lua(L, SOL_SOCKET, SO_SNDLOWAT, LUA_TNUMBER);
 }
 
-#define sockopt_timeval_lua(L, level, opt)                                     \
- ({                                                                            \
-lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);                            \
-lls_sockopt_timeval_lua(L, s->fd, level, opt);                                  \
- })
+static inline int sockopt_timeval_lua(lua_State *L, int level, int opt)
+{
+    lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
+    return lls_sockopt_timeval_lua(L, s->fd, level, opt);
+}
 
 static int rcvtimeo_lua(lua_State *L)
 {
