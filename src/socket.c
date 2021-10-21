@@ -43,20 +43,16 @@ typedef struct {
 } lls_socket_t;
 
 // MARK: fd option
-#define fcntl_lua(L, getfl, setfl, fl)                                         \
- ({                                                                            \
-lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);                            \
-lls_fcntl_lua(L, s->fd, getfl, setfl, fl);                                      \
- })
-
 static int cloexec_lua(lua_State *L)
 {
-    return fcntl_lua(L, F_GETFD, F_SETFD, FD_CLOEXEC);
+    lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
+    return lls_fcntl_lua(L, s->fd, F_GETFD, F_SETFD, FD_CLOEXEC);
 }
 
 static int nonblock_lua(lua_State *L)
 {
-    return fcntl_lua(L, F_GETFL, F_SETFL, O_NONBLOCK);
+    lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
+    return lls_fcntl_lua(L, s->fd, F_GETFL, F_SETFL, O_NONBLOCK);
 }
 
 // MARK: socket option
