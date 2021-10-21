@@ -80,14 +80,14 @@ typedef struct {
     // data byte count, not including header
     int len;
     const char *data;
-} cmsghdr_t;
+} lls_cmsghdr_t;
 
 typedef struct {
     int ref;
     size_t bytes;
     size_t len;
     char *data;
-} cmsghdrs_t;
+} lls_cmsghdrs_t;
 
 typedef struct {
     // msg_name
@@ -101,14 +101,15 @@ typedef struct {
     // data pointers
     struct addrinfo *name;
     lua_iovec_t *iov;
-    cmsghdrs_t *control;
-} lmsghdr_t;
+    lls_cmsghdrs_t *control;
+} lls_msghdr_t;
 
-static inline cmsghdr_t *lls_cmsghdr_alloc(lua_State *L, int level, int type)
+static inline lls_cmsghdr_t *lls_cmsghdr_alloc(lua_State *L, int level,
+                                               int type)
 {
-    size_t len       = 0;
-    const char *data = lauxh_checklstring(L, -1, &len);
-    cmsghdr_t *cmsg  = lua_newuserdata(L, sizeof(cmsghdr_t));
+    size_t len          = 0;
+    const char *data    = lauxh_checklstring(L, -1, &len);
+    lls_cmsghdr_t *cmsg = lua_newuserdata(L, sizeof(lls_cmsghdr_t));
 
     lua_pushvalue(L, -2);
     cmsg->ref   = lauxh_ref(L);

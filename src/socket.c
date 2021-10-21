@@ -1048,7 +1048,7 @@ static int sendfd_lua(lua_State *L)
 static int sendmsg_lua(lua_State *L)
 {
     lls_socket_t *s           = lauxh_checkudata(L, 1, SOCKET_MT);
-    lmsghdr_t *lmsg           = lauxh_checkudata(L, 2, MSGHDR_MT);
+    lls_msghdr_t *lmsg        = lauxh_checkudata(L, 2, MSGHDR_MT);
     int flg                   = lauxh_optflags(L, 3);
     // init data
     struct iovec iov[IOV_MAX] = {0};
@@ -1521,7 +1521,7 @@ static int recvfd_lua(lua_State *L)
 static int recvmsg_lua(lua_State *L)
 {
     lls_socket_t *s                      = lauxh_checkudata(L, 1, SOCKET_MT);
-    lmsghdr_t *lmsg                      = lauxh_checkudata(L, 2, MSGHDR_MT);
+    lls_msghdr_t *lmsg                   = lauxh_checkudata(L, 2, MSGHDR_MT);
     int flg                              = lauxh_optflags(L, 3);
     unsigned char control[CMSG_SPACE(0)] = {0};
     struct iovec iov[IOV_MAX]            = {0};

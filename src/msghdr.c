@@ -29,7 +29,7 @@
 
 static int flags_lua(lua_State *L)
 {
-    lmsghdr_t *msg = lauxh_checkudata(L, 1, MSGHDR_MT);
+    lls_msghdr_t *msg = lauxh_checkudata(L, 1, MSGHDR_MT);
 
     lua_pushinteger(L, msg->flags);
 
@@ -38,14 +38,14 @@ static int flags_lua(lua_State *L)
 
 static int control_lua(lua_State *L)
 {
-    lmsghdr_t *msg = lauxh_checkudata(L, 1, MSGHDR_MT);
+    lls_msghdr_t *msg = lauxh_checkudata(L, 1, MSGHDR_MT);
 
     // push ref
     lauxh_pushref(L, msg->control_ref);
 
     if (lua_gettop(L) > 1) {
         // check argument
-        cmsghdrs_t *cmsgs = lauxh_optudata(L, 2, CMSGHDRS_MT, NULL);
+        lls_cmsghdrs_t *cmsgs = lauxh_optudata(L, 2, CMSGHDRS_MT, NULL);
 
         // release current ref
         msg->control_ref = lauxh_unref(L, msg->control_ref);
@@ -61,7 +61,7 @@ static int control_lua(lua_State *L)
 
 static int iov_lua(lua_State *L)
 {
-    lmsghdr_t *msg = lauxh_checkudata(L, 1, MSGHDR_MT);
+    lls_msghdr_t *msg = lauxh_checkudata(L, 1, MSGHDR_MT);
 
     // push ref
     lauxh_pushref(L, msg->iov_ref);
@@ -84,7 +84,7 @@ static int iov_lua(lua_State *L)
 
 static int name_lua(lua_State *L)
 {
-    lmsghdr_t *msg = lauxh_checkudata(L, 1, MSGHDR_MT);
+    lls_msghdr_t *msg = lauxh_checkudata(L, 1, MSGHDR_MT);
 
     // push ref
     lauxh_pushref(L, msg->name_ref);
@@ -112,7 +112,7 @@ static int tostring_lua(lua_State *L)
 
 static int gc_lua(lua_State *L)
 {
-    lmsghdr_t *msg = lauxh_checkudata(L, 1, MSGHDR_MT);
+    lls_msghdr_t *msg = lauxh_checkudata(L, 1, MSGHDR_MT);
 
     lauxh_unref(L, msg->name_ref);
     lauxh_unref(L, msg->iov_ref);
@@ -123,15 +123,15 @@ static int gc_lua(lua_State *L)
 
 static int new_lua(lua_State *L)
 {
-    lmsghdr_t *msg = lua_newuserdata(L, sizeof(lmsghdr_t));
+    lls_msghdr_t *msg = lua_newuserdata(L, sizeof(lls_msghdr_t));
 
-    *msg = (lmsghdr_t){.name_ref    = LUA_NOREF,
-                       .iov_ref     = LUA_NOREF,
-                       .control_ref = LUA_NOREF,
-                       .flags       = 0,
-                       .name        = NULL,
-                       .iov         = NULL,
-                       .control     = NULL};
+    *msg = (lls_msghdr_t){.name_ref    = LUA_NOREF,
+                          .iov_ref     = LUA_NOREF,
+                          .control_ref = LUA_NOREF,
+                          .flags       = 0,
+                          .name        = NULL,
+                          .iov         = NULL,
+                          .control     = NULL};
     lauxh_setmetatable(L, MSGHDR_MT);
 
     return 1;
