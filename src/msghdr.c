@@ -100,28 +100,20 @@ static int name_lua(lua_State *L)
 {
     lmsghdr_t *msg = lauxh_checkudata(L, 1, MSGHDR_MT);
 
-    if (lua_gettop(L) > 1) {
-        // check argument
-        lua_settop(L, 2);
-        if (!lauxh_isnil(L, 2)) {
-            struct addrinfo *info = lauxh_checkudata(L, 2, ADDRINFO_MT);
-
-            // release current ref
-            if (lauxh_isref(msg->name_ref)) {
-                lauxh_unref(L, msg->name_ref);
-            }
-            msg->name_ref = lauxh_ref(L);
-            msg->name     = info;
-        }
-        // release ref
-        else if (lauxh_isref(msg->name_ref)) {
-            msg->name_ref = lauxh_unref(L, msg->name_ref);
-            msg->name     = NULL;
-        }
-    }
-
     // push ref
     lauxh_pushref(L, msg->name_ref);
+
+    if (lua_gettop(L) > 1) {
+        struct addrinfo *info = lauxh_optudata(L, 2, ADDRINFO_MT, NULL);
+
+        // release current ref
+        msg->name_ref = lauxh_unref(L, msg->name_ref);
+        msg->name     = NULL;
+        if (info) {
+            msg->name_ref = lauxh_refat(L, 2);
+            msg->name     = info;
+        }
+    }
 
     return 1;
 }

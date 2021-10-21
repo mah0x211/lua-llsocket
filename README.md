@@ -192,7 +192,7 @@ get the address-info, or change it to specified address-info. if argument is a n
 - **Parameters**
     - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 - **Returns**
-    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+    - `ai:addrinfo`: previous instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 
 
 ### iov = mh:iov( [iov] )
