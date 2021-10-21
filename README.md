@@ -7,8 +7,8 @@ low-level socket module.
 
 ## Dependencies
 
-- luarocks-fetch-gitrec: <https://github.com/siffiejoe/luarocks-fetch-gitrec>
 - lauxhlib: <https://github.com/mah0x211/lauxhlib>
+- lua-iovec: <https://github.com/mah0x211/lua-iovec>
 
 
 ## Installation
@@ -502,21 +502,6 @@ send a file.
     - `len:number`: the number of bytes sent.
     - `err:string`: error string.
     - `again:bool`: true if len != #bytes, or errno is EAGAIN or EINTR.
-
-**NOTE:** all return values will be nil if closed by peer.
-
-
-### len, err, again = sock:writev( iov [, offset] )
-
-send iovec messages at once.
-
-- **Parameters**
-    - `iov:iovec`: instance of [iovec](https://github.com/mah0x211/lua-iovec).
-    - `offset:numbger`: offset at which the output operation is to be performed.
-- **Returns**
-    - `len:number`: the number of bytes sent.
-    - `err:string`: error string.
-    - `again:bool`: true if all data has not been sent.
 
 **NOTE:** all return values will be nil if closed by peer.
 
