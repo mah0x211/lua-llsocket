@@ -61,7 +61,7 @@ static int addr_lua(lua_State *L)
         struct sockaddr_in *addr = (struct sockaddr_in *)info->ai.ai_addr;
 
         lua_createtable(L, 0, 2);
-        lauxh_pushnum2tbl(L, "port", ntohs(addr->sin_port));
+        lauxh_pushint2tbl(L, "port", ntohs(addr->sin_port));
         lauxh_pushstr2tbl(L, "ip",
                           inet_ntop(info->ai.ai_family,
                                     (const void *)&addr->sin_addr, buf,
@@ -73,7 +73,7 @@ static int addr_lua(lua_State *L)
         struct sockaddr_in6 *addr = (struct sockaddr_in6 *)info->ai.ai_addr;
 
         lua_createtable(L, 0, 2);
-        lauxh_pushnum2tbl(L, "port", ntohs(addr->sin6_port));
+        lauxh_pushint2tbl(L, "port", ntohs(addr->sin6_port));
         lauxh_pushstr2tbl(L, "ip",
                           inet_ntop(info->ai.ai_family,
                                     (const void *)&addr->sin6_addr, buf,

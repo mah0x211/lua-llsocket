@@ -67,9 +67,9 @@ LUALIB_API int luaopen_llsocket(lua_State *L)
     lauxh_pushint2tbl(L, "IOV_MAX", IOV_MAX);
 
     // for shutdown
-    lauxh_pushnum2tbl(L, "SHUT_RD", SHUT_RD);
-    lauxh_pushnum2tbl(L, "SHUT_WR", SHUT_WR);
-    lauxh_pushnum2tbl(L, "SHUT_RDWR", SHUT_RDWR);
+    lauxh_pushint2tbl(L, "SHUT_RD", SHUT_RD);
+    lauxh_pushint2tbl(L, "SHUT_WR", SHUT_WR);
+    lauxh_pushint2tbl(L, "SHUT_RDWR", SHUT_RDWR);
 
     // for send/recv flags
 #define GEN_MSG_FLAGS_DECL
@@ -88,9 +88,9 @@ LUALIB_API int luaopen_llsocket(lua_State *L)
 
     // cmsg_types
 #if defined(SCM_CREDENTIALS)
-    lauxh_pushnum2tbl(L, "SCM_CREDS", SCM_CREDENTIALS);
+    lauxh_pushint2tbl(L, "SCM_CREDS", SCM_CREDENTIALS);
 #elif defined(SCM_CREDS)
-    lauxh_pushnum2tbl(L, "SCM_CREDS", SCM_CREDS);
+    lauxh_pushint2tbl(L, "SCM_CREDS", SCM_CREDS);
 #endif
 
 #define GEN_SCM_TYPES_DECL

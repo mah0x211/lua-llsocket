@@ -651,7 +651,7 @@ static int linger_lua(lua_State *L)
         lua_pushstring(L, strerror(errno));
         return 2;
     } else if (l.l_onoff) {
-        lua_pushnumber(L, l.l_linger);
+        lua_pushinteger(L, l.l_linger);
     } else {
         lua_pushnil(L);
     }
