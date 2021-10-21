@@ -60,6 +60,7 @@
 #define CMSGHDRS_MT "llsocket.cmsghdrs"
 #define MSGHDR_MT   "llsocket.msghdr"
 
+LUALIB_API int luaopen_llsocket(lua_State *L);
 LUALIB_API int luaopen_llsocket_inet(lua_State *L);
 LUALIB_API int luaopen_llsocket_unix(lua_State *L);
 LUALIB_API int luaopen_llsocket_device(lua_State *L);
