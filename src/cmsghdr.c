@@ -120,16 +120,15 @@ static int rights_lua( lua_State *L )
 
     if( argc )
     {
-        int *fds = NULL;
-        int i = 1;
-
-        lauxh_pushbuffer( L, sizeof( int ) * argc );
-        fds = (int*)lua_tostring( L, -1 );
+        char b[sizeof(int)];
+        int *fd = (int*)b;
 
         // check arguments
-        for(; i <= argc; i++ ){
-            fds[i - 1] = lauxh_checkinteger( L, i );
+        for( int i = 1; i <= argc; i++ ){
+            *fd = (int)lauxh_checkinteger( L, i );
+            lua_pushlstring( L, b, sizeof(b) );
         }
+        lua_concat( L, argc );
         lua_replace( L, 1 );
         lua_settop( L, 1 );
         lls_cmsghdr_alloc( L, SOL_SOCKET, SCM_RIGHTS );

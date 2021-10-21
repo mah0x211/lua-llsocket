@@ -38,21 +38,6 @@ get a list of address info of tcp stream socket.
     - `err:string`: error string.
 
 
-### arr, err = inet.getaddrinfo6( host [, port [, socktype [, protocol [, flag, ...]]]] )
-
-get a list of IPv6 address info of tcp stream socket.
-
-- **Parameters**
-    - `host:string`: host string.
-    - `port:string`: either a decimal port number or a service name listed in services(5).
-    - `socktype:number` [SOCK_* types](#sock_-types) constants.
-    - `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
-    - `flags:...`: [AI_* flags](#ai_-flags) constants.
-- **Returns**
-    - `arr:table`: list of [addrinfo](#llsocketaddrinfo-instance-methods).
-    - `err:string`: error string.
-
-
 ## llsocket.unix Module
 
 `llsocket.unix` module has the following functions.
