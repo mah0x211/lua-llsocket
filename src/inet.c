@@ -51,28 +51,19 @@ static int getaddrinfo_lua(lua_State *L)
     }
 
     // create address table
-    rc = 1;
     lua_newtable(L);
     ptr = list;
     while (ptr) {
-        if (lls_addrinfo_alloc(L, ptr)) {
-            lua_rawseti(L, -2, idx++);
-            // check next
-            ptr = ptr->ai_next;
-            continue;
-        }
-
-        // mem-error
-        lua_pushnil(L);
-        lua_pushstring(L, strerror(errno));
-        rc = 2;
-        break;
+        lls_addrinfo_alloc(L, ptr);
+        lua_rawseti(L, -2, idx++);
+        // check next
+        ptr = ptr->ai_next;
     }
 
     // remove address-list
     freeaddrinfo(list);
 
-    return rc;
+    return 1;
 }
 
 LUALIB_API int luaopen_llsocket_inet(lua_State *L)

@@ -29,7 +29,7 @@
 
 static int shift_lua(lua_State *L)
 {
-    cmsghdrs_t *cmsg     = lauxh_checkudata(L, 1, CMSGHDRS_MT);
+    lls_cmsghdrs_t *cmsg = lauxh_checkudata(L, 1, CMSGHDRS_MT);
     struct msghdr msg    = {.msg_name       = NULL,
                             .msg_namelen    = 0,
                             .msg_iov        = NULL,
@@ -63,10 +63,10 @@ static int shift_lua(lua_State *L)
 
 static int push_lua(lua_State *L)
 {
-    cmsghdrs_t *cmsg = lauxh_checkudata(L, 1, CMSGHDRS_MT);
-    cmsghdr_t *item  = lauxh_checkudata(L, 2, CMSGHDR_MT);
-    char *data       = cmsg->data;
-    size_t len       = cmsg->len + CMSG_SPACE(item->len);
+    lls_cmsghdrs_t *cmsg = lauxh_checkudata(L, 1, CMSGHDRS_MT);
+    lls_cmsghdr_t *item  = lauxh_checkudata(L, 2, CMSGHDR_MT);
+    char *data           = cmsg->data;
+    size_t len           = cmsg->len + CMSG_SPACE(item->len);
 
     if (len > cmsg->bytes) {
         data = lua_newuserdata(L, len);
@@ -100,7 +100,7 @@ static int tostring_lua(lua_State *L)
 
 static int gc_lua(lua_State *L)
 {
-    cmsghdrs_t *cmsg = lauxh_checkudata(L, 1, CMSGHDRS_MT);
+    lls_cmsghdrs_t *cmsg = lauxh_checkudata(L, 1, CMSGHDRS_MT);
 
     if (lauxh_isref(cmsg->ref)) {
         lauxh_unref(L, cmsg->ref);
@@ -111,7 +111,7 @@ static int gc_lua(lua_State *L)
 
 static int new_lua(lua_State *L)
 {
-    cmsghdrs_t *cmsg = lua_newuserdata(L, sizeof(cmsghdrs_t));
+    lls_cmsghdrs_t *cmsg = lua_newuserdata(L, sizeof(lls_cmsghdrs_t));
 
     cmsg->ref   = LUA_NOREF;
     cmsg->data  = NULL;

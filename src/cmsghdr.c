@@ -29,7 +29,7 @@
 
 static int data_lua(lua_State *L)
 {
-    cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
+    lls_cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
 
     lauxh_pushref(L, cmsg->ref);
     if (cmsg->level == SOL_SOCKET) {
@@ -51,7 +51,7 @@ static int data_lua(lua_State *L)
 
 static int type_lua(lua_State *L)
 {
-    cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
+    lls_cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
 
     lua_pushinteger(L, cmsg->type);
 
@@ -60,7 +60,7 @@ static int type_lua(lua_State *L)
 
 static int level_lua(lua_State *L)
 {
-    cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
+    lls_cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
 
     lua_pushinteger(L, cmsg->level);
 
@@ -69,7 +69,7 @@ static int level_lua(lua_State *L)
 
 static int len_lua(lua_State *L)
 {
-    cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
+    lls_cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
 
     lua_pushinteger(L, cmsg->len);
 
@@ -84,7 +84,7 @@ static int tostring_lua(lua_State *L)
 
 static int gc_lua(lua_State *L)
 {
-    cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
+    lls_cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
 
     if (lauxh_isref(cmsg->ref)) {
         lauxh_unref(L, cmsg->ref);

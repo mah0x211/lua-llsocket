@@ -56,9 +56,8 @@ static int getaddrinfo_lua(lua_State *L)
         memcpy((void *)&addr.sun_path, (void *)path, len);
         addr.sun_path[len] = 0;
         tmpl.ai_addr       = (struct sockaddr *)&addr;
-        if (lls_addrinfo_alloc(L, &tmpl)) {
-            return 1;
-        }
+        lls_addrinfo_alloc(L, &tmpl);
+        return 1;
     }
 
     // got error

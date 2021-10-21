@@ -30,12 +30,12 @@
 
 static int getnameinfo_lua(lua_State *L)
 {
-    struct addrinfo *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
-    int flag              = lauxh_optflags(L, 2);
+    lls_addrinfo_t *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
+    int flag             = lauxh_optflags(L, 2);
     char host[NI_MAXHOST];
     char serv[NI_MAXSERV];
-    int rc = getnameinfo(info->ai_addr, info->ai_addrlen, host, NI_MAXHOST,
-                         serv, NI_MAXSERV, flag);
+    int rc = getnameinfo(info->ai.ai_addr, info->ai.ai_addrlen, host,
+                         NI_MAXHOST, serv, NI_MAXSERV, flag);
 
     if (rc == 0) {
         lua_createtable(L, 0, 2);
@@ -53,36 +53,36 @@ static int getnameinfo_lua(lua_State *L)
 
 static int addr_lua(lua_State *L)
 {
-    struct addrinfo *info      = lauxh_checkudata(L, 1, ADDRINFO_MT);
+    lls_addrinfo_t *info       = lauxh_checkudata(L, 1, ADDRINFO_MT);
     char buf[INET6_ADDRSTRLEN] = {0};
 
-    switch (info->ai_family) {
+    switch (info->ai.ai_family) {
     case AF_INET: {
-        struct sockaddr_in *addr = (struct sockaddr_in *)info->ai_addr;
+        struct sockaddr_in *addr = (struct sockaddr_in *)info->ai.ai_addr;
 
         lua_createtable(L, 0, 2);
         lauxh_pushnum2tbl(L, "port", ntohs(addr->sin_port));
         lauxh_pushstr2tbl(L, "ip",
-                          inet_ntop(info->ai_family,
+                          inet_ntop(info->ai.ai_family,
                                     (const void *)&addr->sin_addr, buf,
                                     INET6_ADDRSTRLEN));
         return 1;
     }
 
     case AF_INET6: {
-        struct sockaddr_in6 *addr = (struct sockaddr_in6 *)info->ai_addr;
+        struct sockaddr_in6 *addr = (struct sockaddr_in6 *)info->ai.ai_addr;
 
         lua_createtable(L, 0, 2);
         lauxh_pushnum2tbl(L, "port", ntohs(addr->sin6_port));
         lauxh_pushstr2tbl(L, "ip",
-                          inet_ntop(info->ai_family,
+                          inet_ntop(info->ai.ai_family,
                                     (const void *)&addr->sin6_addr, buf,
                                     INET6_ADDRSTRLEN));
         return 1;
     }
 
     case AF_UNIX: {
-        struct sockaddr_un *addr = (struct sockaddr_un *)info->ai_addr;
+        struct sockaddr_un *addr = (struct sockaddr_un *)info->ai.ai_addr;
 
         lua_createtable(L, 0, 1);
         lauxh_pushstr2tbl(L, "path", addr->sun_path);
@@ -97,10 +97,10 @@ static int addr_lua(lua_State *L)
 
 static int canonname_lua(lua_State *L)
 {
-    struct addrinfo *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
+    lls_addrinfo_t *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
 
-    if (info->ai_canonname) {
-        lua_pushstring(L, info->ai_canonname);
+    if (info->ai.ai_canonname) {
+        lua_pushstring(L, info->ai.ai_canonname);
         return 1;
     }
 
@@ -109,27 +109,27 @@ static int canonname_lua(lua_State *L)
 
 static int protocol_lua(lua_State *L)
 {
-    struct addrinfo *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
+    lls_addrinfo_t *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
 
-    lua_pushinteger(L, info->ai_protocol);
+    lua_pushinteger(L, info->ai.ai_protocol);
 
     return 1;
 }
 
 static int socktype_lua(lua_State *L)
 {
-    struct addrinfo *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
+    lls_addrinfo_t *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
 
-    lua_pushinteger(L, info->ai_socktype);
+    lua_pushinteger(L, info->ai.ai_socktype);
 
     return 1;
 }
 
 static int family_lua(lua_State *L)
 {
-    struct addrinfo *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
+    lls_addrinfo_t *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
 
-    lua_pushinteger(L, info->ai_family);
+    lua_pushinteger(L, info->ai.ai_family);
 
     return 1;
 }
@@ -142,12 +142,10 @@ static int tostring_lua(lua_State *L)
 
 static int gc_lua(lua_State *L)
 {
-    struct addrinfo *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
+    lls_addrinfo_t *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
 
-    if (info->ai_canonname) {
-        free((void *)info->ai_canonname);
-    }
-    free((void *)info->ai_addr);
+    info->ai_addr_ref      = lauxh_unref(L, info->ai_addr_ref);
+    info->ai_canonname_ref = lauxh_unref(L, info->ai_canonname_ref);
 
     return 0;
 }
