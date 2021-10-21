@@ -1323,15 +1323,6 @@ static int sendfile_lua(lua_State *L)
 
 #endif
 
-static int writev_lua(lua_State *L)
-{
-    lls_socket_t *s  = lauxh_checkudata(L, 1, SOCKET_MT);
-    lua_iovec_t *iov = lauxh_checkudata(L, 2, IOVEC_MT);
-    uint64_t offset  = lauxh_optuint64(L, 3, 0);
-
-    return lua_iovec_writev(L, s->fd, iov, offset, 0);
-}
-
 static int recv_lua(lua_State *L)
 {
     lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
@@ -1985,7 +1976,6 @@ LUALIB_API int luaopen_llsocket_socket(lua_State *L)
             {"sendfd",          sendfd_lua         },
             {"sendmsg",         sendmsg_lua        },
             {"sendfile",        sendfile_lua       },
-            {"writev",          writev_lua         },
             {"recv",            recv_lua           },
             {"recvfrom",        recvfrom_lua       },
             {"recvfd",          recvfd_lua         },
