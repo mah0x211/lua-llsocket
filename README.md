@@ -344,12 +344,10 @@ get a protocol type.
     - `pt:number`: [IPPROTO_* type](#ipproto_-types) constants.
 
 
-### err = sock:bind( [ai] )
+### err = sock:bind()
 
 bind the socket to an address.
 
-- **Parameters**
-    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 - **Returns**
     - `err:string`: error string.
 
