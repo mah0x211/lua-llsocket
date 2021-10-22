@@ -741,7 +741,7 @@ static inline int shutdownfd(lua_State *L, int fd, int how)
 static int shutdown_lua(lua_State *L)
 {
     lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
-    int how         = (int)lauxh_checkinteger(L, 2);
+    int how         = (int)lauxh_optinteger(L, 2, SHUT_RDWR);
 
     return shutdownfd(L, s->fd, how);
 }
@@ -1887,7 +1887,7 @@ FAILED:
 static int shutdownfd_lua(lua_State *L)
 {
     int fd  = (int)lauxh_checkinteger(L, 1);
-    int how = (int)lauxh_checkinteger(L, 2);
+    int how = (int)lauxh_optinteger(L, 2, SHUT_RDWR);
 
     return shutdownfd(L, fd, how);
 }
