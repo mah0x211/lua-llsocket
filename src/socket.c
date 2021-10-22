@@ -1540,13 +1540,6 @@ static int connect_lua(lua_State *L)
     struct sockaddr *addr = (struct sockaddr *)&s->addr;
     socklen_t addrlen     = s->addrlen;
 
-    // check argument
-    if (!lua_isnoneornil(L, 2)) {
-        lls_addrinfo_t *info = lauxh_checkudata(L, 2, ADDRINFO_MT);
-        addr                 = info->ai.ai_addr;
-        addrlen              = info->ai.ai_addrlen;
-    }
-
     if (connect(s->fd, addr, addrlen) == 0) {
         return 0;
     }

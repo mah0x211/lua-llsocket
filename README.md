@@ -352,12 +352,10 @@ bind the socket to an address.
     - `err:string`: error string.
 
 
-### err, again = sock:connect( [ai] )
+### err, again = sock:connect()
 
 initiate a new connection.
 
-- **Parameters**
-    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 - **Returns**
     - `err:string`: error string.
     - `again:boolean`: true if errno is EINPROGRESS.
