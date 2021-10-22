@@ -746,19 +746,14 @@ static int shutdown_lua(lua_State *L)
     return shutdownfd(L, s->fd, how);
 }
 
-static inline int closefd(lua_State *L, int fd, int how)
+static inline int closefd(lua_State *L, int fd, int how, int with_shutdown)
 {
     int rc = 0;
 
-    switch (how) {
-    case SHUT_RD:
-    case SHUT_WR:
-    case SHUT_RDWR:
+    if (with_shutdown) {
         rc = shutdown(fd, how);
-
-    default:
-        rc += close(fd);
     }
+    rc += close(fd);
 
     // got error
     if (rc) {
@@ -777,7 +772,7 @@ static int close_lua(lua_State *L)
 
     if (fd != -1) {
         s->fd = -1;
-        return closefd(L, fd, how);
+        return closefd(L, fd, how, !lua_isnoneornil(L, 2));
     }
 
     return 0;
@@ -1897,7 +1892,7 @@ static int closefd_lua(lua_State *L)
     int fd  = (int)lauxh_checkinteger(L, 1);
     int how = (int)lauxh_optinteger(L, 2, -1);
 
-    return closefd(L, fd, how);
+    return closefd(L, fd, how, !lua_isnoneornil(L, 2));
 }
 
 LUALIB_API int luaopen_llsocket_socket(lua_State *L)
