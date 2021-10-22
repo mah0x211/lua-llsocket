@@ -34,6 +34,7 @@ static const char *const SA_STORAGE_BUF[sizeof(struct sockaddr_storage)] = {0};
  *((struct sockaddr_storage *)SA_STORAGE_BUF)
 
 typedef struct {
+    int is_bind;
     int fd;
     int family;
     int socktype;
@@ -788,8 +789,22 @@ static int listen_lua(lua_State *L)
     if (backlog < 1 || backlog > INT_MAX) {
         return luaL_error(L, "backlog range must be 1 to %d", INT_MAX);
     }
+
+    // bind socket before calling listen
+    if (!s->is_bind) {
+        struct sockaddr *addr = (struct sockaddr *)&s->addr;
+        socklen_t addrlen     = s->addrlen;
+
+        if (bind(s->fd, addr, addrlen) != 0) {
+            // got error
+            lua_pushstring(L, strerror(errno));
+            return 1;
+        }
+        s->is_bind = 1;
+    }
+
     // listen
-    else if (listen(s->fd, (int)backlog) != 0) {
+    if (listen(s->fd, (int)backlog) != 0) {
         // got error
         lua_pushstring(L, strerror(errno));
         return 1;
@@ -1624,6 +1639,7 @@ static int bind_lua(lua_State *L)
     socklen_t addrlen     = s->addrlen;
 
     if (bind(s->fd, addr, addrlen) == 0) {
+        s->is_bind = 1;
         return 0;
     }
 
