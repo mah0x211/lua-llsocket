@@ -273,7 +273,7 @@ shut down part of a full-duplex connection.
 
 - **Parameters**
     - `fd:number`: socket file descriptor.
-    - `flag:number`: [SHUT_* flag](#shut_-flags) constants.
+    - `flag:number`: [SHUT_* flag](#shut_-flags) constants. (default `SHUT_RDWR`)
 - **Returns**
     - `err:string`: error string.
 
@@ -370,7 +370,7 @@ initiate a new connection.
 shut down part of a full-duplex connection.
 
 - **Parameters**
-    - `flag:number`: [SHUT_* flag](#shut_-flags) constants.
+    - `flag:number`: [SHUT_* flag](#shut_-flags) constants. (default `SHUT_RDWR`)
 - **Returns**
     - `err:string`: error string.
 
