@@ -536,7 +536,7 @@ receive a message.
 **NOTE:** all return values will be nil if closed by peer.
 
 
-### msg, ai, err, again = sock:recvfrom( [bufsize [, flag, ...]] )
+### msg, err, again, ai = sock:recvfrom( [bufsize [, flag, ...]] )
 
 receive message and address info.
 
@@ -545,9 +545,9 @@ receive message and address info.
     - `flag:...`: [MSG_* flags](#msg_-flags) constants.
 - **Returns**
     - `msg:string`: received message string.
-    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
     - `err:string`: error string.
-    - `again:bool`: true if errno is EAGAIN, EWOULDBLOCK or EINTR.
+    - `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
+    - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 
 **NOTE:** all return values will be nil if closed by peer.
 

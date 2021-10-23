@@ -1395,16 +1395,15 @@ static int recvfrom_lua(lua_State *L)
     // got error
     case -1:
         lua_pushnil(L);
-        lua_pushnil(L);
         // again
         if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
             lua_pushnil(L);
             lua_pushboolean(L, 1);
-            return 4;
+            return 3;
         }
         // got error
         lua_pushstring(L, strerror(errno));
-        return 3;
+        return 2;
 
     case 0:
         // close by peer
@@ -1426,9 +1425,11 @@ static int recvfrom_lua(lua_State *L)
                                     .ai_canonname = NULL,
                                     .ai_next      = NULL};
 
+            lua_pushnil(L);
+            lua_pushnil(L);
             // push llsocket.addr udata
             lls_addrinfo_alloc(L, &wrap);
-            return 2;
+            return 4;
         }
         // no addrinfo
         return 1;
