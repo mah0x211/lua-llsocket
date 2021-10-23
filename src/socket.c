@@ -730,13 +730,15 @@ static int getpeername_lua(lua_State *L)
 static inline int shutdownfd(lua_State *L, int fd, int how)
 {
     if (shutdown(fd, how) == 0) {
-        return 0;
+        lua_pushboolean(L, 1);
+        return 1;
     }
 
     // got error
+    lua_pushboolean(L, 0);
     lua_pushstring(L, strerror(errno));
 
-    return 1;
+    return 2;
 }
 
 static int shutdown_lua(lua_State *L)
@@ -756,13 +758,16 @@ static inline int closefd(lua_State *L, int fd, int how, int with_shutdown)
     }
     rc += close(fd);
 
-    // got error
-    if (rc) {
-        lua_pushstring(L, strerror(errno));
+    if (!rc) {
+        lua_pushboolean(L, 1);
         return 1;
     }
 
-    return 0;
+    // got error
+    lua_pushboolean(L, 0);
+    lua_pushstring(L, strerror(errno));
+
+    return 2;
 }
 
 static int close_lua(lua_State *L)
@@ -771,12 +776,13 @@ static int close_lua(lua_State *L)
     int how         = (int)lauxh_optinteger(L, 2, -1);
     int fd          = s->fd;
 
-    if (fd != -1) {
-        s->fd = -1;
-        return closefd(L, fd, how, !lua_isnoneornil(L, 2));
+    if (fd == -1) {
+        lua_pushboolean(L, 1);
+        return 1;
     }
+    s->fd = -1;
 
-    return 0;
+    return closefd(L, fd, how, !lua_isnoneornil(L, 2));
 }
 
 static int listen_lua(lua_State *L)
@@ -797,20 +803,24 @@ static int listen_lua(lua_State *L)
 
         if (bind(s->fd, addr, addrlen) != 0) {
             // got error
+            lua_pushboolean(L, 0);
             lua_pushstring(L, strerror(errno));
-            return 1;
+            return 2;
         }
         s->is_bind = 1;
     }
 
     // listen
-    if (listen(s->fd, (int)backlog) != 0) {
-        // got error
-        lua_pushstring(L, strerror(errno));
+    if (listen(s->fd, (int)backlog) == 0) {
+        lua_pushboolean(L, 1);
         return 1;
     }
 
-    return 0;
+    // got error
+    lua_pushboolean(L, 0);
+    lua_pushstring(L, strerror(errno));
+
+    return 2;
 }
 
 static inline int acceptfd(int sfd, struct sockaddr *addr, socklen_t *addrlen)
@@ -1385,16 +1395,15 @@ static int recvfrom_lua(lua_State *L)
     // got error
     case -1:
         lua_pushnil(L);
-        lua_pushnil(L);
         // again
         if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
             lua_pushnil(L);
             lua_pushboolean(L, 1);
-            return 4;
+            return 3;
         }
         // got error
         lua_pushstring(L, strerror(errno));
-        return 3;
+        return 2;
 
     case 0:
         // close by peer
@@ -1416,9 +1425,11 @@ static int recvfrom_lua(lua_State *L)
                                     .ai_canonname = NULL,
                                     .ai_next      = NULL};
 
+            lua_pushnil(L);
+            lua_pushnil(L);
             // push llsocket.addr udata
             lls_addrinfo_alloc(L, &wrap);
-            return 2;
+            return 4;
         }
         // no addrinfo
         return 1;
@@ -1542,19 +1553,22 @@ static int connect_lua(lua_State *L)
     socklen_t addrlen     = s->addrlen;
 
     if (connect(s->fd, addr, addrlen) == 0) {
-        return 0;
+        lua_pushboolean(L, 1);
+        return 1;
     }
+    lua_pushboolean(L, 0);
+
     // nonblocking connect
-    else if (errno == EINPROGRESS) {
+    if (errno == EINPROGRESS) {
         lua_pushnil(L);
         lua_pushboolean(L, 1);
-        return 2;
+        return 3;
     }
 
     // got error
     lua_pushstring(L, strerror(errno));
 
-    return 1;
+    return 2;
 }
 
 static inline int select_lua(lua_State *L, int receivable, int sendable)
@@ -1634,13 +1648,15 @@ static int bind_lua(lua_State *L)
 
     if (bind(s->fd, addr, addrlen) == 0) {
         s->is_bind = 1;
-        return 0;
+        lua_pushboolean(L, 1);
+        return 1;
     }
 
     // got error
+    lua_pushboolean(L, 0);
     lua_pushstring(L, strerror(errno));
 
-    return 1;
+    return 2;
 }
 
 static int protocol_lua(lua_State *L)
