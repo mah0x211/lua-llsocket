@@ -279,7 +279,7 @@ shut down part of a full-duplex connection.
     - `err:string`: error string.
 
 
-### err = socket.close( fd, [flag] )
+### ok, err = socket.close( fd, [flag] )
 
 close a file descriptor.
 
@@ -287,6 +287,7 @@ close a file descriptor.
     - `fd:number`: socket file descriptor.
     - `flag:number`: [SHUT_* flag](#shut_-flags) constants.
 - **Returns**
+    - `ok:boolean`: `true` on success.
     - `err:string`: error string.
 
 
@@ -373,13 +374,14 @@ shut down part of a full-duplex connection.
     - `err:string`: error string.
 
 
-### err = sock:close( [flag] )
+### ok, err = sock:close( [flag] )
 
 close a file descriptor.
 
 - **Parameters**
     - `flag:number`: [SHUT_* flag](#shut_-flags) constants.
 - **Returns**
+    - `ok:boolean`: `true` on success.
     - `err:string`: error string.
 
 

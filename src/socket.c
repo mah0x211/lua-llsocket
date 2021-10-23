@@ -758,13 +758,16 @@ static inline int closefd(lua_State *L, int fd, int how, int with_shutdown)
     }
     rc += close(fd);
 
-    // got error
-    if (rc) {
-        lua_pushstring(L, strerror(errno));
+    if (!rc) {
+        lua_pushboolean(L, 1);
         return 1;
     }
 
-    return 0;
+    // got error
+    lua_pushboolean(L, 0);
+    lua_pushstring(L, strerror(errno));
+
+    return 2;
 }
 
 static int close_lua(lua_State *L)
@@ -773,12 +776,13 @@ static int close_lua(lua_State *L)
     int how         = (int)lauxh_optinteger(L, 2, -1);
     int fd          = s->fd;
 
-    if (fd != -1) {
-        s->fd = -1;
-        return closefd(L, fd, how, !lua_isnoneornil(L, 2));
+    if (fd == -1) {
+        lua_pushboolean(L, 1);
+        return 1;
     }
+    s->fd = -1;
 
-    return 0;
+    return closefd(L, fd, how, !lua_isnoneornil(L, 2));
 }
 
 static int listen_lua(lua_State *L)
