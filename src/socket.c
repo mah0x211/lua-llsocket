@@ -803,20 +803,24 @@ static int listen_lua(lua_State *L)
 
         if (bind(s->fd, addr, addrlen) != 0) {
             // got error
+            lua_pushboolean(L, 0);
             lua_pushstring(L, strerror(errno));
-            return 1;
+            return 2;
         }
         s->is_bind = 1;
     }
 
     // listen
-    if (listen(s->fd, (int)backlog) != 0) {
-        // got error
-        lua_pushstring(L, strerror(errno));
+    if (listen(s->fd, (int)backlog) == 0) {
+        lua_pushboolean(L, 1);
         return 1;
     }
 
-    return 0;
+    // got error
+    lua_pushboolean(L, 0);
+    lua_pushstring(L, strerror(errno));
+
+    return 2;
 }
 
 static inline int acceptfd(int sfd, struct sockaddr *addr, socklen_t *addrlen)

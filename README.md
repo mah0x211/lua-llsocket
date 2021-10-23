@@ -385,13 +385,14 @@ close a file descriptor.
     - `err:string`: error string.
 
 
-### err = sock:listen( [backlog] )
+### ok, err = sock:listen( [backlog] )
 
 listen for connections.
 
 - **Parameters**
     - `backlog:number`: the maximum length for the queue of pending connections.
 - **Returns**
+    - `ok:boolean`: `true` on success.
     - `err:string`: error string.
 
 
