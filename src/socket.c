@@ -730,13 +730,15 @@ static int getpeername_lua(lua_State *L)
 static inline int shutdownfd(lua_State *L, int fd, int how)
 {
     if (shutdown(fd, how) == 0) {
-        return 0;
+        lua_pushboolean(L, 1);
+        return 1;
     }
 
     // got error
+    lua_pushboolean(L, 0);
     lua_pushstring(L, strerror(errno));
 
-    return 1;
+    return 2;
 }
 
 static int shutdown_lua(lua_State *L)

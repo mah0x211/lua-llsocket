@@ -267,7 +267,7 @@ create an instance of socket
     - `err:string`: error string.
 
 
-### err = socket.shutdown( fd, [flag] )
+### ok, err = socket.shutdown( fd, [flag] )
 
 shut down part of a full-duplex connection.
 
@@ -275,6 +275,7 @@ shut down part of a full-duplex connection.
     - `fd:number`: socket file descriptor.
     - `flag:number`: [SHUT_* flag](#shut_-flags) constants. (default `SHUT_RDWR`)
 - **Returns**
+    - `ok:boolean`: `true` on success.
     - `err:string`: error string.
 
 
@@ -361,13 +362,14 @@ initiate a new connection.
     - `again:boolean`: true if errno is EINPROGRESS.
 
 
-### err = sock:shutdown( [flag] )
+### ok, err = sock:shutdown( [flag] )
 
 shut down part of a full-duplex connection.
 
 - **Parameters**
     - `flag:number`: [SHUT_* flag](#shut_-flags) constants. (default `SHUT_RDWR`)
 - **Returns**
+    - `ok:boolean`: `true` on success.
     - `err:string`: error string.
 
 
