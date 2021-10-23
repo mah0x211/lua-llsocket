@@ -291,7 +291,6 @@ close a file descriptor.
     - `err:string`: error string.
 
 
-
 ## llsocket.socket Instance Methods
 
 
@@ -354,11 +353,12 @@ bind the socket to an address.
     - `err:string`: error string.
 
 
-### err, again = sock:connect()
+### ok, err, again = sock:connect()
 
 initiate a new connection.
 
 - **Returns**
+    - `ok:boolean`: `true` on success.
     - `err:string`: error string.
     - `again:boolean`: true if errno is EINPROGRESS.
 

@@ -1548,19 +1548,22 @@ static int connect_lua(lua_State *L)
     socklen_t addrlen     = s->addrlen;
 
     if (connect(s->fd, addr, addrlen) == 0) {
-        return 0;
+        lua_pushboolean(L, 1);
+        return 1;
     }
+    lua_pushboolean(L, 0);
+
     // nonblocking connect
-    else if (errno == EINPROGRESS) {
+    if (errno == EINPROGRESS) {
         lua_pushnil(L);
         lua_pushboolean(L, 1);
-        return 2;
+        return 3;
     }
 
     // got error
     lua_pushstring(L, strerror(errno));
 
-    return 1;
+    return 2;
 }
 
 static inline int select_lua(lua_State *L, int receivable, int sendable)
