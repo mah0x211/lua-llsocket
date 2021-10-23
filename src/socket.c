@@ -787,7 +787,7 @@ static int listen_lua(lua_State *L)
 
     // check args
     if (backlog < 1 || backlog > INT_MAX) {
-        return luaL_error(L, "backlog range must be 1 to %d", INT_MAX);
+        return lauxh_argerror(L, 2, "range must be 1 to %d", INT_MAX);
     }
 
     // bind socket before calling listen
