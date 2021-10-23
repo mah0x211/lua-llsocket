@@ -345,11 +345,12 @@ get a protocol type.
     - `pt:number`: [IPPROTO_* type](#ipproto_-types) constants.
 
 
-### err = sock:bind()
+### ok, err = sock:bind()
 
 bind the socket to an address.
 
 - **Returns**
+    - `ok:boolean`: `true` on success.
     - `err:string`: error string.
 
 

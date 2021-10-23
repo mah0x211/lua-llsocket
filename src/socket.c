@@ -1647,13 +1647,15 @@ static int bind_lua(lua_State *L)
 
     if (bind(s->fd, addr, addrlen) == 0) {
         s->is_bind = 1;
-        return 0;
+        lua_pushboolean(L, 1);
+        return 1;
     }
 
     // got error
+    lua_pushboolean(L, 0);
     lua_pushstring(L, strerror(errno));
 
-    return 1;
+    return 2;
 }
 
 static int protocol_lua(lua_State *L)
