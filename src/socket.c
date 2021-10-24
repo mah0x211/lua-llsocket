@@ -213,8 +213,9 @@ static inline int mcastgroup_lua(lua_State *L, lls_socket_t *s, int family,
 
     // check arguments
     if (rc != 0) {
+        lua_pushboolean(L, 0);
         lua_pushstring(L, gai_strerror(rc));
-        return 1;
+        return 2;
     }
 
     gr.gr_interface = 0;
@@ -222,13 +223,15 @@ static inline int mcastgroup_lua(lua_State *L, lls_socket_t *s, int family,
     if ((!ifname || (gr.gr_interface = if_nametoindex(ifname)) != 0) &&
         setsockopt(s->fd, proto, opt, (void *)&gr, sizeof(struct group_req)) ==
             0) {
-        return 0;
+        lua_pushboolean(L, 1);
+        return 1;
     }
 
     // got error
+    lua_pushboolean(L, 0);
     lua_pushstring(L, strerror(errno));
 
-    return 1;
+    return 2;
 }
 
 static inline int mcast4group_lua(lua_State *L, lls_socket_t *s, int opt)
@@ -238,8 +241,9 @@ static inline int mcast4group_lua(lua_State *L, lls_socket_t *s, int opt)
     const char *ifname = NULL;
 
     if (rc != 0) {
+        lua_pushboolean(L, 0);
         lua_pushstring(L, gai_strerror(rc));
-        return 1;
+        return 2;
     }
 
     ifname = lauxh_optstring(L, 3, NULL);
@@ -259,14 +263,16 @@ static inline int mcast4group_lua(lua_State *L, lls_socket_t *s, int opt)
 
     if (setsockopt(s->fd, IPPROTO_IP, opt, (void *)&mr,
                    sizeof(struct ip_mreq)) == 0) {
-        return 0;
+        lua_pushboolean(L, 1);
+        return 1;
     }
 
 FAILED:
     // got error
+    lua_pushboolean(L, 0);
     lua_pushstring(L, strerror(errno));
 
-    return 1;
+    return 2;
 }
 
 static inline int mcast6group_lua(lua_State *L, lls_socket_t *s, int opt)
@@ -277,21 +283,24 @@ static inline int mcast6group_lua(lua_State *L, lls_socket_t *s, int opt)
     const char *ifname = NULL;
 
     if (rc != 0) {
+        lua_pushboolean(L, 0);
         lua_pushstring(L, gai_strerror(rc));
-        return 1;
+        return 2;
     }
 
     ifname = lauxh_optstring(L, 3, NULL);
     if ((!ifname || (mr.ipv6mr_interface = if_nametoindex(ifname)) != 0) &&
         setsockopt(s->fd, IPPROTO_IPV6, opt, (void *)&mr,
                    sizeof(struct ipv6_mreq)) == 0) {
-        return 0;
+        lua_pushboolean(L, 1);
+        return 1;
     }
 
     // got error
+    lua_pushboolean(L, 0);
     lua_pushstring(L, strerror(errno));
 
-    return 1;
+    return 2;
 }
 
 static int mcastjoin_lua(lua_State *L)
@@ -311,8 +320,9 @@ static int mcastjoin_lua(lua_State *L)
         }
 
     default:
+        lua_pushboolean(L, 0);
         lua_pushstring(L, strerror(EOPNOTSUPP));
-        return 1;
+        return 2;
     }
 }
 
@@ -333,8 +343,9 @@ static int mcastleave_lua(lua_State *L)
         }
 
     default:
+        lua_pushboolean(L, 0);
         lua_pushstring(L, strerror(EOPNOTSUPP));
-        return 1;
+        return 2;
     }
 }
 
@@ -347,14 +358,16 @@ static inline int mcast4srcgroup_lua(lua_State *L, lls_socket_t *s, int opt)
 
     // check arguments
     if (rc != 0) {
+        lua_pushboolean(L, 0);
         lua_pushstring(L, gai_strerror(rc));
-        return 1;
+        return 2;
     }
 
     rc = lls_check4inaddr(L, 3, s->socktype, &mr.imr_sourceaddr);
     if (rc != 0) {
+        lua_pushboolean(L, 0);
         lua_pushstring(L, gai_strerror(rc));
-        return 1;
+        return 2;
     }
 
     ifname = lauxh_optstring(L, 4, NULL);
@@ -374,14 +387,16 @@ static inline int mcast4srcgroup_lua(lua_State *L, lls_socket_t *s, int opt)
 
     if (setsockopt(s->fd, IPPROTO_IP, opt, (void *)&mr,
                    sizeof(struct ip_mreq_source)) == 0) {
-        return 0;
+        lua_pushboolean(L, 1);
+        return 1;
     }
 
 FAILED:
     // got error
+    lua_pushboolean(L, 0);
     lua_pushstring(L, strerror(errno));
 
-    return 1;
+    return 2;
 }
 
 static int mcastjoinsrc_lua(lua_State *L)
@@ -402,8 +417,9 @@ static int mcastjoinsrc_lua(lua_State *L)
         }
 
     default:
+        lua_pushboolean(L, 0);
         lua_pushstring(L, strerror(EOPNOTSUPP));
-        return 1;
+        return 2;
     }
 }
 
@@ -425,8 +441,9 @@ static int mcastleavesrc_lua(lua_State *L)
         }
 
     default:
+        lua_pushboolean(L, 0);
         lua_pushstring(L, strerror(EOPNOTSUPP));
-        return 1;
+        return 2;
     }
 }
 
@@ -448,8 +465,9 @@ static int mcastblocksrc_lua(lua_State *L)
         }
 
     default:
+        lua_pushboolean(L, 0);
         lua_pushstring(L, strerror(EOPNOTSUPP));
-        return 1;
+        return 2;
     }
 }
 
@@ -471,8 +489,9 @@ static int mcastunblocksrc_lua(lua_State *L)
         }
 
     default:
+        lua_pushboolean(L, 0);
         lua_pushstring(L, strerror(EOPNOTSUPP));
-        return 1;
+        return 2;
     }
 }
 
