@@ -595,7 +595,7 @@ send a file.
 **NOTE:** all return values will be nil if closed by peer.
 
 
-### sec, err = sock:recvable( [msec [, exception]] )
+### ok, err, timeout = sock:recvable( [msec [, exception]] )
 
 wait until the socket can be receivable within specified timeout milliseconds.
 
@@ -1079,7 +1079,7 @@ get the `IP_MULTICAST_IF` value, or change that value to an argument value.
 - `err:string`: error string.
 
 
-### err = sock:mcastjoin( mcaddr [, ifname] )
+### ok, err = sock:mcastjoin( mcaddr [, ifname] )
 
 set the `IP_ADD_MEMBERSHIP` or `IPV6_JOIN_GROUP` (if IPv6) value.
 
@@ -1090,10 +1090,11 @@ set the `IP_ADD_MEMBERSHIP` or `IPV6_JOIN_GROUP` (if IPv6) value.
 
 **Returns**
 
+- `ok:boolean`: `true` on success.
 - `err:string`: error string.
 
 
-### err = sock:mcastleave( mcaddr [, ifname] )
+### ok, err = sock:mcastleave( mcaddr [, ifname] )
 
 set the `IP_DROP_MEMBERSHIP` or `IPV6_LEAVE_GROUP` (if IPv6) value.
 
@@ -1104,10 +1105,11 @@ set the `IP_DROP_MEMBERSHIP` or `IPV6_LEAVE_GROUP` (if IPv6) value.
 
 **Returns**
 
+- `ok:boolean`: `true` on success.
 - `err:string`: error string.
 
 
-### err = sock:mcastjoinsrc( mcaddr, srcaddr [, ifname] )
+### ok, err = sock:mcastjoinsrc( mcaddr, srcaddr [, ifname] )
 
 set the `IP_ADD_SOURCE_MEMBERSHIP` or `MCAST_JOIN_SOURCE_GROUP` (if IPv6) value.
 
@@ -1119,10 +1121,11 @@ set the `IP_ADD_SOURCE_MEMBERSHIP` or `MCAST_JOIN_SOURCE_GROUP` (if IPv6) value.
 
 **Returns**
 
+- `ok:boolean`: `true` on success.
 - `err:string`: error string.
 
 
-### err = sock:mcastleavesrc( mcaddr, srcaddr [, ifname] )
+### ok, err = sock:mcastleavesrc( mcaddr, srcaddr [, ifname] )
 
 set the `IP_DROP_SOURCE_MEMBERSHIP` or `MCAST_LEAVE_SOURCE_GROUP` (if IPv6) value.
 
@@ -1134,10 +1137,11 @@ set the `IP_DROP_SOURCE_MEMBERSHIP` or `MCAST_LEAVE_SOURCE_GROUP` (if IPv6) valu
 
 **Returns**
 
+- `ok:boolean`: `true` on success.
 - `err:string`: error string.
 
 
-### err = sock:mcastblocksrc( mcaddr, srcaddr [, ifname] )
+### ok, err = sock:mcastblocksrc( mcaddr, srcaddr [, ifname] )
 
 set the `IP_BLOCK_SOURCE` or `MCAST_BLOCK_SOURCE` (if IPv6) value.
 
@@ -1149,10 +1153,11 @@ set the `IP_BLOCK_SOURCE` or `MCAST_BLOCK_SOURCE` (if IPv6) value.
 
 **Returns**
 
+- `ok:boolean`: `true` on success.
 - `err:string`: error string.
 
 
-### err = sock:mcastunblocksrc( mcaddr, srcaddr [, ifname] )
+### ok, err = sock:mcastunblocksrc( mcaddr, srcaddr [, ifname] )
 
 set the `IP_UNBLOCK_SOURCE` or `MCAST_UNBLOCK_SOURCE` (if IPv6) value.
 
@@ -1164,6 +1169,7 @@ set the `IP_UNBLOCK_SOURCE` or `MCAST_UNBLOCK_SOURCE` (if IPv6) value.
 
 **Returns**
 
+- `ok:boolean`: `true` on success.
 - `err:string`: error string.
 
 
