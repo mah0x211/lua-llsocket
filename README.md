@@ -582,7 +582,7 @@ send a file.
 
 **Parameters**
 
-- `fd:number`: file descriptor.
+- `fd:number|file`: file descriptor or file handle.
 - `bytes:number`: how many bytes of the file should be sent.
 - `offset:number`: where to begin in the file.
 

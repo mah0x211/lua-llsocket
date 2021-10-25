@@ -1146,6 +1146,15 @@ static int sendmsg_lua(lua_State *L)
     }
 }
 
+static inline int checkfile(lua_State *L, int idx)
+{
+    if (!lauxh_isinteger(L, idx)) {
+        FILE *fp = lauxh_checkfile(L, idx);
+        return fileno(fp);
+    }
+    return lua_tointeger(L, idx);
+}
+
 #if defined(HAVE_SENDFILE)
 
 # if defined(__linux__)
@@ -1154,7 +1163,7 @@ static int sendmsg_lua(lua_State *L)
 static int sendfile_lua(lua_State *L)
 {
     lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
-    int fd          = (int)lauxh_checkinteger(L, 2);
+    int fd          = checkfile(L, 2);
     size_t len      = (size_t)lauxh_checkinteger(L, 3);
     off_t offset    = (off_t)lauxh_optinteger(L, 4, 0);
     ssize_t rv      = 0;
@@ -1194,7 +1203,7 @@ static int sendfile_lua(lua_State *L)
 static int sendfile_lua(lua_State *L)
 {
     lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
-    int fd          = (int)lauxh_checkinteger(L, 2);
+    int fd          = checkfile(L, 2);
     off_t len       = (off_t)lauxh_checkinteger(L, 3);
     off_t offset    = (off_t)lauxh_optinteger(L, 4, 0);
 
@@ -1230,7 +1239,7 @@ static int sendfile_lua(lua_State *L)
 static int sendfile_lua(lua_State *L)
 {
     lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
-    int fd          = (int)lauxh_checkinteger(L, 2);
+    int fd          = checkfile(L, 2);
     size_t len      = (size_t)lauxh_checkinteger(L, 3);
     off_t offset    = (off_t)lauxh_optinteger(L, 4, 0);
     off_t nbytes    = 0;
@@ -1275,7 +1284,7 @@ static int sendfile_lua(lua_State *L)
 static int sendfile_lua(lua_State *L)
 {
     lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
-    int fd          = (int)lauxh_checkinteger(L, 2);
+    int fd          = checkfile(L, 2);
     size_t len      = (size_t)lauxh_checkinteger(L, 3);
     off_t offset    = (off_t)lauxh_optinteger(L, 4, 0);
     ssize_t nbytes  = 0;
