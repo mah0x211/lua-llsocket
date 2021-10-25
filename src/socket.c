@@ -647,36 +647,37 @@ static int linger_lua(lua_State *L)
     lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
     struct linger l = {0, 0};
     socklen_t len   = sizeof(struct linger);
-    int rc          = 0;
 #if defined(SO_LINGER_SEC)
     int opt = SO_LINGER_SEC;
 #else
     int opt = SO_LINGER;
 #endif
 
-    // set linger option
-    if (!lua_isnoneornil(L, 2)) {
+    if (getsockopt(s->fd, SOL_SOCKET, opt, (void *)&l, &len) == 0) {
+        if (l.l_onoff) {
+            lua_pushinteger(L, l.l_linger);
+        } else {
+            lua_pushinteger(L, -1);
+        }
+
+        // no-change
+        if (lua_isnoneornil(L, 2)) {
+            return 1;
+        }
+
+        // set linger option
         l.l_linger = lauxh_checkinteger(L, 2);
         l.l_onoff  = l.l_linger >= 0;
-        rc         = setsockopt(s->fd, SOL_SOCKET, opt, (void *)&l, len);
-    }
-    // get linger option
-    else {
-        rc = getsockopt(s->fd, SOL_SOCKET, opt, (void *)&l, &len);
+        if (setsockopt(s->fd, SOL_SOCKET, opt, (void *)&l, len) == 0) {
+            return 1;
+        }
     }
 
     // got error
-    if (rc) {
-        lua_pushnil(L);
-        lua_pushstring(L, strerror(errno));
-        return 2;
-    } else if (l.l_onoff) {
-        lua_pushinteger(L, l.l_linger);
-    } else {
-        lua_pushnil(L);
-    }
+    lua_pushnil(L);
+    lua_pushstring(L, strerror(errno));
 
-    return 1;
+    return 2;
 }
 
 // MARK: state

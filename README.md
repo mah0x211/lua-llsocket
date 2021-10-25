@@ -729,7 +729,7 @@ determine whether the `FD_CLOEXEC` flag enabled, or change the state to an argum
 
 **Returns**
 
-- `enable:boolean`: state of the `FD_CLOEXEC` flag.
+- `enable:boolean`: the state before changing the `FD_CLOEXEC` flag.
 - `err:string`: error string.
 
 
@@ -739,11 +739,11 @@ determine whether the `O_NONBLOCK` flag enabled, or change the state to an argum
 
 **Parameters**
 
-- `enable:boolean`: to enable or disable the O_NONBLOCK flag.
+- `enable:boolean`: to enable or disable the `O_NONBLOCK` flag.
 
 **Returns**
 
-- `enable:boolean`: state of the O_NONBLOCK flag.
+- `enable:boolean`: the state before changing the `O_NONBLOCK` flag.
 - `err:string`: error string.
 
 
@@ -763,7 +763,7 @@ determine whether the `SO_ACCEPTCONN` flag enabled.
 
 **Returns**
 
-- `bool:boolean`: state of the `SO_ACCEPTCONN` flag.
+- `bool:boolean`: the state of the `SO_ACCEPTCONN` flag.
 - `err:string`: error string.
 
 
@@ -777,7 +777,7 @@ determine whether the `TCP_NODELAY` flag enabled, or change the state to an argu
 
 **Returns**
 
-- `enable:boolean`: state of the `TCP_NODELAY` flag.
+- `enable:boolean`: the state before changing the `TCP_NODELAY` flag.
 - `err:string`: error string.
 
 
@@ -791,7 +791,7 @@ get the `TCP_KEEPINTVL` value, or change that value to an argument value.
 
 **Returns**
 
-- `sec:number`: value of the `TCP_KEEPINTVL`.
+- `sec:number`: the value before changing the `TCP_KEEPINTVL`.
 - `err:string`: error string.
 
 
@@ -805,7 +805,7 @@ get the `TCP_KEEPCNT` value, or change that value to an argument value.
 
 **Returns**
 
-- `sec:number`: value of the `TCP_KEEPCNT`.
+- `sec:number`: the value before changing the `TCP_KEEPCNT`.
 - `err:string`: error string.
 
 
@@ -819,7 +819,7 @@ get the `TCP_KEEPALIVE` value, or set that value if argument passed.
 
 **Returns**
 
-- `sec:number`: value of the `TCP_KEEPALIVE`.
+- `sec:number`: the value before changing the `TCP_KEEPALIVE`.
 - `err:string`: error string.
 
 
@@ -833,7 +833,7 @@ determine whether the `TCP_CORK` flag enabled, or change the state to an argumen
 
 **Returns**
 
-- `enable:boolean`: state of the `TCP_CORK` flag.
+- `enable:boolean`: the state before changing the `TCP_CORK` flag.
 - `err:string`: error string.
 
 
@@ -847,7 +847,7 @@ determine whether the `SO_REUSEPORT` flag enabled, or change the state to an arg
 
 **Returns**
 
-- `bool:boolean`: state of the `SO_REUSEADDR` flag.
+- `enable:boolean`: the state before changing the `SO_REUSEADDR` flag.
 - `err:string`: error string.
 
 
@@ -861,7 +861,7 @@ determine whether the `SO_REUSEADDR` flag enabled, or change the state to an arg
 
 **Returns**
 
-- `enable:boolean`: state of the `SO_REUSEADDR` flag.
+- `enable:boolean`: the state before changing the `SO_REUSEADDR` flag.
 - `err:string`: error string.
 
 
@@ -875,7 +875,7 @@ determine whether the `SO_BROADCAST` flag enabled, or change the state to an arg
 
 **Returns**
 
-- `enable:boolean`: state of the `SO_BROADCAST` flag.
+- `enable:boolean`: the state before changing the `SO_BROADCAST` flag.
 - `err:string`: error string.
 
 
@@ -889,7 +889,7 @@ determine whether the `SO_DEBUG` flag enabled, or change the state to an argumen
 
 **Returns**
 
-- `enable:boolean`: state of the `SO_DEBUG` flag.
+- `enable:boolean`: the state before changing the `SO_DEBUG` flag.
 - `err:string`: error string.
 
 
@@ -903,7 +903,7 @@ determine whether the `SO_KEEPALIVE` flag enabled, or change the state to an arg
 
 **Returns**
 
-- `enable:boolean`: state of the `SO_KEEPALIVE` flag.
+- `enable:boolean`: the state before changing the `SO_KEEPALIVE` flag.
 - `err:string`: error string.
 
 
@@ -917,7 +917,7 @@ determine whether the `SO_OOBINLINE` flag enabled, or change the state to an arg
 
 **Returns**
 
-- `enable:boolean`: state of the `SO_OOBINLINE` flag.
+- `enable:boolean`: the state before changing the `SO_OOBINLINE` flag.
 - `err:string`: error string.
 
 
@@ -931,7 +931,7 @@ determine whether the `SO_DONTROUTE` flag enabled, or change the state to an arg
 
 **Returns**
 
-- `enable:boolean`: state of the `SO_DONTROUTE` flag.
+- `enable:boolean`: the state before changing the `SO_DONTROUTE` flag.
 - `err:string`: error string.
 
 
@@ -945,7 +945,7 @@ determine whether the `SO_TIMESTAMP` flag enabled, or change the state to an arg
 
 **Returns**
 
-- `enable:boolean`: state of the `SO_TIMESTAMP` flag.
+- `enable:boolean`: the state before changing the `SO_TIMESTAMP` flag.
 - `err:string`: error string.
 
 
@@ -959,7 +959,7 @@ get the `SO_RCVBUF` value, or change that value to an argument value.
 
 **Returns**
 
-- `sz:number`: value of the `SO_RCVBUF`.
+- `sz:number`: the value before changing the `SO_RCVBUF`.
 - `err:string`: error string.
 
 
@@ -973,7 +973,7 @@ get the `SO_RCVLOWAT` value, or change that value to an argument value.
 
 **Returns**
 
-- `sz:number`: value of the `SO_RCVLOWAT`.
+- `sz:number`: the value before changing the `SO_RCVLOWAT`.
 - `err:string`: error string.
 
 
@@ -987,7 +987,7 @@ get the `SO_SNDBUF` value, or change that value to an argument value.
 
 **Returns**
 
-- `sz:number`: value of the `SO_SNDBUF`.
+- `sz:number`: the value before changing the `SO_SNDBUF`.
 - `err:string`: error string.
 
 
@@ -1001,7 +1001,7 @@ get the `SO_SNDLOWAT` value, or change that value to an argument value.
 
 **Returns**
 
-- `sz:number`: value of the `SO_SNDLOWAT`.
+- `sz:number`: the value before changing the `SO_SNDLOWAT`.
 - `err:string`: error string.
 
 
@@ -1015,7 +1015,7 @@ get the `SO_RCVTIMEO` value, or change that value to an argument value.
 
 **Returns**
 
-- `sec:number`: value of the `SO_RCVTIMEO`.
+- `sec:number`: the value before changing the `SO_RCVTIMEO`.
 - `err:string`: error string.
 
 
@@ -1029,7 +1029,7 @@ get the `SO_SNDTIMEO` value, or change that value to an argument value.
 
 **Returns**
 
-- `sec:number`: value of the `SO_SNDTIMEO`.
+- `sec:number`: the value before changing the `SO_SNDTIMEO`.
 - `err:string`: error string.
 
 
@@ -1039,11 +1039,11 @@ get the `SO_LINGER` value, or change that value to an argument value.
 
 **Parameters**
 
-- `sec:number`: if sec >= 0 then enable `SO_LINGER` option, or else disabled this option.
+- `sec:number`: if `sec >= 0` then enable `SO_LINGER` option, or else disabled this option.
 
 **Returns**
 
-- `sec:number`: nil or a value of the `SO_LINGER`.
+- `sec:number`: the value before changing the `SO_LINGER`.
 - `err:string`: error string.
 
 
@@ -1057,7 +1057,7 @@ determine whether the `IP_MULTICAST_LOOP` flag enabled, or change the state to a
 
 **Returns**
 
-- `enable:boolean`: state of the `IP_MULTICAST_LOOP` flag.
+- `enable:boolean`: the state before changing the `IP_MULTICAST_LOOP` flag.
 - `err:string`: error string.
 
 
@@ -1071,7 +1071,7 @@ get the `IP_MULTICAST_TTL` value, or change that value to an argument value.
 
 **Returns**
 
-- `sec:number`: value of the `IP_MULTICAST_TTL`.
+- `sec:number`: the value before changing the `IP_MULTICAST_TTL`.
 - `err:string`: error string.
 
 
