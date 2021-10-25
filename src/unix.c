@@ -27,9 +27,6 @@
 
 #include "llsocket.h"
 
-// unix-domain socket max path length
-#define UNIXPATH_MAX (sizeof(((struct sockaddr_un *)0)->sun_path))
-
 static int getaddrinfo_lua(lua_State *L)
 {
     size_t len              = 0;
