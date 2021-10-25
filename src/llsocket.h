@@ -60,6 +60,9 @@
 #define CMSGHDRS_MT "llsocket.cmsghdrs"
 #define MSGHDR_MT   "llsocket.msghdr"
 
+// unix-domain socket max path length
+#define UNIXPATH_MAX (sizeof(((struct sockaddr_un *)0)->sun_path))
+
 LUALIB_API int luaopen_llsocket(lua_State *L);
 LUALIB_API int luaopen_llsocket_inet(lua_State *L);
 LUALIB_API int luaopen_llsocket_unix(lua_State *L);
@@ -70,6 +73,7 @@ LUALIB_API int luaopen_llsocket_iovec(lua_State *L);
 LUALIB_API int luaopen_llsocket_cmsghdr(lua_State *L);
 LUALIB_API int luaopen_llsocket_cmsghdrs(lua_State *L);
 LUALIB_API int luaopen_llsocket_msghdr(lua_State *L);
+LUALIB_API int luaopen_llsocket_env(lua_State *L);
 
 typedef struct {
     int ref;

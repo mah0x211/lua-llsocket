@@ -20,6 +20,16 @@ $ luarocks install llsocket
 ```
 
 
+## llsocket.env Module
+
+`llsocket.env` module is the table that contains the following fields.
+
+- `os:string`: one of the following strings:
+  - `apple`, `dragonfly`, `freebsd`, `netbsd`, `openbsd`, `linux`, or `unknown`.
+- `unixpath_max:number`: maximum length of a pathname for unix domain socket.
+- `somaxconn:number`: maximum queue length specifiable by `listen`.
+
+
 ## llsocket.inet Module
 
 `llsocket.inet` module has the following functions.
