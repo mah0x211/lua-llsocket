@@ -654,6 +654,8 @@ static int linger_lua(lua_State *L)
 #endif
 
     if (getsockopt(s->fd, SOL_SOCKET, opt, (void *)&l, &len) == 0) {
+        int top = lua_gettop(L);
+
         if (l.l_onoff) {
             lua_pushinteger(L, l.l_linger);
         } else {
@@ -661,7 +663,7 @@ static int linger_lua(lua_State *L)
         }
 
         // no-change
-        if (lua_isnoneornil(L, 2)) {
+        if (top == 1 || lua_isnoneornil(L, 2)) {
             return 1;
         }
 
