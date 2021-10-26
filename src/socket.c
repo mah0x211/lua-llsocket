@@ -1028,8 +1028,11 @@ static int sendfd_lua(lua_State *L)
     lua_Integer fd         = lauxh_checkinteger(L, 2);
     lls_addrinfo_t *info   = lauxh_optudata(L, 3, ADDRINFO_MT, NULL);
     int flg                = lauxh_optflags(L, 4);
-    // init data
-    struct iovec empty_iov = {.iov_base = NULL, .iov_len = 0};
+    // NOTE: on linux, auxiliary data must be sent along with at least 1 byte of
+    // real data in order to be sent.
+    char iov_data          = 1;
+    struct iovec empty_iov = {.iov_base = &iov_data,
+                              .iov_len  = sizeof(iov_data)};
     union {
         unsigned char buf[CMSG_SPACE(sizeof(int))];
         struct cmsghdr data;
