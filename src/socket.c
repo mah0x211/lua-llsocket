@@ -114,87 +114,54 @@ static int mcastttl_lua(lua_State *L)
     }
 }
 
-static int mcastif_lua(lua_State *L)
+static int mcastif4_lua(lua_State *L, lls_socket_t *s)
 {
-    lls_socket_t *s     = lauxh_checkudata(L, 1, SOCKET_MT);
-    unsigned int ifidx  = 0;
-    socklen_t len       = sizeof(struct in_addr);
-    struct in_addr addr = {0};
+    int top              = lua_gettop(L);
+    struct in_addr addr  = {0};
+    socklen_t addrlen    = sizeof(addr);
+    struct ifaddrs *list = NULL;
 
-    switch (s->socktype) {
-    case SOCK_RAW:
-    case SOCK_DGRAM:
-        switch (s->family) {
-        case AF_INET:
-            if (lua_isnoneornil(L, 2)) {
-                len = sizeof(addr);
-                if (getsockopt(s->fd, IPPROTO_IP, IP_MULTICAST_IF,
-                               (void *)&addr, &len) == 0) {
-                    struct ifaddrs *list = NULL;
+    if (getsockopt(s->fd, IPPROTO_IP, IP_MULTICAST_IF, (void *)&addr,
+                   &addrlen) == 0 &&
+        getifaddrs(&list) == 0) {
+        // push the IP_MULTICAST_IF value if found
+        lua_pushnil(L);
+        for (struct ifaddrs *ptr = list; ptr; ptr = ptr->ifa_next) {
+            struct sockaddr_in *ifa_addr = (struct sockaddr_in *)ptr->ifa_addr;
 
-                    if (getifaddrs(&list) == 0) {
-                        struct ifaddrs *ptr          = list;
-                        struct sockaddr_in *ifa_addr = NULL;
-
-                        for (ptr = list; ptr; ptr = ptr->ifa_next) {
-                            ifa_addr = (struct sockaddr_in *)ptr->ifa_addr;
-                            if (ptr->ifa_addr->sa_family == AF_INET &&
-                                addr.s_addr == ifa_addr->sin_addr.s_addr) {
-                                lua_pushstring(L, ptr->ifa_name);
-                                freeifaddrs(list);
-                                return 1;
-                            }
-                        }
-
-                        freeifaddrs(list);
-                    }
-                }
-            } else {
-                const char *ifname = lauxh_checkstring(L, 2);
-                struct ifreq ifr;
-
-                strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-                // get interface address
-                if (ioctl(s->fd, SIOCGIFADDR, &ifr) == 0) {
-                    addr = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
-                    // set address to multicast_if
-                    if (setsockopt(s->fd, IPPROTO_IP, IP_MULTICAST_IF,
-                                   (void *)&addr, sizeof(addr)) == 0) {
-                        lua_settop(L, 2);
-                        return 1;
-                    }
-                }
+            if (ptr->ifa_addr->sa_family == AF_INET &&
+                addr.s_addr == ifa_addr->sin_addr.s_addr) {
+                lua_pushstring(L, ptr->ifa_name);
+                break;
             }
-            break;
+        }
+        freeifaddrs(list);
 
-        case AF_INET6:
-            if (lua_isnoneornil(L, 2)) {
-                len = sizeof(ifidx);
+        if (top == 1) {
+            // no-change
+            return 1;
+        } else if (lua_isnoneornil(L, 2)) {
+            // disable the interface setting
+            addr.s_addr = 0;
+            if (setsockopt(s->fd, IPPROTO_IP, IP_MULTICAST_IF, (void *)&addr,
+                           sizeof(addr)) == 0) {
+                return 1;
+            }
+        } else {
+            const char *ifname = lauxh_checkstring(L, 2);
+            struct ifreq ifr;
 
-                if (getsockopt(s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
-                               (void *)&ifidx, &len) == 0) {
-                    char ifname[IFNAMSIZ] = {0};
-
-                    if (if_indextoname(ifidx, ifname)) {
-                        lua_pushstring(L, ifname);
-                        return 1;
-                    }
-                }
-            } else {
-                const char *ifname = lauxh_checkstring(L, 2);
-
-                if ((ifidx = if_nametoindex(ifname)) != 0 &&
-                    setsockopt(s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
-                               (void *)&ifidx, sizeof(ifidx)) == 0) {
-                    lua_settop(L, 2);
+            strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+            // get interface address
+            if (ioctl(s->fd, SIOCGIFADDR, &ifr) == 0) {
+                // set address to multicast_if
+                addr = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
+                if (setsockopt(s->fd, IPPROTO_IP, IP_MULTICAST_IF,
+                               (void *)&addr, sizeof(addr)) == 0) {
                     return 1;
                 }
             }
-            break;
         }
-
-    default:
-        errno = EOPNOTSUPP;
     }
 
     // got error
@@ -202,6 +169,77 @@ static int mcastif_lua(lua_State *L)
     lua_pushstring(L, strerror(errno));
 
     return 2;
+}
+
+static int mcastif6_lua(lua_State *L, lls_socket_t *s)
+{
+    int top          = lua_gettop(L);
+    unsigned int idx = 0;
+    socklen_t idxlen = sizeof(idx);
+
+    if (getsockopt(s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, (void *)&idx,
+                   &idxlen) == 0) {
+        char buf[IFNAMSIZ] = {0};
+        char *ifname       = if_indextoname(idx, buf);
+
+        if (ifname) {
+            lua_pushstring(L, ifname);
+        } else if (errno == ENXIO) {
+            // unknown device name
+            lua_pushnil(L);
+        } else {
+            goto FAIL;
+        }
+
+        if (top == 1) {
+            // no-change
+            return 1;
+        } else if (lua_isnoneornil(L, 2)) {
+            // disable the interface setting
+            idx = 0;
+            if (setsockopt(s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, (void *)&idx,
+                           sizeof(idx)) == 0) {
+                return 1;
+            }
+        } else {
+            // change
+            ifname = (char *)lauxh_checkstring(L, 2);
+            if ((idx = if_nametoindex(ifname)) != 0 &&
+                setsockopt(s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, (void *)&idx,
+                           sizeof(idx)) == 0) {
+                return 1;
+            }
+        }
+    }
+
+FAIL:
+    // got error
+    lua_pushnil(L);
+    lua_pushstring(L, strerror(errno));
+
+    return 2;
+}
+
+static int mcastif_lua(lua_State *L)
+{
+    lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
+
+    switch (s->socktype) {
+    case SOCK_RAW:
+    case SOCK_DGRAM:
+        switch (s->family) {
+        case AF_INET:
+            return mcastif4_lua(L, s);
+        case AF_INET6:
+            return mcastif6_lua(L, s);
+        }
+
+    default:
+        // got error
+        lua_pushnil(L);
+        lua_pushstring(L, strerror(errno));
+        return 2;
+    }
 }
 
 static inline int mcastgroup_lua(lua_State *L, lls_socket_t *s, int family,
