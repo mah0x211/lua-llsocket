@@ -60,6 +60,13 @@
 #define CMSGHDRS_MT "llsocket.cmsghdrs"
 #define MSGHDR_MT   "llsocket.msghdr"
 
+#if defined(__linux__)
+# include <linux/if.h>
+# include <linux/if_packet.h>
+#else
+# include <net/if_dl.h>
+#endif
+
 // unix-domain socket max path length
 #define UNIXPATH_MAX (sizeof(((struct sockaddr_un *)0)->sun_path))
 
