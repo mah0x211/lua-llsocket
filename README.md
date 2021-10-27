@@ -1085,7 +1085,7 @@ get the `IP_MULTICAST_IF` value, or change that value to an argument value.
 
 **Returns**
 
-- `ifnames:string`: value of the `IP_MULTICAST_IF`.
+- `ifname:string`: the value before changing the `IP_MULTICAST_IF`.
 - `err:string`: error string.
 
 
