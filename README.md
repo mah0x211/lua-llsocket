@@ -30,6 +30,21 @@ $ luarocks install llsocket
 - `somaxconn:number`: maximum queue length specifiable by `listen`.
 
 
+## llsocket.device Module
+
+`llsocket.device` module has the following functions.
+
+
+### tbl, err = inet.getifaddrs()
+
+get interface addresses.
+
+**Returns**
+
+- `tbl:table`: key-value pairs of interface addresses.
+- `err:string`: error string.
+
+
 ## llsocket.inet Module
 
 `llsocket.inet` module has the following functions.
