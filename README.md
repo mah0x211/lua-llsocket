@@ -50,7 +50,7 @@ get interface addresses.
 `llsocket.inet` module has the following functions.
 
 
-### arr, err = inet.getaddrinfo( host [, port [, socktype [, protocol [, flag, ...]]]] )
+### arr, err = inet.getaddrinfo( host [, port [, family [, socktype [, protocol [, flag, ...]]]]] )
 
 get a list of address info of tcp stream socket.
 
@@ -58,6 +58,7 @@ get a list of address info of tcp stream socket.
 
 - `host:string`: host string.
 - `port:string`: either a decimal port number or a service name listed in `services(5)`.
+- `family:number`: [AF_* types](#af_-types) constants.
 - `socktype:number` [SOCK_* types](#sock_-types) constants.
 - `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
 - `flags:...`: [AI_* flags](#ai_-flags) constants.
@@ -109,6 +110,68 @@ get hostname and service name.
     - `host:string`: hostname.
     - `serv:string`: service name.
 - `err:string`: error string.
+
+
+### af = ai:family()
+
+get a address family type.
+
+**Returns**
+
+- `af:number`: [AF_* types](#af_-types) constants.
+
+
+### st = ai:socktype()
+
+get a socket type.
+
+**Returns**
+
+- `st:number`: [SOCK_* type](#sock_-types) constants.
+
+
+### proto = ai:protocol()
+
+get a protocol type.
+
+**Returns**
+
+- `pt:number`: [IPPROTO_* type](#ipproto_-types) constants.
+
+
+### name = ai:canonname()
+
+get a canonical name for service location.
+
+**Returns**
+
+- `name:string`: canonical name for service location.
+
+
+### addr = ai:addr()
+
+get the address info as a table.
+
+**Returns**
+
+- `addr:table`: canonical name for service location.
+    - `AF_INET|AF_INET6` family
+        ```
+        {
+            ip = '<string>',
+            port = <integer>
+        }
+        ```
+    - `AF_UNIX` family
+        ```
+        {
+            path = '<string>',
+        }
+        ```
+    - otherwise
+        ```
+        nil
+        ```
 
 
 ## llsocket.cmsghdr Module

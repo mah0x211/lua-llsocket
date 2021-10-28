@@ -32,17 +32,18 @@ static int getaddrinfo_lua(lua_State *L)
 {
     const char *node      = lauxh_optstring(L, 1, NULL);
     const char *service   = lauxh_optstring(L, 2, NULL);
+    int family            = (int)lauxh_optinteger(L, 3, AF_UNSPEC);
     // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
-    int socktype          = (int)lauxh_optinteger(L, 3, 0);
+    int socktype          = (int)lauxh_optinteger(L, 4, 0);
     // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
-    int protocol          = (int)lauxh_optinteger(L, 4, 0);
+    int protocol          = (int)lauxh_optinteger(L, 5, 0);
     // AI_PASSIVE:bind socket if node is null
-    int flags             = lauxh_optflags(L, 5);
+    int flags             = lauxh_optflags(L, 6);
     struct addrinfo *list = NULL;
     struct addrinfo *ptr  = NULL;
     int idx               = 1;
-    int rc = lls_getaddrinfo(&list, node, service, AF_UNSPEC, socktype,
-                             protocol, flags);
+    int rc = lls_getaddrinfo(&list, node, service, family, socktype, protocol,
+                             flags);
 
     if (rc != 0) {
         lua_pushnil(L);
