@@ -242,36 +242,6 @@ static int mcastif_lua(lua_State *L)
     }
 }
 
-static inline int mcastgroup_lua(lua_State *L, lls_socket_t *s, int family,
-                                 int proto, int opt)
-{
-    struct group_req gr;
-    int rc = lls_checksockaddr(L, 2, family, s->socktype, &gr.gr_group);
-    const char *ifname = NULL;
-
-    // check arguments
-    if (rc != 0) {
-        lua_pushboolean(L, 0);
-        lua_pushstring(L, gai_strerror(rc));
-        return 2;
-    }
-
-    gr.gr_interface = 0;
-    ifname          = lauxh_optstring(L, 3, NULL);
-    if ((!ifname || (gr.gr_interface = if_nametoindex(ifname)) != 0) &&
-        setsockopt(s->fd, proto, opt, (void *)&gr, sizeof(struct group_req)) ==
-            0) {
-        lua_pushboolean(L, 1);
-        return 1;
-    }
-
-    // got error
-    lua_pushboolean(L, 0);
-    lua_pushstring(L, strerror(errno));
-
-    return 2;
-}
-
 static inline int mcast4group_lua(lua_State *L, lls_socket_t *s, int opt)
 {
     struct ip_mreq mr  = {.imr_multiaddr = {INADDR_ANY}, .imr_interface = {0}};
@@ -387,6 +357,47 @@ static int mcastleave_lua(lua_State *L)
     }
 }
 
+static inline int mcastsrcgroup_lua(lua_State *L, lls_socket_t *s, int proto,
+                                    int opt)
+{
+    struct group_source_req gsr = {0};
+    int rc = lls_checksockaddr(L, 2, s->family, s->socktype, &gsr.gsr_group);
+    const char *ifname = NULL;
+
+    // check arguments
+    if (rc != 0) {
+        lua_pushboolean(L, 0);
+        lua_pushstring(L, gai_strerror(rc));
+        return 2;
+    }
+
+    rc = lls_checksockaddr(L, 3, s->family, s->socktype, &gsr.gsr_source);
+    if (rc != 0) {
+        lua_pushboolean(L, 0);
+        lua_pushstring(L, gai_strerror(rc));
+        return 2;
+    }
+
+    ifname = lauxh_optstring(L, 4, NULL);
+    if (ifname && (gsr.gsr_interface = if_nametoindex(ifname)) == 0) {
+        lua_pushboolean(L, 0);
+        lua_pushstring(L, gai_strerror(rc));
+        return 2;
+    }
+
+    if (setsockopt(s->fd, proto, opt, (void *)&gsr,
+                   sizeof(struct group_source_req)) == 0) {
+        lua_pushboolean(L, 1);
+        return 1;
+    }
+
+    // got error
+    lua_pushboolean(L, 0);
+    lua_pushstring(L, strerror(errno));
+
+    return 2;
+}
+
 static inline int mcast4srcgroup_lua(lua_State *L, lls_socket_t *s, int opt)
 {
     struct ip_mreq_source mr = {
@@ -450,8 +461,8 @@ static int mcastjoinsrc_lua(lua_State *L)
             return mcast4srcgroup_lua(L, s, IP_ADD_SOURCE_MEMBERSHIP);
 
         case AF_INET6:
-            return mcastgroup_lua(L, s, AF_INET6, IPPROTO_IPV6,
-                                  MCAST_JOIN_SOURCE_GROUP);
+            return mcastsrcgroup_lua(L, s, IPPROTO_IPV6,
+                                     MCAST_JOIN_SOURCE_GROUP);
         }
 
     default:
@@ -474,8 +485,8 @@ static int mcastleavesrc_lua(lua_State *L)
             return mcast4srcgroup_lua(L, s, IP_DROP_SOURCE_MEMBERSHIP);
 
         case AF_INET6:
-            return mcastgroup_lua(L, s, AF_INET6, IPPROTO_IPV6,
-                                  MCAST_LEAVE_SOURCE_GROUP);
+            return mcastsrcgroup_lua(L, s, IPPROTO_IPV6,
+                                     MCAST_LEAVE_SOURCE_GROUP);
         }
 
     default:
@@ -498,8 +509,7 @@ static int mcastblocksrc_lua(lua_State *L)
             return mcast4srcgroup_lua(L, s, IP_BLOCK_SOURCE);
 
         case AF_INET6:
-            return mcastgroup_lua(L, s, AF_INET6, IPPROTO_IPV6,
-                                  MCAST_BLOCK_SOURCE);
+            return mcastsrcgroup_lua(L, s, IPPROTO_IPV6, MCAST_BLOCK_SOURCE);
         }
 
     default:
@@ -522,8 +532,7 @@ static int mcastunblocksrc_lua(lua_State *L)
             return mcast4srcgroup_lua(L, s, IP_UNBLOCK_SOURCE);
 
         case AF_INET6:
-            return mcastgroup_lua(L, s, AF_INET6, IPPROTO_IPV6,
-                                  MCAST_UNBLOCK_SOURCE);
+            return mcastsrcgroup_lua(L, s, IPPROTO_IPV6, MCAST_UNBLOCK_SOURCE);
         }
 
     default:
