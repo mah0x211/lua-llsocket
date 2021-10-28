@@ -383,13 +383,15 @@ create an instance of socket from specified socket file descriptor.
 - `err:string`: error string.
 
 
-### sock, err = socket.new( ai, nonblock )
+### sock, err = socket.new( family, socktype, [protocol [, nonblock]] )
 
 create an instance of socket
 
 **Parameters**
 
-- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+- `family:number`: [AF_* types](#af_-types) constants.
+- `socktype:number` [SOCK_* types](#sock_-types) constants.
+- `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
 - `nonblock:boolean`: enable the O_NONBLOCK flag.
 
 **Returns**
@@ -440,13 +442,9 @@ get a socket file descriptor, and disable an instance of socket.
 - `fd:number`: socket file descriptor.
 
 
-### sock, err = sock:dup( [ai] )
+### sock, err = sock:dup()
 
 duplicate an instance of socket.
-
-**Parameters**
-
-- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 
 **Returns**
 
@@ -490,9 +488,13 @@ get a protocol type.
 - `pt:number`: [IPPROTO_* type](#ipproto_-types) constants.
 
 
-### ok, err = sock:bind()
+### ok, err = sock:bind( ai )
 
 bind the socket to an address.
+
+**Parameters**
+
+- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 
 **Returns**
 
@@ -500,9 +502,13 @@ bind the socket to an address.
 - `err:string`: error string.
 
 
-### ok, err, again = sock:connect()
+### ok, err, again = sock:connect( ai )
 
 initiate a new connection.
+
+**Parameters**
+
+- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 
 **Returns**
 
@@ -553,15 +559,20 @@ listen for connections.
 - `err:string`: error string.
 
 
-### sock, err, again = sock:accept()
+### sock, err, again, ai = sock:accept( [with_ai] )
 
 accept a connection.
+
+**Parameters**
+
+- `with_ai:boolean`: `true` to receive socket with address info.
 
 **Returns**
 
 - `sock:socket`: instance of [socket](#llsocketsocket-instance-methods).
 - `err:string`: error string.
 - `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK`, `EINTR` or `ECONNABORTED`.
+- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 
 
 ### fd, err, again = sock:acceptfd()

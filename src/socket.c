@@ -34,13 +34,10 @@ static const char *const SA_STORAGE_BUF[sizeof(struct sockaddr_storage)] = {0};
  *((struct sockaddr_storage *)SA_STORAGE_BUF)
 
 typedef struct {
-    int is_bind;
     int fd;
     int family;
     int socktype;
     int protocol;
-    socklen_t addrlen;
-    struct sockaddr_storage addr;
 } lls_socket_t;
 
 // MARK: fd option
@@ -752,20 +749,30 @@ static int atmark_lua(lua_State *L)
 
 static int getsockname_lua(lua_State *L)
 {
-    lls_socket_t *s      = lauxh_checkudata(L, 1, SOCKET_MT);
-    struct addrinfo wrap = {.ai_flags     = 0,
-                            .ai_family    = s->family,
-                            .ai_socktype  = s->socktype,
-                            .ai_protocol  = s->protocol,
-                            .ai_addrlen   = s->addrlen,
-                            .ai_addr      = (struct sockaddr *)&s->addr,
-                            .ai_canonname = NULL,
-                            .ai_next      = NULL};
+    lls_socket_t *s              = lauxh_checkudata(L, 1, SOCKET_MT);
+    struct sockaddr_storage addr = SOCKADDR_STORAGE_INITIALIZER;
+    socklen_t addrlen            = sizeof(struct sockaddr_storage);
 
-    // push llsocket.addr udata
-    lls_addrinfo_alloc(L, &wrap);
+    if (getsockname(s->fd, (struct sockaddr *)&addr, &addrlen) == 0) {
+        struct addrinfo wrap = {.ai_flags     = 0,
+                                .ai_family    = s->family,
+                                .ai_socktype  = s->socktype,
+                                .ai_protocol  = s->protocol,
+                                .ai_addrlen   = addrlen,
+                                .ai_addr      = (struct sockaddr *)&addr,
+                                .ai_canonname = NULL,
+                                .ai_next      = NULL};
 
-    return 1;
+        // push llsocket.addr udata
+        lls_addrinfo_alloc(L, &wrap);
+        return 1;
+    }
+
+    // got error
+    lua_pushnil(L);
+    lua_pushstring(L, strerror(errno));
+
+    return 2;
 }
 
 static int getpeername_lua(lua_State *L)
@@ -865,20 +872,6 @@ static int listen_lua(lua_State *L)
         return lauxh_argerror(L, 2, "range must be 1 to %d", INT_MAX);
     }
 
-    // bind socket before calling listen
-    if (!s->is_bind) {
-        struct sockaddr *addr = (struct sockaddr *)&s->addr;
-        socklen_t addrlen     = s->addrlen;
-
-        if (bind(s->fd, addr, addrlen) != 0) {
-            // got error
-            lua_pushboolean(L, 0);
-            lua_pushstring(L, strerror(errno));
-            return 2;
-        }
-        s->is_bind = 1;
-    }
-
     // listen
     if (listen(s->fd, (int)backlog) == 0) {
         lua_pushboolean(L, 1);
@@ -945,11 +938,19 @@ static int acceptfd_lua(lua_State *L)
 
 static int accept_lua(lua_State *L)
 {
-    lls_socket_t *s              = lauxh_checkudata(L, 1, SOCKET_MT);
-    struct sockaddr_storage addr = SOCKADDR_STORAGE_INITIALIZER;
-    socklen_t addrlen            = sizeof(struct sockaddr_storage);
-    int fd = acceptfd(s->fd, (struct sockaddr *)&addr, &addrlen);
+    lls_socket_t *s               = lauxh_checkudata(L, 1, SOCKET_MT);
+    int with_addr                 = lauxh_optboolean(L, 2, 0);
+    struct sockaddr_storage saddr = SOCKADDR_STORAGE_INITIALIZER;
+    socklen_t saddrlen            = sizeof(struct sockaddr_storage);
+    struct sockaddr *addr         = NULL;
+    socklen_t *addrlen            = NULL;
+    int fd                        = 0;
 
+    if (with_addr) {
+        addr    = (struct sockaddr *)&saddr;
+        addrlen = &saddrlen;
+    }
+    fd = acceptfd(s->fd, addr, addrlen);
     if (fd != -1) {
         lls_socket_t *cs = lua_newuserdata(L, sizeof(lls_socket_t));
 
@@ -957,10 +958,22 @@ static int accept_lua(lua_State *L)
         cs->family   = s->family;
         cs->socktype = s->socktype;
         cs->protocol = s->protocol;
-        cs->addrlen  = addrlen;
-        // copy sockaddr
-        memcpy((void *)&cs->addr, (void *)&addr, addrlen);
         lauxh_setmetatable(L, SOCKET_MT);
+        if (with_addr) {
+            struct addrinfo wrap = {.ai_flags     = 0,
+                                    .ai_family    = s->family,
+                                    .ai_socktype  = s->socktype,
+                                    .ai_protocol  = s->protocol,
+                                    .ai_addrlen   = saddrlen,
+                                    .ai_addr      = addr,
+                                    .ai_canonname = NULL,
+                                    .ai_next      = NULL};
+            lua_pushnil(L);
+            lua_pushnil(L);
+            // push llsocket.addr udata
+            lls_addrinfo_alloc(L, &wrap);
+            return 4;
+        }
 
         return 1;
     }
@@ -1629,11 +1642,10 @@ static int recvmsg_lua(lua_State *L)
 
 static int connect_lua(lua_State *L)
 {
-    lls_socket_t *s       = lauxh_checkudata(L, 1, SOCKET_MT);
-    struct sockaddr *addr = (struct sockaddr *)&s->addr;
-    socklen_t addrlen     = s->addrlen;
+    lls_socket_t *s      = lauxh_checkudata(L, 1, SOCKET_MT);
+    lls_addrinfo_t *info = lauxh_checkudata(L, 2, ADDRINFO_MT);
 
-    if (connect(s->fd, addr, addrlen) == 0) {
+    if (connect(s->fd, info->ai.ai_addr, info->ai.ai_addrlen) == 0) {
         lua_pushboolean(L, 1);
         return 1;
     }
@@ -1723,12 +1735,11 @@ static int recvable_lua(lua_State *L)
 
 static int bind_lua(lua_State *L)
 {
-    lls_socket_t *s       = lauxh_checkudata(L, 1, SOCKET_MT);
-    struct sockaddr *addr = (struct sockaddr *)&s->addr;
-    socklen_t addrlen     = s->addrlen;
+    lls_socket_t *s      = lauxh_checkudata(L, 1, SOCKET_MT);
+    lls_addrinfo_t *info = lauxh_checkudata(L, 2, ADDRINFO_MT);
 
-    if (bind(s->fd, addr, addrlen) == 0) {
-        s->is_bind = 1;
+    if (bind(s->fd, (struct sockaddr *)info->ai.ai_addr, info->ai.ai_addrlen) ==
+        0) {
         lua_pushboolean(L, 1);
         return 1;
     }
@@ -1795,35 +1806,18 @@ static int gc_lua(lua_State *L)
 
 static int dup_lua(lua_State *L)
 {
-    lls_socket_t *s     = lauxh_checkudata(L, 1, SOCKET_MT);
-    lls_addrinfo_t info = {
-        .ai = (struct addrinfo){.ai_family   = s->family,
-                                .ai_socktype = s->socktype,
-                                .ai_protocol = s->protocol,
-                                .ai_addrlen  = s->addrlen,
-                                .ai_addr     = (struct sockaddr *)&s->addr},
-    };
-    lls_addrinfo_t *ptr = &info;
-    int fd              = 0;
-
-    // check argument
-    if (!lua_isnoneornil(L, 2)) {
-        ptr = lauxh_checkudata(L, 2, ADDRINFO_MT);
-    }
+    lls_socket_t *s  = lauxh_checkudata(L, 1, SOCKET_MT);
+    lls_socket_t *sd = lua_newuserdata(L, sizeof(lls_socket_t));
+    int fd           = 0;
 
     if ((fd = dup(s->fd)) != -1) {
-        lls_socket_t *sd = NULL;
-
         if (fcntl(fd, F_SETFD, FD_CLOEXEC) != -1) {
-            sd  = lua_newuserdata(L, sizeof(lls_socket_t));
-            *sd = (lls_socket_t){.fd       = fd,
-                                 .family   = ptr->ai.ai_family,
-                                 .socktype = ptr->ai.ai_socktype,
-                                 .protocol = ptr->ai.ai_protocol,
-                                 .addrlen  = ptr->ai.ai_addrlen};
-            // copy sockaddr
-            memcpy((void *)&sd->addr, (void *)&ptr->ai.ai_addr,
-                   ptr->ai.ai_addrlen);
+            *sd = (lls_socket_t){
+                .fd       = fd,
+                .family   = s->family,
+                .socktype = s->socktype,
+                .protocol = s->protocol,
+            };
             lauxh_setmetatable(L, SOCKET_MT);
             return 1;
         }
@@ -1856,7 +1850,8 @@ static int unwrap_lua(lua_State *L)
 
 static int wrap_lua(lua_State *L)
 {
-    int fd            = (int)lauxh_checkinteger(L, 1);
+    int fd = (int)lauxh_checkinteger(L, 1);
+    struct sockaddr_storage addr;
     socklen_t addrlen = sizeof(struct sockaddr_storage);
     lls_socket_t *s   = NULL;
     socklen_t typelen = sizeof(int);
@@ -1866,18 +1861,17 @@ static int wrap_lua(lua_State *L)
 
     lua_settop(L, 1);
     s = lua_newuserdata(L, sizeof(lls_socket_t));
-    if (getsockname(fd, (void *)&s->addr, &addrlen) == 0 &&
+    if (getsockname(fd, (void *)&addr, &addrlen) == 0 &&
 #if defined(SO_PROTOCOL)
         getsockopt(fd, SOL_SOCKET, SO_PROTOCOL, &s->protocol, &protolen) == 0 &&
 #endif
         getsockopt(fd, SOL_SOCKET, SO_TYPE, &s->socktype, &typelen) == 0) {
         lauxh_setmetatable(L, SOCKET_MT);
         s->fd     = fd;
-        s->family = s->addr.ss_family;
+        s->family = addr.ss_family;
 #if !defined(SO_PROTOCOL)
         s->protocol = 0;
 #endif
-        s->addrlen = addrlen;
         return 1;
     }
 
@@ -1890,11 +1884,11 @@ static int wrap_lua(lua_State *L)
 
 static int new_lua(lua_State *L)
 {
-    lls_addrinfo_t *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
-    int nonblock         = lauxh_optboolean(L, 2, 0);
-    // create socket
-    int fd =
-        socket(info->ai.ai_family, info->ai.ai_socktype, info->ai.ai_protocol);
+    int family   = lauxh_checkinteger(L, 1);
+    int socktype = lauxh_checkinteger(L, 2);
+    int protocol = lauxh_optinteger(L, 3, 0);
+    int nonblock = lauxh_optboolean(L, 4, 0);
+    int fd       = socket(family, socktype, protocol);
 
     if (fd != -1) {
         lls_socket_t *s = NULL;
@@ -1906,16 +1900,13 @@ static int new_lua(lua_State *L)
             (!nonblock || ((fl = fcntl(fd, F_GETFL)) != -1 &&
                            fcntl(fd, F_SETFL, fl | O_NONBLOCK) != -1))) {
             s  = lua_newuserdata(L, sizeof(lls_socket_t));
-            *s = (lls_socket_t){.fd       = fd,
-                                .family   = info->ai.ai_family,
-                                .socktype = info->ai.ai_socktype,
-                                .protocol = info->ai.ai_protocol,
-                                .addrlen  = info->ai.ai_addrlen};
-            // copy sockaddr
-            memcpy((void *)&s->addr, (void *)info->ai.ai_addr,
-                   info->ai.ai_addrlen);
+            *s = (lls_socket_t){
+                .fd       = fd,
+                .family   = family,
+                .socktype = socktype,
+                .protocol = protocol,
+            };
             lauxh_setmetatable(L, SOCKET_MT);
-
             return 1;
         }
 
@@ -1932,11 +1923,9 @@ static int new_lua(lua_State *L)
 
 static int pair_lua(lua_State *L)
 {
-    int socktype                 = (int)lauxh_checkinteger(L, 1);
-    int nonblock                 = lauxh_optboolean(L, 2, 0);
-    int protocol                 = (int)lauxh_optinteger(L, 3, 0);
-    struct sockaddr_storage addr = SOCKADDR_STORAGE_INITIALIZER;
-    socklen_t addrlen            = sizeof(struct sockaddr_storage);
+    int socktype = (int)lauxh_checkinteger(L, 1);
+    int nonblock = lauxh_optboolean(L, 2, 0);
+    int protocol = (int)lauxh_optinteger(L, 3, 0);
     int fds[2];
 
     if (socketpair(AF_UNIX, socktype, protocol, fds) == 0) {
@@ -1946,17 +1935,15 @@ static int pair_lua(lua_State *L)
         lua_createtable(L, 2, 0);
         for (; i < 2; i++) {
             // set flags
-            if (getsockname(fds[i], (void *)&addr, &addrlen) == 0 &&
-                fcntl(fds[i], F_SETFD, FD_CLOEXEC) != -1 &&
+            if (fcntl(fds[i], F_SETFD, FD_CLOEXEC) != -1 &&
                 (!nonblock || fcntl(fds[i], F_SETFL, O_NONBLOCK) != -1)) {
                 s  = lua_newuserdata(L, sizeof(lls_socket_t));
-                *s = (lls_socket_t){.fd       = fds[i],
-                                    .family   = AF_UNIX,
-                                    .socktype = socktype,
-                                    .protocol = protocol,
-                                    .addrlen  = addrlen};
-                // copy sockaddr
-                memcpy((void *)&s->addr, (void *)&addr, addrlen);
+                *s = (lls_socket_t){
+                    .fd       = fds[i],
+                    .family   = AF_UNIX,
+                    .socktype = socktype,
+                    .protocol = protocol,
+                };
                 lauxh_setmetatable(L, SOCKET_MT);
                 lua_rawseti(L, -2, i + 1);
 
