@@ -225,6 +225,15 @@ get a canonical name for service location.
 - `name:string`: canonical name for service location.
 
 
+### port = ai:port()
+
+get a port number.
+
+**Returns**
+
+- `port:number`: port number.
+
+
 ### addr = ai:addr()
 
 get the address info as a table.

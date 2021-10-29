@@ -95,6 +95,29 @@ static int addr_lua(lua_State *L)
     }
 }
 
+static int port_lua(lua_State *L)
+{
+    lls_addrinfo_t *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
+
+    switch (info->ai.ai_family) {
+    case AF_INET: {
+        struct sockaddr_in *addr = (struct sockaddr_in *)info->ai.ai_addr;
+        lua_pushinteger(L, ntohs(addr->sin_port));
+    } break;
+
+    case AF_INET6: {
+        struct sockaddr_in6 *addr = (struct sockaddr_in6 *)info->ai.ai_addr;
+        lua_pushinteger(L, ntohs(addr->sin6_port));
+    } break;
+
+    // unsupported family
+    default:
+        lua_pushnil(L);
+    }
+
+    return 1;
+}
+
 static int canonname_lua(lua_State *L)
 {
     lls_addrinfo_t *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
@@ -308,6 +331,7 @@ LUALIB_API int luaopen_llsocket_addrinfo(lua_State *L)
             {"socktype",    socktype_lua   },
             {"protocol",    protocol_lua   },
             {"canonname",   canonname_lua  },
+            {"port",        port_lua       },
             {"addr",        addr_lua       },
             {"getnameinfo", getnameinfo_lua},
             {NULL,          NULL           }
