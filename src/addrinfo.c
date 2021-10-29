@@ -59,40 +59,50 @@ static int addr_lua(lua_State *L)
     switch (info->ai.ai_family) {
     case AF_INET: {
         struct sockaddr_in *addr = (struct sockaddr_in *)info->ai.ai_addr;
-
-        lua_createtable(L, 0, 2);
-        lauxh_pushint2tbl(L, "port", ntohs(addr->sin_port));
-        lauxh_pushstr2tbl(L, "ip",
-                          inet_ntop(info->ai.ai_family,
-                                    (const void *)&addr->sin_addr, buf,
+        lua_pushstring(L, inet_ntop(AF_INET, (const void *)&addr->sin_addr, buf,
                                     INET6_ADDRSTRLEN));
-        return 1;
-    }
+    } break;
 
     case AF_INET6: {
         struct sockaddr_in6 *addr = (struct sockaddr_in6 *)info->ai.ai_addr;
-
-        lua_createtable(L, 0, 2);
-        lauxh_pushint2tbl(L, "port", ntohs(addr->sin6_port));
-        lauxh_pushstr2tbl(L, "ip",
-                          inet_ntop(info->ai.ai_family,
-                                    (const void *)&addr->sin6_addr, buf,
-                                    INET6_ADDRSTRLEN));
-        return 1;
-    }
+        lua_pushstring(L, inet_ntop(AF_INET6, (const void *)&addr->sin6_addr,
+                                    buf, INET6_ADDRSTRLEN));
+    } break;
 
     case AF_UNIX: {
         struct sockaddr_un *addr = (struct sockaddr_un *)info->ai.ai_addr;
-
-        lua_createtable(L, 0, 1);
-        lauxh_pushstr2tbl(L, "path", addr->sun_path);
-        return 1;
-    }
+        lua_pushstring(L, addr->sun_path);
+    } break;
 
     // unsupported family
     default:
-        return 0;
+        lua_pushnil(L);
     }
+
+    return 1;
+}
+
+static int port_lua(lua_State *L)
+{
+    lls_addrinfo_t *info = lauxh_checkudata(L, 1, ADDRINFO_MT);
+
+    switch (info->ai.ai_family) {
+    case AF_INET: {
+        struct sockaddr_in *addr = (struct sockaddr_in *)info->ai.ai_addr;
+        lua_pushinteger(L, ntohs(addr->sin_port));
+    } break;
+
+    case AF_INET6: {
+        struct sockaddr_in6 *addr = (struct sockaddr_in6 *)info->ai.ai_addr;
+        lua_pushinteger(L, ntohs(addr->sin6_port));
+    } break;
+
+    // unsupported family
+    default:
+        lua_pushnil(L);
+    }
+
+    return 1;
 }
 
 static int canonname_lua(lua_State *L)
@@ -150,6 +160,150 @@ static int gc_lua(lua_State *L)
     return 0;
 }
 
+static int getaddrinfo_lua(lua_State *L)
+{
+    const char *node      = lauxh_optstring(L, 1, NULL);
+    const char *service   = lauxh_optstring(L, 2, NULL);
+    int family            = (int)lauxh_optinteger(L, 3, AF_UNSPEC);
+    // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
+    int socktype          = (int)lauxh_optinteger(L, 4, 0);
+    // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
+    int protocol          = (int)lauxh_optinteger(L, 5, 0);
+    // AI_PASSIVE:bind socket if node is null
+    int flags             = lauxh_optflags(L, 6);
+    struct addrinfo *list = NULL;
+    struct addrinfo *ptr  = NULL;
+    int idx               = 1;
+    int rc = lls_getaddrinfo(&list, node, service, family, socktype, protocol,
+                             flags);
+
+    if (rc != 0) {
+        lua_pushnil(L);
+        lua_pushstring(L, gai_strerror(rc));
+        return 2;
+    }
+
+    // create address table
+    lua_newtable(L);
+    ptr = list;
+    while (ptr) {
+        lls_addrinfo_alloc(L, ptr);
+        lua_rawseti(L, -2, idx++);
+        // check next
+        ptr = ptr->ai_next;
+    }
+
+    // remove address-list
+    freeaddrinfo(list);
+
+    return 1;
+}
+
+static int inet6_lua(lua_State *L)
+{
+    const char *addr          = lauxh_optstring(L, 1, NULL);
+    uint16_t port             = lauxh_optuint16(L, 2, 0);
+    struct sockaddr_in6 saddr = {.sin6_family = AF_INET6,
+                                 .sin6_port   = htons(port),
+                                 .sin6_addr   = in6addr_any};
+    struct addrinfo ai        = {.ai_family    = AF_INET6,
+                          // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
+                                 .ai_socktype  = (int)lauxh_optinteger(L, 3, 0),
+                          // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
+                                 .ai_protocol  = (int)lauxh_optinteger(L, 4, 0),
+                          // AI_PASSIVE:bind socket if node is null
+                                 .ai_flags     = (int)lauxh_optflags(L, 5),
+                          // initialize
+                                 .ai_addrlen   = sizeof(saddr),
+                                 .ai_addr      = (struct sockaddr *)&saddr,
+                                 .ai_canonname = NULL,
+                                 .ai_next      = NULL};
+
+    if (addr) {
+        switch (inet_pton(AF_INET6, addr, (void *)&saddr.sin6_addr)) {
+        case -1:
+            lua_pushnil(L);
+            lua_pushstring(L, strerror(errno));
+            return 2;
+        case 0:
+            lua_pushnil(L);
+            lua_pushfstring(L, "addr cannot be parsed as ipv6 address");
+            return 2;
+        }
+    }
+    lls_addrinfo_alloc(L, &ai);
+
+    return 1;
+}
+
+static int inet_lua(lua_State *L)
+{
+    const char *addr         = lauxh_optstring(L, 1, NULL);
+    uint16_t port            = lauxh_optuint16(L, 2, 0);
+    struct sockaddr_in saddr = {.sin_family = AF_INET,
+                                .sin_port   = htons(port),
+                                .sin_addr   = {.s_addr = INADDR_ANY}};
+    struct addrinfo ai       = {.ai_family    = AF_INET,
+                          // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
+                                .ai_socktype  = (int)lauxh_optinteger(L, 3, 0),
+                          // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
+                                .ai_protocol  = (int)lauxh_optinteger(L, 4, 0),
+                          // AI_PASSIVE:bind socket if node is null
+                                .ai_flags     = (int)lauxh_optflags(L, 5),
+                          // initialize
+                                .ai_addrlen   = sizeof(saddr),
+                                .ai_addr      = (struct sockaddr *)&saddr,
+                                .ai_canonname = NULL,
+                                .ai_next      = NULL};
+
+    if (addr) {
+        switch (inet_pton(AF_INET, addr, (void *)&saddr.sin_addr)) {
+        case 0:
+            lua_pushnil(L);
+            lua_pushstring(L, strerror(errno));
+            return 2;
+        case -1:
+            lua_pushnil(L);
+            lua_pushfstring(L, "addr cannot be parsed as ipv4 address");
+            return 2;
+        }
+    }
+    lls_addrinfo_alloc(L, &ai);
+
+    return 1;
+}
+
+static int unix_lua(lua_State *L)
+{
+    size_t len               = 0;
+    const char *pathname     = lauxh_checklstring(L, 1, &len);
+    struct sockaddr_un saddr = {.sun_family = AF_UNIX, .sun_path = {0}};
+    struct addrinfo ai       = {.ai_family    = AF_UNIX,
+                          // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
+                                .ai_socktype  = (int)lauxh_optinteger(L, 2, 0),
+                          // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
+                                .ai_protocol  = (int)lauxh_optinteger(L, 3, 0),
+                          // AI_PASSIVE:bind socket if node is null
+                                .ai_flags     = (int)lauxh_optflags(L, 4),
+                          // initialize
+                                .ai_addrlen   = sizeof(saddr),
+                                .ai_addr      = (struct sockaddr *)&saddr,
+                                .ai_canonname = NULL,
+                                .ai_next      = NULL};
+
+    // length too large
+    if (len >= UNIXPATH_MAX) {
+        lua_pushnil(L);
+        lua_pushstring(L, strerror(ENAMETOOLONG));
+        return 2;
+    }
+    memcpy((void *)&saddr.sun_path, (void *)pathname, len);
+    saddr.sun_path[len] = 0;
+    lls_addrinfo_alloc(L, &ai);
+
+    return 1;
+}
+
 LUALIB_API int luaopen_llsocket_addrinfo(lua_State *L)
 {
     // create metatable
@@ -164,6 +318,7 @@ LUALIB_API int luaopen_llsocket_addrinfo(lua_State *L)
             {"socktype",    socktype_lua   },
             {"protocol",    protocol_lua   },
             {"canonname",   canonname_lua  },
+            {"port",        port_lua       },
             {"addr",        addr_lua       },
             {"getnameinfo", getnameinfo_lua},
             {NULL,          NULL           }
@@ -187,5 +342,12 @@ LUALIB_API int luaopen_llsocket_addrinfo(lua_State *L)
     }
     lua_pop(L, 1);
 
-    return 0;
+    // create table
+    lua_newtable(L);
+    lauxh_pushfn2tbl(L, "unix", unix_lua);
+    lauxh_pushfn2tbl(L, "inet", inet_lua);
+    lauxh_pushfn2tbl(L, "inet6", inet6_lua);
+    lauxh_pushfn2tbl(L, "getaddrinfo", getaddrinfo_lua);
+
+    return 1;
 }

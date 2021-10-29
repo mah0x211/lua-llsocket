@@ -35,7 +35,7 @@ $ luarocks install llsocket
 `llsocket.device` module has the following functions.
 
 
-### tbl, err = inet.getifaddrs()
+### tbl, err = device.getifaddrs()
 
 get interface addresses.
 
@@ -45,12 +45,66 @@ get interface addresses.
 - `err:string`: error string.
 
 
-## llsocket.inet Module
 
-`llsocket.inet` module has the following functions.
+## llsocket.addrinfo Module
+
+`llsocket.addrinfo` module has the following functions.
 
 
-### arr, err = inet.getaddrinfo( host [, port [, family [, socktype [, protocol [, flag, ...]]]]] )
+### ai, err = addrinfo.unix( pathname [, socktype [, protocol [, flag, ...]]] )
+
+create a new addrinfo instance of `AF_UNIX`.
+
+**Parameters**
+
+- `pathname:string`: pathname of unix domain socket.
+- `socktype:number` [SOCK_* types](#sock_-types) constants.
+- `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
+- `flags:...`: [AI_* flags](#ai-flags) constants.
+
+**Returns**
+
+- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+- `err:string`: error string.
+
+
+### ai, err = addrinfo.inet( [addr [, port [, socktype [, protocol [, flag, ...]]]]] )
+
+create a new addrinfo instance of `AF_INET`.
+
+**Parameters**
+
+- `addr:string`: ipv4 host addresss.
+- `port:number`: port number.
+- `socktype:number` [SOCK_* types](#sock_-types) constants.
+- `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
+- `flags:...`: [AI_* flags](#ai_-flags) constants.
+
+**Returns**
+
+- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+- `err:string`: error string.
+
+
+### ai, err = addrinfo.inet6( [addr [, port [, socktype [, protocol [, flag, ...]]]]] )
+
+create a new addrinfo instance of `AF_INET6`.
+
+**Parameters**
+
+- `addr:string`: ipv6 host addresss.
+- `port:number`: port number.
+- `socktype:number` [SOCK_* types](#sock_-types) constants.
+- `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
+- `flags:...`: [AI_* flags](#ai_-flags) constants.
+
+**Returns**
+
+- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+- `err:string`: error string.
+
+
+### arr, err = addrinfo.getaddrinfo( [host [, port [, family [, socktype [, protocol [, flag, ...]]]]]] )
 
 get a list of address info of tcp stream socket.
 
@@ -66,29 +120,6 @@ get a list of address info of tcp stream socket.
 **Returns**
 
 - `arr:table`: list of [addrinfo](#llsocketaddrinfo-instance-methods).
-- `err:string`: error string.
-
-
-## llsocket.unix Module
-
-`llsocket.unix` module has the following functions.
-
-
-### ai, err = unix.getaddrinfo( path [, socktype [, protocol [, flag, ...]]] )
-
-get an AF_UNIX address info.
-
-**Parameters**
-
-- `host:string`: host string.
-- `port:string`: either a decimal port number or a service name listed in `services(5)`.
-- `socktype:number` [SOCK_* types](#sock_-types) constants.
-- `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
-- `flags:...`: [AI_* flags](#ai-flags) constants.
-
-**Returns**
-
-- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 - `err:string`: error string.
 
 
@@ -148,30 +179,23 @@ get a canonical name for service location.
 - `name:string`: canonical name for service location.
 
 
-### addr = ai:addr()
+### port = ai:port()
 
-get the address info as a table.
+get a port number.
 
 **Returns**
 
-- `addr:table`: canonical name for service location.
-    - `AF_INET|AF_INET6` family
-        ```
-        {
-            ip = '<string>',
-            port = <integer>
-        }
-        ```
-    - `AF_UNIX` family
-        ```
-        {
-            path = '<string>',
-        }
-        ```
-    - otherwise
-        ```
-        nil
-        ```
+- `port:number`: port number.
+
+
+### addr = ai:addr()
+
+get an address.
+
+**Returns**
+
+- `addr:string`: address or pathname string.
+
 
 
 ## llsocket.cmsghdr Module
