@@ -236,28 +236,12 @@ get a port number.
 
 ### addr = ai:addr()
 
-get the address info as a table.
+get an address.
 
 **Returns**
 
-- `addr:table`: canonical name for service location.
-    - `AF_INET|AF_INET6` family
-        ```
-        {
-            ip = '<string>',
-            port = <integer>
-        }
-        ```
-    - `AF_UNIX` family
-        ```
-        {
-            path = '<string>',
-        }
-        ```
-    - otherwise
-        ```
-        nil
-        ```
+- `addr:string`: address or pathname string.
+
 
 
 ## llsocket.cmsghdr Module

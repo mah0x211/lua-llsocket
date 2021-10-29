@@ -59,40 +59,27 @@ static int addr_lua(lua_State *L)
     switch (info->ai.ai_family) {
     case AF_INET: {
         struct sockaddr_in *addr = (struct sockaddr_in *)info->ai.ai_addr;
-
-        lua_createtable(L, 0, 2);
-        lauxh_pushint2tbl(L, "port", ntohs(addr->sin_port));
-        lauxh_pushstr2tbl(L, "ip",
-                          inet_ntop(info->ai.ai_family,
-                                    (const void *)&addr->sin_addr, buf,
+        lua_pushstring(L, inet_ntop(AF_INET, (const void *)&addr->sin_addr, buf,
                                     INET6_ADDRSTRLEN));
-        return 1;
-    }
+    } break;
 
     case AF_INET6: {
         struct sockaddr_in6 *addr = (struct sockaddr_in6 *)info->ai.ai_addr;
-
-        lua_createtable(L, 0, 2);
-        lauxh_pushint2tbl(L, "port", ntohs(addr->sin6_port));
-        lauxh_pushstr2tbl(L, "ip",
-                          inet_ntop(info->ai.ai_family,
-                                    (const void *)&addr->sin6_addr, buf,
-                                    INET6_ADDRSTRLEN));
-        return 1;
-    }
+        lua_pushstring(L, inet_ntop(AF_INET6, (const void *)&addr->sin6_addr,
+                                    buf, INET6_ADDRSTRLEN));
+    } break;
 
     case AF_UNIX: {
         struct sockaddr_un *addr = (struct sockaddr_un *)info->ai.ai_addr;
-
-        lua_createtable(L, 0, 1);
-        lauxh_pushstr2tbl(L, "path", addr->sun_path);
-        return 1;
-    }
+        lua_pushstring(L, addr->sun_path);
+    } break;
 
     // unsupported family
     default:
-        return 0;
+        lua_pushnil(L);
     }
+
+    return 1;
 }
 
 static int port_lua(lua_State *L)
