@@ -114,6 +114,24 @@ create a new addrinfo instance of `AF_UNIX`.
 - `err:string`: error string.
 
 
+### ai, err = addrinfo.inet( [addr [, port [, socktype [, protocol [, flag, ...]]]]] )
+
+create a new addrinfo instance of `AF_INET`.
+
+**Parameters**
+
+- `addr:string`: ipv4 host addresss.
+- `port:number`: port number.
+- `socktype:number` [SOCK_* types](#sock_-types) constants.
+- `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
+- `flags:...`: [AI_* flags](#ai_-flags) constants.
+
+**Returns**
+
+- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+- `err:string`: error string.
+
+
 ## llsocket.addrinfo Instance Methods
 
 `llsocket.addrinfo` (address info) instance has following methods.
