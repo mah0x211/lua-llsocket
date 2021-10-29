@@ -35,7 +35,7 @@ $ luarocks install llsocket
 `llsocket.device` module has the following functions.
 
 
-### tbl, err = inet.getifaddrs()
+### tbl, err = device.getifaddrs()
 
 get interface addresses.
 
@@ -44,52 +44,6 @@ get interface addresses.
 - `tbl:table`: key-value pairs of interface addresses.
 - `err:string`: error string.
 
-
-## llsocket.inet Module
-
-`llsocket.inet` module has the following functions.
-
-
-### arr, err = inet.getaddrinfo( host [, port [, family [, socktype [, protocol [, flag, ...]]]]] )
-
-get a list of address info of tcp stream socket.
-
-**Parameters**
-
-- `host:string`: host string.
-- `port:string`: either a decimal port number or a service name listed in `services(5)`.
-- `family:number`: [AF_* types](#af_-types) constants.
-- `socktype:number` [SOCK_* types](#sock_-types) constants.
-- `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
-- `flags:...`: [AI_* flags](#ai_-flags) constants.
-
-**Returns**
-
-- `arr:table`: list of [addrinfo](#llsocketaddrinfo-instance-methods).
-- `err:string`: error string.
-
-
-## llsocket.unix Module
-
-`llsocket.unix` module has the following functions.
-
-
-### ai, err = unix.getaddrinfo( path [, socktype [, protocol [, flag, ...]]] )
-
-get an AF_UNIX address info.
-
-**Parameters**
-
-- `host:string`: host string.
-- `port:string`: either a decimal port number or a service name listed in `services(5)`.
-- `socktype:number` [SOCK_* types](#sock_-types) constants.
-- `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
-- `flags:...`: [AI_* flags](#ai-flags) constants.
-
-**Returns**
-
-- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
-- `err:string`: error string.
 
 
 ## llsocket.addrinfo Module

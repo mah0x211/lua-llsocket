@@ -53,14 +53,6 @@ LUALIB_API int luaopen_llsocket(lua_State *L)
     luaopen_llsocket_msghdr(L);
     lua_rawset(L, -3);
 
-    lua_pushstring(L, "inet");
-    luaopen_llsocket_inet(L);
-    lua_rawset(L, -3);
-
-    lua_pushstring(L, "unix");
-    luaopen_llsocket_unix(L);
-    lua_rawset(L, -3);
-
     lua_pushstring(L, "device");
     luaopen_llsocket_device(L);
     lua_rawset(L, -3);
