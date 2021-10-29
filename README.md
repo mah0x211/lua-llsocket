@@ -150,6 +150,25 @@ create a new addrinfo instance of `AF_INET6`.
 - `err:string`: error string.
 
 
+### arr, err = addrinfo.getaddrinfo( [host [, port [, family [, socktype [, protocol [, flag, ...]]]]]] )
+
+get a list of address info of tcp stream socket.
+
+**Parameters**
+
+- `host:string`: host string.
+- `port:string`: either a decimal port number or a service name listed in `services(5)`.
+- `family:number`: [AF_* types](#af_-types) constants.
+- `socktype:number` [SOCK_* types](#sock_-types) constants.
+- `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
+- `flags:...`: [AI_* flags](#ai_-flags) constants.
+
+**Returns**
+
+- `arr:table`: list of [addrinfo](#llsocketaddrinfo-instance-methods).
+- `err:string`: error string.
+
+
 ## llsocket.addrinfo Instance Methods
 
 `llsocket.addrinfo` (address info) instance has following methods.
