@@ -863,14 +863,8 @@ static int close_lua(lua_State *L)
 
 static int listen_lua(lua_State *L)
 {
-    lls_socket_t *s     = lauxh_checkudata(L, 1, SOCKET_MT);
-    // default backlog size
-    lua_Integer backlog = lauxh_optinteger(L, 2, SOMAXCONN);
-
-    // check args
-    if (backlog < 1 || backlog > INT_MAX) {
-        return lauxh_argerror(L, 2, "range must be 1 to %d", INT_MAX);
-    }
+    lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
+    int backlog     = (int)lauxh_optinteger(L, 2, SOMAXCONN);
 
     // listen
     if (listen(s->fd, (int)backlog) == 0) {
