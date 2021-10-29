@@ -30,11 +30,13 @@
 LUALIB_API int luaopen_llsocket(lua_State *L)
 {
     // register submodule
-    luaopen_llsocket_addrinfo(L);
-
-    // create table
     lua_newtable(L);
+
     // add submodules
+    lua_pushstring(L, "addrinfo");
+    luaopen_llsocket_addrinfo(L);
+    lua_rawset(L, -3);
+
     lua_pushstring(L, "socket");
     luaopen_llsocket_socket(L);
     lua_rawset(L, -3);

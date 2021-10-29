@@ -92,6 +92,28 @@ get an AF_UNIX address info.
 - `err:string`: error string.
 
 
+## llsocket.addrinfo Module
+
+`llsocket.addrinfo` module has the following functions.
+
+
+### ai, err = addrinfo.unix( pathname [, socktype [, protocol [, flag, ...]]] )
+
+create a new addrinfo instance of `AF_UNIX`.
+
+**Parameters**
+
+- `pathname:string`: pathname of unix domain socket.
+- `socktype:number` [SOCK_* types](#sock_-types) constants.
+- `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
+- `flags:...`: [AI_* flags](#ai-flags) constants.
+
+**Returns**
+
+- `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+- `err:string`: error string.
+
+
 ## llsocket.addrinfo Instance Methods
 
 `llsocket.addrinfo` (address info) instance has following methods.

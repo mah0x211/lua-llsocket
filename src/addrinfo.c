@@ -150,6 +150,37 @@ static int gc_lua(lua_State *L)
     return 0;
 }
 
+static int unix_lua(lua_State *L)
+{
+    size_t len               = 0;
+    const char *pathname     = lauxh_checklstring(L, 1, &len);
+    struct sockaddr_un saddr = {.sun_family = AF_UNIX, .sun_path = {0}};
+    struct addrinfo ai       = {.ai_family    = AF_UNIX,
+                          // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
+                                .ai_socktype  = (int)lauxh_optinteger(L, 2, 0),
+                          // IPPROTO_TCP:tcp | IPPROTO_UDP:udp | 0:automatic
+                                .ai_protocol  = (int)lauxh_optinteger(L, 3, 0),
+                          // AI_PASSIVE:bind socket if node is null
+                                .ai_flags     = (int)lauxh_optflags(L, 4),
+                          // initialize
+                                .ai_addrlen   = sizeof(saddr),
+                                .ai_addr      = (struct sockaddr *)&saddr,
+                                .ai_canonname = NULL,
+                                .ai_next      = NULL};
+
+    // length too large
+    if (len >= UNIXPATH_MAX) {
+        lua_pushnil(L);
+        lua_pushstring(L, strerror(ENAMETOOLONG));
+        return 2;
+    }
+    memcpy((void *)&saddr.sun_path, (void *)pathname, len);
+    saddr.sun_path[len] = 0;
+    lls_addrinfo_alloc(L, &ai);
+
+    return 1;
+}
+
 LUALIB_API int luaopen_llsocket_addrinfo(lua_State *L)
 {
     // create metatable
@@ -187,5 +218,9 @@ LUALIB_API int luaopen_llsocket_addrinfo(lua_State *L)
     }
     lua_pop(L, 1);
 
-    return 0;
+    // create table
+    lua_newtable(L);
+    lauxh_pushfn2tbl(L, "unix", unix_lua);
+
+    return 1;
 }
