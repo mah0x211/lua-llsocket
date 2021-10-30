@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 #
-AC_PREREQ([2.71])
+AC_PREREQ([2.69])
 AC_INIT([llsocket],[0.1.0])
 AM_INIT_AUTOMAKE([foreign no-dist no-installinfo no-installman -Wall])
 AC_CONFIG_HEADERS([src/config.h])
@@ -70,7 +70,6 @@ AC_CHECK_TYPES([
     struct sockaddr,
     struct sockaddr_in,
     struct sockaddr_un,
-    struct sockaddr_dl,
     struct sockaddr_storage,
     struct addrinfo,
     struct ifaddrs,
@@ -93,7 +92,6 @@ AC_CHECK_TYPES([
     #include <netdb.h>
     #include <sys/socket.h>
     #include <sys/un.h>
-    #include <net/if_dl.h>
     #include <netinet/in.h>
     #include <netinet/tcp.h>
     #include <arpa/inet.h>
