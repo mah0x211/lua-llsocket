@@ -241,38 +241,36 @@ static int mcastif_lua(lua_State *L)
 
 static inline int mcast4group_lua(lua_State *L, lls_socket_t *s, int opt)
 {
-    struct ip_mreq mr  = {.imr_multiaddr = {INADDR_ANY}, .imr_interface = {0}};
-    int rc             = lls_check4inaddr(L, 2, s->socktype, &mr.imr_multiaddr);
-    const char *ifname = NULL;
+    lls_addrinfo_t *grp = lauxh_checkudata(L, 2, ADDRINFO_MT);
+    const char *ifname  = lauxh_optstring(L, 3, NULL);
 
-    if (rc != 0) {
-        lua_pushboolean(L, 0);
-        lua_pushstring(L, gai_strerror(rc));
-        return 2;
-    }
-
-    ifname = lauxh_optstring(L, 3, NULL);
-    if (ifname) {
-        struct ifreq ifr;
-
-        strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-        // get interface address
-        if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
-            goto FAILED;
-        }
-        // set in_addr
-        mr.imr_interface = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
+    if (grp->ai.ai_family != AF_INET) {
+        errno = EINVAL;
     } else {
-        mr.imr_interface.s_addr = INADDR_ANY;
+        struct ip_mreq mr = {
+            .imr_multiaddr = ((struct sockaddr_in *)grp->ai.ai_addr)->sin_addr,
+            .imr_interface = {INADDR_ANY}};
+
+        if (ifname) {
+            struct ifreq ifr;
+
+            strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+            // get interface address
+            if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
+                goto FAIL;
+            }
+            // set in_addr
+            mr.imr_interface = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
+        }
+
+        if (setsockopt(s->fd, IPPROTO_IP, opt, (void *)&mr,
+                       sizeof(struct ip_mreq)) == 0) {
+            lua_pushboolean(L, 1);
+            return 1;
+        }
     }
 
-    if (setsockopt(s->fd, IPPROTO_IP, opt, (void *)&mr,
-                   sizeof(struct ip_mreq)) == 0) {
-        lua_pushboolean(L, 1);
-        return 1;
-    }
-
-FAILED:
+FAIL:
     // got error
     lua_pushboolean(L, 0);
     lua_pushstring(L, strerror(errno));
@@ -282,23 +280,23 @@ FAILED:
 
 static inline int mcast6group_lua(lua_State *L, lls_socket_t *s, int opt)
 {
-    struct ipv6_mreq mr = {.ipv6mr_multiaddr = IN6ADDR_ANY_INIT,
-                           .ipv6mr_interface = 0};
-    int rc = lls_check6inaddr(L, 2, s->socktype, &mr.ipv6mr_multiaddr);
-    const char *ifname = NULL;
+    lls_addrinfo_t *grp = lauxh_checkudata(L, 2, ADDRINFO_MT);
+    const char *ifname  = lauxh_optstring(L, 3, NULL);
 
-    if (rc != 0) {
-        lua_pushboolean(L, 0);
-        lua_pushstring(L, gai_strerror(rc));
-        return 2;
-    }
+    if (grp->ai.ai_family != AF_INET6) {
+        errno = EINVAL;
+    } else {
+        struct ipv6_mreq mr = {
+            .ipv6mr_multiaddr =
+                ((struct sockaddr_in6 *)grp->ai.ai_addr)->sin6_addr,
+            .ipv6mr_interface = 0};
 
-    ifname = lauxh_optstring(L, 3, NULL);
-    if ((!ifname || (mr.ipv6mr_interface = if_nametoindex(ifname)) != 0) &&
-        setsockopt(s->fd, IPPROTO_IPV6, opt, (void *)&mr,
-                   sizeof(struct ipv6_mreq)) == 0) {
-        lua_pushboolean(L, 1);
-        return 1;
+        if ((!ifname || (mr.ipv6mr_interface = if_nametoindex(ifname)) != 0) &&
+            setsockopt(s->fd, IPPROTO_IPV6, opt, (void *)&mr,
+                       sizeof(struct ipv6_mreq)) == 0) {
+            lua_pushboolean(L, 1);
+            return 1;
+        }
     }
 
     // got error
@@ -357,37 +355,29 @@ static int mcastleave_lua(lua_State *L)
 static inline int mcastsrcgroup_lua(lua_State *L, lls_socket_t *s, int proto,
                                     int opt)
 {
-    struct group_source_req gsr = {0};
-    int rc = lls_checksockaddr(L, 2, s->family, s->socktype, &gsr.gsr_group);
-    const char *ifname = NULL;
+    lls_addrinfo_t *grp = lauxh_checkudata(L, 2, ADDRINFO_MT);
+    lls_addrinfo_t *src = lauxh_checkudata(L, 3, ADDRINFO_MT);
+    const char *ifname  = lauxh_optstring(L, 4, NULL);
 
-    // check arguments
-    if (rc != 0) {
-        lua_pushboolean(L, 0);
-        lua_pushstring(L, gai_strerror(rc));
-        return 2;
+    if (grp->ai.ai_family != AF_INET6 || src->ai.ai_family != AF_INET6) {
+        errno = EINVAL;
+    } else {
+        struct group_source_req gsr;
+
+        memset(&gsr, 0, sizeof(gsr));
+        memcpy(&gsr.gsr_group, grp->ai.ai_addr, grp->ai.ai_addrlen);
+        memcpy(&gsr.gsr_source, src->ai.ai_addr, src->ai.ai_addrlen);
+        if (ifname && (gsr.gsr_interface = if_nametoindex(ifname)) == 0) {
+            goto FAIL;
+        }
+
+        if (setsockopt(s->fd, proto, opt, (void *)&gsr, sizeof(gsr)) == 0) {
+            lua_pushboolean(L, 1);
+            return 1;
+        }
     }
 
-    rc = lls_checksockaddr(L, 3, s->family, s->socktype, &gsr.gsr_source);
-    if (rc != 0) {
-        lua_pushboolean(L, 0);
-        lua_pushstring(L, gai_strerror(rc));
-        return 2;
-    }
-
-    ifname = lauxh_optstring(L, 4, NULL);
-    if (ifname && (gsr.gsr_interface = if_nametoindex(ifname)) == 0) {
-        lua_pushboolean(L, 0);
-        lua_pushstring(L, gai_strerror(rc));
-        return 2;
-    }
-
-    if (setsockopt(s->fd, proto, opt, (void *)&gsr,
-                   sizeof(struct group_source_req)) == 0) {
-        lua_pushboolean(L, 1);
-        return 1;
-    }
-
+FAIL:
     // got error
     lua_pushboolean(L, 0);
     lua_pushstring(L, strerror(errno));
@@ -397,47 +387,38 @@ static inline int mcastsrcgroup_lua(lua_State *L, lls_socket_t *s, int proto,
 
 static inline int mcast4srcgroup_lua(lua_State *L, lls_socket_t *s, int opt)
 {
-    struct ip_mreq_source mr = {
-        .imr_multiaddr = {0}, .imr_sourceaddr = {0}, .imr_interface = {0}};
-    int rc             = lls_check4inaddr(L, 2, s->socktype, &mr.imr_multiaddr);
-    const char *ifname = NULL;
+    lls_addrinfo_t *grp = lauxh_checkudata(L, 2, ADDRINFO_MT);
+    lls_addrinfo_t *src = lauxh_checkudata(L, 3, ADDRINFO_MT);
+    const char *ifname  = lauxh_optstring(L, 4, NULL);
 
-    // check arguments
-    if (rc != 0) {
-        lua_pushboolean(L, 0);
-        lua_pushstring(L, gai_strerror(rc));
-        return 2;
-    }
-
-    rc = lls_check4inaddr(L, 3, s->socktype, &mr.imr_sourceaddr);
-    if (rc != 0) {
-        lua_pushboolean(L, 0);
-        lua_pushstring(L, gai_strerror(rc));
-        return 2;
-    }
-
-    ifname = lauxh_optstring(L, 4, NULL);
-    if (ifname) {
-        struct ifreq ifr;
-
-        strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-        // get interface address
-        if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
-            goto FAILED;
-        }
-        // set in_addr
-        mr.imr_interface = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
+    if (grp->ai.ai_family != AF_INET || src->ai.ai_family != AF_INET) {
+        errno = EINVAL;
     } else {
-        mr.imr_interface.s_addr = INADDR_ANY;
+        struct ip_mreq_source mr = {
+            .imr_multiaddr  = ((struct sockaddr_in *)grp->ai.ai_addr)->sin_addr,
+            .imr_sourceaddr = ((struct sockaddr_in *)src->ai.ai_addr)->sin_addr,
+            .imr_interface  = {INADDR_ANY}};
+
+        if (ifname) {
+            struct ifreq ifr;
+
+            strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+            // get interface address
+            if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
+                goto FAIL;
+            }
+            // set in_addr
+            mr.imr_interface = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
+        }
+
+        if (setsockopt(s->fd, IPPROTO_IP, opt, (void *)&mr,
+                       sizeof(struct ip_mreq_source)) == 0) {
+            lua_pushboolean(L, 1);
+            return 1;
+        }
     }
 
-    if (setsockopt(s->fd, IPPROTO_IP, opt, (void *)&mr,
-                   sizeof(struct ip_mreq_source)) == 0) {
-        lua_pushboolean(L, 1);
-        return 1;
-    }
-
-FAILED:
+FAIL:
     // got error
     lua_pushboolean(L, 0);
     lua_pushstring(L, strerror(errno));
@@ -1946,13 +1927,13 @@ static int pair_lua(lua_State *L)
 
             close(fds[0]);
             close(fds[1]);
-            goto FAILED;
+            goto FAIL;
         }
 
         return 1;
     }
 
-FAILED:
+FAIL:
     // got error
     lua_pushnil(L);
     lua_pushstring(L, strerror(errno));
