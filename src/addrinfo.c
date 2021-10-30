@@ -219,6 +219,10 @@ static int inet6_lua(lua_State *L)
                                  .ai_canonname = NULL,
                                  .ai_next      = NULL};
 
+#ifdef HAVE_SOCKADDR_SA_LEN
+    saddr.sin6_len = sizeof(saddr);
+#endif
+
     if (addr) {
         switch (inet_pton(AF_INET6, addr, (void *)&saddr.sin6_addr)) {
         case -1:
@@ -255,6 +259,10 @@ static int inet_lua(lua_State *L)
                                 .ai_addr      = (struct sockaddr *)&saddr,
                                 .ai_canonname = NULL,
                                 .ai_next      = NULL};
+
+#ifdef HAVE_SOCKADDR_SA_LEN
+    saddr.sin_len = sizeof(saddr);
+#endif
 
     if (addr) {
         switch (inet_pton(AF_INET, addr, (void *)&saddr.sin_addr)) {
