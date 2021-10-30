@@ -1,16 +1,16 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 #
-AC_PREREQ(2.61)
-AC_INIT(llsocket, 0.1.0)
+AC_PREREQ([2.71])
+AC_INIT([llsocket],[0.1.0])
 AM_INIT_AUTOMAKE([foreign no-dist no-installinfo no-installman -Wall])
-AC_CONFIG_HEADER([src/config.h])
+AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
 #
 # Checks for programs.
 #
-AC_LANG_C
+AC_LANG([C])
 AC_PROG_CC
 
 #
@@ -27,7 +27,6 @@ AC_SUBST([VARDIR], ["$VARDIR"])
 #
 # checking headers
 #
-AC_HEADER_STDC
 AC_CHECK_HEADERS(
     stdlib.h \
     unistd.h \
@@ -71,6 +70,7 @@ AC_CHECK_TYPES([
     struct sockaddr,
     struct sockaddr_in,
     struct sockaddr_un,
+    struct sockaddr_dl,
     struct sockaddr_storage,
     struct addrinfo,
     struct ifaddrs,
@@ -93,6 +93,7 @@ AC_CHECK_TYPES([
     #include <netdb.h>
     #include <sys/socket.h>
     #include <sys/un.h>
+    #include <net/if_dl.h>
     #include <netinet/in.h>
     #include <netinet/tcp.h>
     #include <arpa/inet.h>
@@ -100,10 +101,19 @@ AC_CHECK_TYPES([
     #include <sys/ioctl.h>
     #include <ifaddrs.h>]
 )
-AC_CHECK_TYPES([ \
-struct sockaddr_dl],,,
-    [#include <sys/socket.h>
-     #include <netinet/in.h>]
+
+
+#
+# check data structure
+#
+# check for struct sockaddr.sa_len member
+AC_MSG_CHECKING(for struct sockaddr.sa_len)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
+#include <sys/socket.h>]], [[struct sockaddr x;
+x.sa_len = 0;]])],
+  [AC_MSG_RESULT(yes)
+   AC_DEFINE(HAVE_SOCKADDR_SA_LEN, 1, [Define to 1 if the `sockaddr' type has the `.sa_len' member])],
+  [AC_MSG_RESULT(no)]
 )
 
 
@@ -111,10 +121,6 @@ struct sockaddr_dl],,,
 # checking functions
 #
 AC_CHECK_FUNCS([ \
-    malloc \
-    calloc \
-    realloc \
-    free \
     memset \
     memmove \
     memcpy \
