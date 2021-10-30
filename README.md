@@ -1208,7 +1208,7 @@ set the `IP_ADD_MEMBERSHIP` or `IPV6_JOIN_GROUP` (if IPv6) value.
 
 **Parameters**
 
-- `mcaddr:string`: multicast group address.
+- `mcaddr:addrinfo`: multicast group address.
 - `ifname:string`: interface name.
 
 **Returns**
@@ -1223,7 +1223,7 @@ set the `IP_DROP_MEMBERSHIP` or `IPV6_LEAVE_GROUP` (if IPv6) value.
 
 **Parameters**
 
-- `mcaddr:string`: multicast group address.
+- `mcaddr:addrinfo`: multicast group address.
 - `ifname:string`: interface name.
 
 **Returns**
@@ -1238,8 +1238,8 @@ set the `IP_ADD_SOURCE_MEMBERSHIP` or `MCAST_JOIN_SOURCE_GROUP` (if IPv6) value.
 
 **Parameters**
 
-- `mcaddr:string`: multicast group address.
-- `srcaddr:string`: multicast source address.
+- `mcaddr:addrinfo`: multicast group address.
+- `srcaddr:addrinfo`: multicast source address.
 - `ifname:string`: interface name.
 
 **Returns**
@@ -1254,8 +1254,8 @@ set the `IP_DROP_SOURCE_MEMBERSHIP` or `MCAST_LEAVE_SOURCE_GROUP` (if IPv6) valu
 
 **Parameters**
 
-- `mcaddr:string`: multicast group address.
-- `srcaddr:string`: multicast source address.
+- `mcaddr:addrinfo`: multicast group address.
+- `srcaddr:addrinfo`: multicast source address.
 - `ifname:string`: interface name.
 
 **Returns**
@@ -1270,8 +1270,8 @@ set the `IP_BLOCK_SOURCE` or `MCAST_BLOCK_SOURCE` (if IPv6) value.
 
 **Parameters**
 
-- `mcaddr:string`: multicast group address.
-- `srcaddr:string`: multicast source address.
+- `mcaddr:addrinfo`: multicast group address.
+- `srcaddr:addrinfo`: multicast source address.
 - `ifname:string`: interface name.
 
 **Returns**
@@ -1286,8 +1286,8 @@ set the `IP_UNBLOCK_SOURCE` or `MCAST_UNBLOCK_SOURCE` (if IPv6) value.
 
 **Parameters**
 
-- `mcaddr:string`: multicast group address.
-- `srcaddr:string`: multicast source address.
+- `mcaddr:addrinfo`: multicast group address.
+- `srcaddr:addrinfo`: multicast source address.
 - `ifname:string`: interface name.
 
 **Returns**
