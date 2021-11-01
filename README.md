@@ -538,7 +538,7 @@ initiate a new connection.
 
 - `ok:boolean`: `true` on success.
 - `err:string`: error string.
-- `again:boolean`: `true` if errno is `EINPROGRESS`.
+- `again:boolean`: `true` if errno is `EINPROGRESS` or `ETIMEDOUT`.
 
 
 ### ok, err = sock:shutdown( [flag] )
@@ -816,13 +816,14 @@ determine whether socket is at out-of-band mark.
 - `err:string`: error string.
 
 
-### ai = sock:getsockname()
+### ai, err = sock:getsockname()
 
 get socket name.
 
 **Returns**
 
 - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
+- `err:string`: error string.
 
 
 ### ai, err = sock:getpeername()
@@ -870,13 +871,13 @@ get pending socket error status and clear it.
 - `err:string`: error string.
 
 
-### bool, err = sock:acceptconn()
+### enabled, err = sock:acceptconn()
 
 determine whether the `SO_ACCEPTCONN` flag enabled.
 
 **Returns**
 
-- `bool:boolean`: the state of the `SO_ACCEPTCONN` flag.
+- `enabled:boolean`: the state of the `SO_ACCEPTCONN` flag.
 - `err:string`: error string.
 
 
