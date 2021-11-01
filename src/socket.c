@@ -1627,7 +1627,7 @@ static int connect_lua(lua_State *L)
     lua_pushboolean(L, 0);
 
     // nonblocking connect
-    if (errno == EINPROGRESS) {
+    if (errno == EINPROGRESS || errno == ETIMEDOUT) {
         lua_pushnil(L);
         lua_pushboolean(L, 1);
         return 3;
