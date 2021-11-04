@@ -375,15 +375,15 @@ get the flags.
 `llsocket.socket` module has the following functions.
 
 
-### socks, err = socket.pair( socktype [, nonblock [, protocol]] )
+### socks, err = socket.pair( socktype [, protocol [, nonblock]] )
 
 create a pair of connected sockets.
 
 **Parameters**
 
 - `socktype:number` [SOCK_* types](#sock_-types) constants.
-- `nonblock:boolean`: enable the O_NONBLOCK flag.
 - `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
+- `nonblock:boolean`: enable the `O_NONBLOCK` flag.
 
 **Returns**
 
@@ -417,7 +417,7 @@ create an instance of socket
 - `family:number`: [AF_* types](#af_-types) constants.
 - `socktype:number` [SOCK_* types](#sock_-types) constants.
 - `protocol:number`: [IPROTO_* types](#ipproto_-types) constants.
-- `nonblock:boolean`: enable the O_NONBLOCK flag.
+- `nonblock:boolean`: enable the `O_NONBLOCK` flag.
 
 **Returns**
 

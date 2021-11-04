@@ -1903,8 +1903,8 @@ static int new_lua(lua_State *L)
 static int pair_lua(lua_State *L)
 {
     int socktype = (int)lauxh_checkinteger(L, 1);
-    int nonblock = lauxh_optboolean(L, 2, 0);
-    int protocol = (int)lauxh_optinteger(L, 3, 0);
+    int protocol = (int)lauxh_optinteger(L, 2, 0);
+    int nonblock = lauxh_optboolean(L, 3, 0);
     int fds[2];
 
     if (socketpair(AF_UNIX, socktype, protocol, fds) == 0) {
@@ -1913,12 +1913,16 @@ static int pair_lua(lua_State *L)
 
         lua_createtable(L, 2, 0);
         for (; i < 2; i++) {
+            int fd = fds[i];
+            int fl = 0;
+
             // set flags
-            if (fcntl(fds[i], F_SETFD, FD_CLOEXEC) != -1 &&
-                (!nonblock || fcntl(fds[i], F_SETFL, O_NONBLOCK) != -1)) {
+            if (fcntl(fd, F_SETFD, FD_CLOEXEC) != -1 &&
+                (!nonblock || ((fl = fcntl(fd, F_GETFL)) != -1 &&
+                               fcntl(fd, F_SETFL, fl | O_NONBLOCK) != -1))) {
                 s  = lua_newuserdata(L, sizeof(lls_socket_t));
                 *s = (lls_socket_t){
-                    .fd       = fds[i],
+                    .fd       = fd,
                     .family   = AF_UNIX,
                     .socktype = socktype,
                     .protocol = protocol,
