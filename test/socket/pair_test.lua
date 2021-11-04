@@ -16,7 +16,7 @@ function testcase.stream_pair()
     end
 
     -- test that socket flag is nonblocking
-    sp = assert(socket.pair(llsocket.SOCK_STREAM, true))
+    sp = assert(socket.pair(llsocket.SOCK_STREAM, 0, true))
     for _, v in ipairs(sp) do
         assert.is_true(v:nonblock())
     end
@@ -44,16 +44,16 @@ function testcase.stream_pair()
                 1,
                 {},
             },
-            err = '#2 .+ [(]boolean expected, got table',
+            err = '#2 .+ [(]number expected, got table',
         },
         {
             arg = {
                 1,
-                false,
-                true,
+                0,
+                1,
 
             },
-            err = '#3 .+ [(]number expected, got boolean',
+            err = '#3 .+ [(]boolean expected, got number',
         },
     }) do
         err = assert.throws(function()
