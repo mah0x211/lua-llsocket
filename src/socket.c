@@ -1825,7 +1825,9 @@ static int unwrap_lua(lua_State *L)
 
 static int wrap_lua(lua_State *L)
 {
-    int fd = (int)lauxh_checkinteger(L, 1);
+    int fd       = (int)lauxh_checkinteger(L, 1);
+    int nonblock = lauxh_optboolean(L, 2, 0);
+    int fl       = 0;
     struct sockaddr_storage addr;
     socklen_t addrlen = sizeof(struct sockaddr_storage);
     lls_socket_t *s   = NULL;
@@ -1840,7 +1842,9 @@ static int wrap_lua(lua_State *L)
 #if defined(SO_PROTOCOL)
         getsockopt(fd, SOL_SOCKET, SO_PROTOCOL, &s->protocol, &protolen) == 0 &&
 #endif
-        getsockopt(fd, SOL_SOCKET, SO_TYPE, &s->socktype, &typelen) == 0) {
+        getsockopt(fd, SOL_SOCKET, SO_TYPE, &s->socktype, &typelen) == 0 &&
+        (!nonblock || ((fl = fcntl(fd, F_GETFL)) != -1 &&
+                       fcntl(fd, F_SETFL, fl | O_NONBLOCK) != -1))) {
         lauxh_setmetatable(L, SOCKET_MT);
         s->fd     = fd;
         s->family = addr.ss_family;

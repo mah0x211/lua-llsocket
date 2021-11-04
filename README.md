@@ -393,13 +393,14 @@ create a pair of connected sockets.
 - `err:string`: error string.
 
 
-### sock, err = socket.wrap( fd )
+### sock, err = socket.wrap( fd [, nonblock] )
 
 create an instance of socket from specified socket file descriptor.
 
 **Parameters**
 
 - `fd:number`: socket file descriptor.
+- `nonblock:boolean`: enable the `O_NONBLOCK` flag.
 
 **Returns**
 
