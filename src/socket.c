@@ -1547,9 +1547,8 @@ static int recvfrom_lua(lua_State *L)
     // invalid length
     if (len <= 0) {
         lua_pushnil(L);
-        lua_pushnil(L);
         lls_pusherror(L, strerror(EINVAL), "recvfrom_lua", EINVAL);
-        return 3;
+        return 2;
     }
 
     buf = lua_newuserdata(L, len);
