@@ -78,11 +78,18 @@ static int mcastloop_lua(lua_State *L)
         case AF_INET6:
             return lls_sockopt_int_lua(L, s->fd, IPPROTO_IPV6,
                                        IPV6_MULTICAST_LOOP, LUA_TBOOLEAN);
+
+        default:
+            lua_pushnil(L);
+            lls_pusherror(L, strerror(EAFNOSUPPORT), "mcastloop_lua",
+                          EAFNOSUPPORT);
+            return 2;
         }
 
     default:
         lua_pushnil(L);
-        lua_pushstring(L, strerror(EOPNOTSUPP));
+        lls_pusherror(L, strerror(ESOCKTNOSUPPORT), "mcastloop_lua",
+                      ESOCKTNOSUPPORT);
         return 2;
     }
 }
@@ -102,11 +109,17 @@ static int mcastttl_lua(lua_State *L)
         case AF_INET6:
             return lls_sockopt_int_lua(L, s->fd, IPPROTO_IPV6,
                                        IPV6_MULTICAST_HOPS, LUA_TNUMBER);
+        default:
+            lua_pushnil(L);
+            lls_pusherror(L, strerror(EAFNOSUPPORT), "mcastttl_lua",
+                          EAFNOSUPPORT);
+            return 2;
         }
 
     default:
         lua_pushnil(L);
-        lua_pushstring(L, strerror(EOPNOTSUPP));
+        lls_pusherror(L, strerror(ESOCKTNOSUPPORT), "mcastttl_lua",
+                      ESOCKTNOSUPPORT);
         return 2;
     }
 }
@@ -119,30 +132,38 @@ static int mcastif4_lua(lua_State *L, lls_socket_t *s)
     struct ifaddrs *list = NULL;
 
     if (getsockopt(s->fd, IPPROTO_IP, IP_MULTICAST_IF, (void *)&addr,
-                   &addrlen) == 0 &&
-        getifaddrs(&list) == 0) {
-        // push the IP_MULTICAST_IF value if found
+                   &addrlen) != 0) {
         lua_pushnil(L);
-        for (struct ifaddrs *ptr = list; ptr; ptr = ptr->ifa_next) {
-            struct sockaddr_in *ifa_addr = (struct sockaddr_in *)ptr->ifa_addr;
+        lls_pusherror(L, strerror(errno), "getsockopt", errno);
+        return 2;
+    } else if (getifaddrs(&list) != 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "getifaddrs", errno);
+        return 2;
+    }
 
-            if (ptr->ifa_addr->sa_family == AF_INET &&
-                addr.s_addr == ifa_addr->sin_addr.s_addr) {
-                lua_pushstring(L, ptr->ifa_name);
-                break;
-            }
+    // push the IP_MULTICAST_IF value if found
+    lua_pushnil(L);
+    for (struct ifaddrs *ptr = list; ptr; ptr = ptr->ifa_next) {
+        struct sockaddr_in *ifa_addr = (struct sockaddr_in *)ptr->ifa_addr;
+
+        if (ptr->ifa_addr->sa_family == AF_INET &&
+            addr.s_addr == ifa_addr->sin_addr.s_addr) {
+            lua_pushstring(L, ptr->ifa_name);
+            break;
         }
-        freeifaddrs(list);
+    }
+    freeifaddrs(list);
 
-        if (top == 1) {
-            // no-change
-            return 1;
-        } else if (lua_isnoneornil(L, 2)) {
+    if (top > 1) {
+        if (lua_isnoneornil(L, 2)) {
             // disable the interface setting
             addr.s_addr = 0;
             if (setsockopt(s->fd, IPPROTO_IP, IP_MULTICAST_IF, (void *)&addr,
-                           sizeof(addr)) == 0) {
-                return 1;
+                           sizeof(addr)) != 0) {
+                lua_pushnil(L);
+                lls_pusherror(L, strerror(errno), "setsockopt", errno);
+                return 2;
             }
         } else {
             const char *ifname = lauxh_checkstring(L, 2);
@@ -150,71 +171,84 @@ static int mcastif4_lua(lua_State *L, lls_socket_t *s)
 
             strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
             // get interface address
-            if (ioctl(s->fd, SIOCGIFADDR, &ifr) == 0) {
-                // set address to multicast_if
-                addr = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
-                if (setsockopt(s->fd, IPPROTO_IP, IP_MULTICAST_IF,
-                               (void *)&addr, sizeof(addr)) == 0) {
-                    return 1;
-                }
+            if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
+                // got error
+                lua_pushnil(L);
+                lls_pusherror(L, strerror(errno), "ioctl", errno);
+                return 2;
+            }
+
+            // set address to multicast_if
+            addr = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
+            if (setsockopt(s->fd, IPPROTO_IP, IP_MULTICAST_IF, (void *)&addr,
+                           sizeof(addr)) != 0) {
+                // got error
+                lua_pushnil(L);
+                lls_pusherror(L, strerror(errno), "setsockopt", errno);
+                return 2;
             }
         }
     }
 
-    // got error
-    lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
-
-    return 2;
+    return 1;
 }
 
 static int mcastif6_lua(lua_State *L, lls_socket_t *s)
 {
-    int top          = lua_gettop(L);
-    unsigned int idx = 0;
-    socklen_t idxlen = sizeof(idx);
+    int top            = lua_gettop(L);
+    unsigned int idx   = 0;
+    socklen_t idxlen   = sizeof(idx);
+    char buf[IFNAMSIZ] = {0};
+    char *ifname       = NULL;
 
     if (getsockopt(s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, (void *)&idx,
-                   &idxlen) == 0) {
-        char buf[IFNAMSIZ] = {0};
-        char *ifname       = if_indextoname(idx, buf);
+                   &idxlen) != 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "getsockopt", errno);
+        return 2;
+    }
 
-        if (ifname) {
-            lua_pushstring(L, ifname);
-        } else if (errno == ENXIO) {
-            // unknown device name
-            lua_pushnil(L);
-        } else {
-            goto FAIL;
-        }
+    ifname = if_indextoname(idx, buf);
+    if (ifname) {
+        lua_pushstring(L, ifname);
+    } else if (errno == ENXIO) {
+        // unknown device name
+        lua_pushnil(L);
+    } else {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "if_indextoname", errno);
+        return 2;
+    }
 
-        if (top == 1) {
-            // no-change
-            return 1;
-        } else if (lua_isnoneornil(L, 2)) {
+    if (top > 1) {
+        if (lua_isnoneornil(L, 2)) {
             // disable the interface setting
             idx = 0;
             if (setsockopt(s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, (void *)&idx,
-                           sizeof(idx)) == 0) {
-                return 1;
+                           sizeof(idx)) != 0) {
+                lua_pushnil(L);
+                lls_pusherror(L, strerror(errno), "setsockopt", errno);
+                return 2;
             }
         } else {
             // change
             ifname = (char *)lauxh_checkstring(L, 2);
-            if ((idx = if_nametoindex(ifname)) != 0 &&
-                setsockopt(s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, (void *)&idx,
-                           sizeof(idx)) == 0) {
-                return 1;
+            idx    = if_nametoindex(ifname);
+
+            if (idx == 0) {
+                lua_pushnil(L);
+                lls_pusherror(L, strerror(errno), "if_nametoindex", errno);
+                return 2;
+            } else if (setsockopt(s->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
+                                  (void *)&idx, sizeof(idx)) != 0) {
+                lua_pushnil(L);
+                lls_pusherror(L, strerror(errno), "setsockopt", errno);
+                return 2;
             }
         }
     }
 
-FAIL:
-    // got error
-    lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
-
-    return 2;
+    return 1;
 }
 
 static int mcastif_lua(lua_State *L)
@@ -227,14 +261,22 @@ static int mcastif_lua(lua_State *L)
         switch (s->family) {
         case AF_INET:
             return mcastif4_lua(L, s);
+
         case AF_INET6:
             return mcastif6_lua(L, s);
+
+        default:
+            lua_pushnil(L);
+            lls_pusherror(L, strerror(EAFNOSUPPORT), "mcastif_lua",
+                          EAFNOSUPPORT);
+            return 2;
         }
 
     default:
         // got error
         lua_pushnil(L);
-        lua_pushstring(L, strerror(errno));
+        lls_pusherror(L, strerror(ESOCKTNOSUPPORT), "mcastif_lua",
+                      ESOCKTNOSUPPORT);
         return 2;
     }
 }
@@ -243,67 +285,74 @@ static inline int mcast4group_lua(lua_State *L, lls_socket_t *s, int opt)
 {
     lls_addrinfo_t *grp = lauxh_checkudata(L, 2, ADDRINFO_MT);
     const char *ifname  = lauxh_optstring(L, 3, NULL);
+    struct ip_mreq mr;
 
     if (grp->ai.ai_family != AF_INET) {
-        errno = EINVAL;
-    } else {
-        struct ip_mreq mr = {
-            .imr_multiaddr = ((struct sockaddr_in *)grp->ai.ai_addr)->sin_addr,
-            .imr_interface = {INADDR_ANY}};
-
-        if (ifname) {
-            struct ifreq ifr;
-
-            strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-            // get interface address
-            if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
-                goto FAIL;
-            }
-            // set in_addr
-            mr.imr_interface = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
-        }
-
-        if (setsockopt(s->fd, IPPROTO_IP, opt, (void *)&mr,
-                       sizeof(struct ip_mreq)) == 0) {
-            lua_pushboolean(L, 1);
-            return 1;
-        }
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(EAFNOSUPPORT), "mcastif_lua", EAFNOSUPPORT);
+        return 2;
     }
 
-FAIL:
-    // got error
-    lua_pushboolean(L, 0);
-    lua_pushstring(L, strerror(errno));
+    mr = (struct ip_mreq){.imr_multiaddr =
+                              ((struct sockaddr_in *)grp->ai.ai_addr)->sin_addr,
+                          .imr_interface = {INADDR_ANY}};
+    if (ifname) {
+        struct ifreq ifr;
 
-    return 2;
+        strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+        // get interface address
+        if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
+            lua_pushboolean(L, 0);
+            lls_pusherror(L, strerror(errno), "ioctl", errno);
+            return 2;
+        }
+        // set in_addr
+        mr.imr_interface = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
+    }
+
+    if (setsockopt(s->fd, IPPROTO_IP, opt, (void *)&mr,
+                   sizeof(struct ip_mreq)) != 0) {
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(errno), "setsockopt", errno);
+        return 2;
+    }
+
+    lua_pushboolean(L, 1);
+
+    return 1;
 }
 
 static inline int mcast6group_lua(lua_State *L, lls_socket_t *s, int opt)
 {
     lls_addrinfo_t *grp = lauxh_checkudata(L, 2, ADDRINFO_MT);
     const char *ifname  = lauxh_optstring(L, 3, NULL);
+    struct ipv6_mreq mr;
 
     if (grp->ai.ai_family != AF_INET6) {
-        errno = EINVAL;
-    } else {
-        struct ipv6_mreq mr = {
-            .ipv6mr_multiaddr =
-                ((struct sockaddr_in6 *)grp->ai.ai_addr)->sin6_addr,
-            .ipv6mr_interface = 0};
-
-        if ((!ifname || (mr.ipv6mr_interface = if_nametoindex(ifname)) != 0) &&
-            setsockopt(s->fd, IPPROTO_IPV6, opt, (void *)&mr,
-                       sizeof(struct ipv6_mreq)) == 0) {
-            lua_pushboolean(L, 1);
-            return 1;
-        }
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(EAFNOSUPPORT), "mcast6group_lua",
+                      EAFNOSUPPORT);
+        return 2;
     }
 
-    // got error
-    lua_pushboolean(L, 0);
-    lua_pushstring(L, strerror(errno));
+    mr = (struct ipv6_mreq){
+        .ipv6mr_multiaddr = ((struct sockaddr_in6 *)grp->ai.ai_addr)->sin6_addr,
+        .ipv6mr_interface = 0};
 
-    return 2;
+    if (ifname && (mr.ipv6mr_interface = if_nametoindex(ifname)) == 0) {
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(errno), "if_nametoindex", errno);
+        return 2;
+    } else if (setsockopt(s->fd, IPPROTO_IPV6, opt, (void *)&mr,
+                          sizeof(struct ipv6_mreq)) != 0) {
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(errno), "setsockopt", errno);
+        return 2;
+    }
+
+    lua_pushboolean(L, 1);
+
+    return 1;
 }
 
 static int mcastjoin_lua(lua_State *L)
@@ -320,11 +369,18 @@ static int mcastjoin_lua(lua_State *L)
 
         case AF_INET6:
             return mcast6group_lua(L, s, IPV6_JOIN_GROUP);
+
+        default:
+            lua_pushboolean(L, 0);
+            lls_pusherror(L, strerror(EAFNOSUPPORT), "mcastjoin_lua",
+                          EAFNOSUPPORT);
+            return 2;
         }
 
     default:
         lua_pushboolean(L, 0);
-        lua_pushstring(L, strerror(EOPNOTSUPP));
+        lls_pusherror(L, strerror(ESOCKTNOSUPPORT), "mcastjoin_lua",
+                      ESOCKTNOSUPPORT);
         return 2;
     }
 }
@@ -343,11 +399,18 @@ static int mcastleave_lua(lua_State *L)
 
         case AF_INET6:
             return mcast6group_lua(L, s, IPV6_LEAVE_GROUP);
+
+        default:
+            lua_pushboolean(L, 0);
+            lls_pusherror(L, strerror(EAFNOSUPPORT), "mcastleave_lua",
+                          EAFNOSUPPORT);
+            return 2;
         }
 
     default:
         lua_pushboolean(L, 0);
-        lua_pushstring(L, strerror(EOPNOTSUPP));
+        lls_pusherror(L, strerror(ESOCKTNOSUPPORT), "mcastleave_lua",
+                      ESOCKTNOSUPPORT);
         return 2;
     }
 }
@@ -358,72 +421,71 @@ static inline int mcastsrcgroup_lua(lua_State *L, lls_socket_t *s, int proto,
     lls_addrinfo_t *grp = lauxh_checkudata(L, 2, ADDRINFO_MT);
     lls_addrinfo_t *src = lauxh_checkudata(L, 3, ADDRINFO_MT);
     const char *ifname  = lauxh_optstring(L, 4, NULL);
+    struct group_source_req gsr;
 
     if (grp->ai.ai_family != AF_INET6 || src->ai.ai_family != AF_INET6) {
-        errno = EINVAL;
-    } else {
-        struct group_source_req gsr;
-
-        memset(&gsr, 0, sizeof(gsr));
-        memcpy(&gsr.gsr_group, grp->ai.ai_addr, grp->ai.ai_addrlen);
-        memcpy(&gsr.gsr_source, src->ai.ai_addr, src->ai.ai_addrlen);
-        if (ifname && (gsr.gsr_interface = if_nametoindex(ifname)) == 0) {
-            goto FAIL;
-        }
-
-        if (setsockopt(s->fd, proto, opt, (void *)&gsr, sizeof(gsr)) == 0) {
-            lua_pushboolean(L, 1);
-            return 1;
-        }
+        errno = EAFNOSUPPORT;
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(errno), "mcastsrcgroup_lua", errno);
+        return 2;
     }
 
-FAIL:
-    // got error
-    lua_pushboolean(L, 0);
-    lua_pushstring(L, strerror(errno));
+    memset(&gsr, 0, sizeof(gsr));
+    memcpy(&gsr.gsr_group, grp->ai.ai_addr, grp->ai.ai_addrlen);
+    memcpy(&gsr.gsr_source, src->ai.ai_addr, src->ai.ai_addrlen);
+    if (ifname && (gsr.gsr_interface = if_nametoindex(ifname)) == 0) {
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(errno), "if_nametoindex", errno);
+        return 2;
+    } else if (setsockopt(s->fd, proto, opt, (void *)&gsr, sizeof(gsr)) != 0) {
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(errno), "setsockopt", errno);
+        return 2;
+    }
 
-    return 2;
+    lua_pushboolean(L, 1);
+
+    return 1;
 }
 
 static inline int mcast4srcgroup_lua(lua_State *L, lls_socket_t *s, int opt)
 {
-    lls_addrinfo_t *grp = lauxh_checkudata(L, 2, ADDRINFO_MT);
-    lls_addrinfo_t *src = lauxh_checkudata(L, 3, ADDRINFO_MT);
-    const char *ifname  = lauxh_optstring(L, 4, NULL);
+    lls_addrinfo_t *grp      = lauxh_checkudata(L, 2, ADDRINFO_MT);
+    lls_addrinfo_t *src      = lauxh_checkudata(L, 3, ADDRINFO_MT);
+    const char *ifname       = lauxh_optstring(L, 4, NULL);
+    struct ip_mreq_source mr = {
+        .imr_multiaddr  = ((struct sockaddr_in *)grp->ai.ai_addr)->sin_addr,
+        .imr_sourceaddr = ((struct sockaddr_in *)src->ai.ai_addr)->sin_addr,
+        .imr_interface  = {INADDR_ANY}};
 
     if (grp->ai.ai_family != AF_INET || src->ai.ai_family != AF_INET) {
-        errno = EINVAL;
-    } else {
-        struct ip_mreq_source mr = {
-            .imr_multiaddr  = ((struct sockaddr_in *)grp->ai.ai_addr)->sin_addr,
-            .imr_sourceaddr = ((struct sockaddr_in *)src->ai.ai_addr)->sin_addr,
-            .imr_interface  = {INADDR_ANY}};
-
-        if (ifname) {
-            struct ifreq ifr;
-
-            strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-            // get interface address
-            if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
-                goto FAIL;
-            }
-            // set in_addr
-            mr.imr_interface = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
+        errno = EAFNOSUPPORT;
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(errno), "mcast4srcgroup_lua", errno);
+        return 2;
+    } else if (ifname) {
+        struct ifreq ifr;
+        strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+        // get interface address
+        if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
+            lua_pushboolean(L, 0);
+            lls_pusherror(L, strerror(errno), "ioctl", errno);
+            return 2;
         }
-
-        if (setsockopt(s->fd, IPPROTO_IP, opt, (void *)&mr,
-                       sizeof(struct ip_mreq_source)) == 0) {
-            lua_pushboolean(L, 1);
-            return 1;
-        }
+        // set in_addr
+        mr.imr_interface = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
     }
 
-FAIL:
-    // got error
-    lua_pushboolean(L, 0);
-    lua_pushstring(L, strerror(errno));
+    if (setsockopt(s->fd, IPPROTO_IP, opt, (void *)&mr,
+                   sizeof(struct ip_mreq_source)) != 0) {
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(errno), "setsockopt", errno);
+        return 2;
+    }
 
-    return 2;
+    lua_pushboolean(L, 1);
+
+    return 1;
 }
 
 static int mcastjoinsrc_lua(lua_State *L)
@@ -441,11 +503,17 @@ static int mcastjoinsrc_lua(lua_State *L)
         case AF_INET6:
             return mcastsrcgroup_lua(L, s, IPPROTO_IPV6,
                                      MCAST_JOIN_SOURCE_GROUP);
+        default:
+            lua_pushboolean(L, 0);
+            lls_pusherror(L, strerror(EAFNOSUPPORT), "mcastjoinsrc_lua",
+                          EAFNOSUPPORT);
+            return 2;
         }
 
     default:
         lua_pushboolean(L, 0);
-        lua_pushstring(L, strerror(EOPNOTSUPP));
+        lls_pusherror(L, strerror(ESOCKTNOSUPPORT), "mcastjoinsrc_lua",
+                      ESOCKTNOSUPPORT);
         return 2;
     }
 }
@@ -465,11 +533,18 @@ static int mcastleavesrc_lua(lua_State *L)
         case AF_INET6:
             return mcastsrcgroup_lua(L, s, IPPROTO_IPV6,
                                      MCAST_LEAVE_SOURCE_GROUP);
+
+        default:
+            lua_pushboolean(L, 0);
+            lls_pusherror(L, strerror(EAFNOSUPPORT), "mcastleavesrc_lua",
+                          EAFNOSUPPORT);
+            return 2;
         }
 
     default:
         lua_pushboolean(L, 0);
-        lua_pushstring(L, strerror(EOPNOTSUPP));
+        lls_pusherror(L, strerror(ESOCKTNOSUPPORT), "mcastleavesrc_lua",
+                      ESOCKTNOSUPPORT);
         return 2;
     }
 }
@@ -488,11 +563,18 @@ static int mcastblocksrc_lua(lua_State *L)
 
         case AF_INET6:
             return mcastsrcgroup_lua(L, s, IPPROTO_IPV6, MCAST_BLOCK_SOURCE);
+
+        default:
+            lua_pushboolean(L, 0);
+            lls_pusherror(L, strerror(EAFNOSUPPORT), "mcastblocksrc_lua",
+                          EAFNOSUPPORT);
+            return 2;
         }
 
     default:
         lua_pushboolean(L, 0);
-        lua_pushstring(L, strerror(EOPNOTSUPP));
+        lls_pusherror(L, strerror(ESOCKTNOSUPPORT), "mcastblocksrc_lua",
+                      ESOCKTNOSUPPORT);
         return 2;
     }
 }
@@ -511,11 +593,18 @@ static int mcastunblocksrc_lua(lua_State *L)
 
         case AF_INET6:
             return mcastsrcgroup_lua(L, s, IPPROTO_IPV6, MCAST_UNBLOCK_SOURCE);
+
+        default:
+            lua_pushboolean(L, 0);
+            lls_pusherror(L, strerror(EAFNOSUPPORT), "mcastunblocksrc_lua",
+                          EAFNOSUPPORT);
+            return 2;
         }
 
     default:
         lua_pushboolean(L, 0);
-        lua_pushstring(L, strerror(EOPNOTSUPP));
+        lls_pusherror(L, strerror(ESOCKTNOSUPPORT), "mcastunblocksrc_lua",
+                      ESOCKTNOSUPPORT);
         return 2;
     }
 }
@@ -559,7 +648,7 @@ static int tcpkeepalive_lua(lua_State *L)
 #else
     // tcpkeepalive does not implemented in this platform
     lua_pushnil(L);
-    lua_pushstring(L, strerror(ENOPROTOOPT));
+    lls_pusherror(L, strerror(EOPNOTSUPP), "tcpkeepalive_lua", EOPNOTSUPP);
     return 2;
 
 #endif
@@ -576,7 +665,7 @@ static int tcpcork_lua(lua_State *L)
 #else
     // tcpcork does not implmeneted in this platform
     lua_pushnil(L);
-    lua_pushstring(L, strerror(ENOPROTOOPT));
+    lls_pusherror(L, strerror(EOPNOTSUPP), "tcpcork_lua", EOPNOTSUPP);
     return 2;
 
 #endif
@@ -590,7 +679,7 @@ static int reuseport_lua(lua_State *L)
 #else
     // reuseport does not implmeneted in this platform
     lua_pushnil(L);
-    lua_pushstring(L, strerror(ENOPROTOOPT));
+    lls_pusherror(L, strerror(EOPNOTSUPP), "reuseport_lua", EOPNOTSUPP);
     return 2;
 
 #endif
@@ -677,34 +766,33 @@ static int linger_lua(lua_State *L)
 #else
     int opt = SO_LINGER;
 #endif
+    int top = lua_gettop(L);
 
-    if (getsockopt(s->fd, SOL_SOCKET, opt, (void *)&l, &len) == 0) {
-        int top = lua_gettop(L);
+    if (getsockopt(s->fd, SOL_SOCKET, opt, (void *)&l, &len) != 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "getsockopt", errno);
+        return 2;
+    }
 
-        if (l.l_onoff) {
-            lua_pushinteger(L, l.l_linger);
-        } else {
-            lua_pushinteger(L, -1);
-        }
+    if (l.l_onoff) {
+        lua_pushinteger(L, l.l_linger);
+    } else {
+        lua_pushinteger(L, -1);
+    }
 
-        // no-change
-        if (top == 1 || lua_isnoneornil(L, 2)) {
-            return 1;
-        }
-
+    // change
+    if (top > 1 && !lua_isnoneornil(L, 2)) {
         // set linger option
         l.l_linger = lauxh_checkinteger(L, 2);
         l.l_onoff  = l.l_linger >= 0;
-        if (setsockopt(s->fd, SOL_SOCKET, opt, (void *)&l, len) == 0) {
-            return 1;
+        if (setsockopt(s->fd, SOL_SOCKET, opt, (void *)&l, len) != 0) {
+            lua_pushnil(L);
+            lls_pusherror(L, strerror(errno), "setsockopt", errno);
+            return 2;
         }
     }
 
-    // got error
-    lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
-
-    return 2;
+    return 1;
 }
 
 // MARK: state
@@ -714,16 +802,14 @@ static int atmark_lua(lua_State *L)
     lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
     int rc          = sockatmark(s->fd);
 
-    if (rc != -1) {
-        lua_pushboolean(L, rc);
-        return 1;
+    if (rc == -1) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "sockatmark", errno);
+        return 2;
     }
+    lua_pushboolean(L, rc);
 
-    // got error
-    lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
-
-    return 2;
+    return 1;
 }
 
 // MARK: address info
@@ -733,27 +819,26 @@ static int getsockname_lua(lua_State *L)
     lls_socket_t *s              = lauxh_checkudata(L, 1, SOCKET_MT);
     struct sockaddr_storage addr = SOCKADDR_STORAGE_INITIALIZER;
     socklen_t addrlen            = sizeof(struct sockaddr_storage);
+    struct addrinfo wrap;
 
-    if (getsockname(s->fd, (struct sockaddr *)&addr, &addrlen) == 0) {
-        struct addrinfo wrap = {.ai_flags     = 0,
-                                .ai_family    = s->family,
-                                .ai_socktype  = s->socktype,
-                                .ai_protocol  = s->protocol,
-                                .ai_addrlen   = addrlen,
-                                .ai_addr      = (struct sockaddr *)&addr,
-                                .ai_canonname = NULL,
-                                .ai_next      = NULL};
-
-        // push llsocket.addr udata
-        lls_addrinfo_alloc(L, &wrap);
-        return 1;
+    if (getsockname(s->fd, (struct sockaddr *)&addr, &addrlen) != 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "getsockname", errno);
+        return 2;
     }
 
-    // got error
-    lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    wrap = (struct addrinfo){.ai_flags     = 0,
+                             .ai_family    = s->family,
+                             .ai_socktype  = s->socktype,
+                             .ai_protocol  = s->protocol,
+                             .ai_addrlen   = addrlen,
+                             .ai_addr      = (struct sockaddr *)&addr,
+                             .ai_canonname = NULL,
+                             .ai_next      = NULL};
+    // push llsocket.addr udata
+    lls_addrinfo_alloc(L, &wrap);
 
-    return 2;
+    return 1;
 }
 
 static int getpeername_lua(lua_State *L)
@@ -761,41 +846,38 @@ static int getpeername_lua(lua_State *L)
     lls_socket_t *s              = lauxh_checkudata(L, 1, SOCKET_MT);
     socklen_t len                = sizeof(struct sockaddr_storage);
     struct sockaddr_storage addr = SOCKADDR_STORAGE_INITIALIZER;
+    struct addrinfo wrap;
 
-    if (getpeername(s->fd, (struct sockaddr *)&addr, &len) == 0) {
-        struct addrinfo wrap = {.ai_flags     = 0,
-                                .ai_family    = s->family,
-                                .ai_socktype  = s->socktype,
-                                .ai_protocol  = s->protocol,
-                                .ai_addrlen   = len,
-                                .ai_addr      = (struct sockaddr *)&addr,
-                                .ai_canonname = NULL,
-                                .ai_next      = NULL};
-        lls_addrinfo_alloc(L, &wrap);
-        return 1;
+    if (getpeername(s->fd, (struct sockaddr *)&addr, &len) != 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "getpeername", errno);
+        return 2;
     }
 
-    // got error
-    lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    wrap = (struct addrinfo){.ai_flags     = 0,
+                             .ai_family    = s->family,
+                             .ai_socktype  = s->socktype,
+                             .ai_protocol  = s->protocol,
+                             .ai_addrlen   = len,
+                             .ai_addr      = (struct sockaddr *)&addr,
+                             .ai_canonname = NULL,
+                             .ai_next      = NULL};
+    lls_addrinfo_alloc(L, &wrap);
 
-    return 2;
+    return 1;
 }
 
 // MARK: method
 
 static inline int shutdownfd(lua_State *L, int fd, int how)
 {
-    if (shutdown(fd, how) == 0) {
-        lua_pushboolean(L, 1);
-        return 1;
+    if (shutdown(fd, how) != 0) {
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(errno), "shutdown", errno);
+        return 2;
     }
-
-    // got error
-    lua_pushboolean(L, 0);
-    lua_pushstring(L, strerror(errno));
-
-    return 2;
+    lua_pushboolean(L, 1);
+    return 1;
 }
 
 static int shutdown_lua(lua_State *L)
@@ -808,21 +890,33 @@ static int shutdown_lua(lua_State *L)
 
 static inline int closefd(lua_State *L, int fd, int how, int with_shutdown)
 {
-    int rc = 0;
+    int err = 0;
 
     if (with_shutdown) {
-        rc = shutdown(fd, how);
-    }
-    rc += close(fd);
-
-    if (!rc) {
-        lua_pushboolean(L, 1);
-        return 1;
+        if (shutdown(fd, how)) {
+            err = errno;
+        }
     }
 
-    // got error
-    lua_pushboolean(L, 0);
-    lua_pushstring(L, strerror(errno));
+    if (close(fd) == 0) {
+        if (err) {
+            lua_pushboolean(L, 0);
+            lls_pusherror(L, strerror(err), "shutdown", err);
+            return 2;
+        }
+    } else if (err) {
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(err), "shutdown", err);
+        lls_pusherror_ex(L, strerror(errno), "close", errno, -1);
+        return 2;
+    } else {
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(errno), "close", errno);
+        return 2;
+    }
+
+    lua_pushboolean(L, 1);
+    return 1;
 
     return 2;
 }
@@ -848,16 +942,14 @@ static int listen_lua(lua_State *L)
     int backlog     = (int)lauxh_optinteger(L, 2, SOMAXCONN);
 
     // listen
-    if (listen(s->fd, (int)backlog) == 0) {
-        lua_pushboolean(L, 1);
-        return 1;
+    if (listen(s->fd, (int)backlog) != 0) {
+        lua_pushboolean(L, 0);
+        lls_pusherror(L, strerror(errno), "listen", errno);
+        return 2;
     }
 
-    // got error
-    lua_pushboolean(L, 0);
-    lua_pushstring(L, strerror(errno));
-
-    return 2;
+    lua_pushboolean(L, 1);
+    return 1;
 }
 
 static inline int acceptfd(int sfd, struct sockaddr *addr, socklen_t *addrlen)
@@ -906,7 +998,7 @@ static int acceptfd_lua(lua_State *L)
 
     // got error
     lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    lls_pusherror(L, strerror(errno), "acceptfd", errno);
 
     return 2;
 }
@@ -964,7 +1056,7 @@ static int accept_lua(lua_State *L)
 
     // got error
     lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    lls_pusherror(L, strerror(errno), "acceptfd", errno);
 
     return 2;
 }
@@ -980,7 +1072,7 @@ static int send_lua(lua_State *L)
     // invalid length
     if (!len) {
         lua_pushnil(L);
-        lua_pushstring(L, strerror(EINVAL));
+        lls_pusherror(L, strerror(EINVAL), "send_lua", EINVAL);
         return 2;
     }
 
@@ -1001,7 +1093,7 @@ static int send_lua(lua_State *L)
         }
         // got error
         lua_pushnil(L);
-        lua_pushstring(L, strerror(errno));
+        lls_pusherror(L, strerror(errno), "send", errno);
         return 2;
 
     default:
@@ -1024,7 +1116,7 @@ static int sendto_lua(lua_State *L)
     // invalid length
     if (!len) {
         lua_pushnil(L);
-        lua_pushstring(L, strerror(EINVAL));
+        lls_pusherror(L, strerror(EINVAL), "send_lua", EINVAL);
         return 2;
     }
 
@@ -1046,7 +1138,7 @@ static int sendto_lua(lua_State *L)
         }
         // got error
         lua_pushnil(L);
-        lua_pushstring(L, strerror(errno));
+        lls_pusherror(L, strerror(errno), "sendto", errno);
         return 2;
 
     default:
@@ -1108,7 +1200,7 @@ static int sendfd_lua(lua_State *L)
         }
         // got error
         lua_pushnil(L);
-        lua_pushstring(L, strerror(errno));
+        lls_pusherror(L, strerror(errno), "sendmsg", errno);
         return 2;
 
     default:
@@ -1176,7 +1268,7 @@ static int sendmsg_lua(lua_State *L)
         }
         // got error
         lua_pushnil(L);
-        lua_pushstring(L, strerror(errno));
+        lls_pusherror(L, strerror(errno), "sendmsg", errno);
         return 2;
 
     default:
@@ -1212,7 +1304,7 @@ static int sendfile_lua(lua_State *L)
     // invalid length
     if (!len) {
         lua_pushnil(L);
-        lua_pushstring(L, strerror(EINVAL));
+        lls_pusherror(L, strerror(EINVAL), "sendfile_lua", EINVAL);
         return 2;
     } else if ((rv = sendfile(s->fd, fd, &offset, len)) != -1) {
         lua_pushinteger(L, rv);
@@ -1234,7 +1326,7 @@ static int sendfile_lua(lua_State *L)
 
     // got error
     lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    lls_pusherror(L, strerror(errno), "sendfile", errno);
 
     return 2;
 }
@@ -1250,7 +1342,9 @@ static int sendfile_lua(lua_State *L)
 
     // invalid length
     if (!len) {
-        errno = EINVAL;
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(EINVAL), "sendfile_lua", EINVAL);
+        return 2;
     } else if (sendfile(fd, s->fd, offset, &len, NULL, 0) == 0) {
         lua_pushinteger(L, len);
         return 1;
@@ -1269,7 +1363,7 @@ static int sendfile_lua(lua_State *L)
 
     // got error
     lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    lls_pusherror(L, strerror(errno), "sendfile", errno);
 
     return 2;
 }
@@ -1287,7 +1381,9 @@ static int sendfile_lua(lua_State *L)
 
     // invalid length
     if (!len) {
-        errno = EINVAL;
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(EINVAL), "sendfile_lua", EINVAL);
+        return 2;
     } else if (sendfile(fd, s->fd, offset, len, NULL, &nbytes, 0) == 0) {
         lua_pushinteger(L, nbytes);
         return 1;
@@ -1306,7 +1402,7 @@ static int sendfile_lua(lua_State *L)
 
     // got error
     lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    lls_pusherror(L, strerror(errno), "sendfile", errno);
 
     return 2;
 }
@@ -1336,7 +1432,7 @@ static int sendfile_lua(lua_State *L)
     // invalid length
     if (!len) {
         lua_pushnil(L);
-        lua_pushstring(L, strerror(EINVAL));
+        lls_pusherror(L, strerror(EINVAL), "sendfile_lua", EINVAL);
         return 2;
     }
 
@@ -1347,9 +1443,7 @@ static int sendfile_lua(lua_State *L)
     if (!nbytes) {
         lua_pushinteger(L, 0);
         return 1;
-    }
-    // got error
-    else if (nbytes == -1) {
+    } else if (nbytes == -1) {
         // again
         if (errno == EAGAIN || errno == EINTR) {
             lua_pushinteger(L, 0);
@@ -1360,7 +1454,7 @@ static int sendfile_lua(lua_State *L)
 
         // got error
         lua_pushnil(L);
-        lua_pushstring(L, strerror(errno));
+        lls_pusherror(L, strerror(errno), "pread", errno);
         return 2;
     }
 
@@ -1381,7 +1475,7 @@ static int sendfile_lua(lua_State *L)
         }
         // got error
         lua_pushnil(L);
-        lua_pushstring(L, strerror(errno));
+        lls_pusherror(L, strerror(errno), "send", errno);
         return 2;
 
     default:
@@ -1407,7 +1501,7 @@ static int recv_lua(lua_State *L)
     // invalid length
     if (len <= 0) {
         lua_pushnil(L);
-        lua_pushstring(L, strerror(EINVAL));
+        lls_pusherror(L, strerror(EINVAL), "sendfile_lua", EINVAL);
         return 2;
     }
 
@@ -1424,7 +1518,7 @@ static int recv_lua(lua_State *L)
             return 3;
         }
         // got error
-        lua_pushstring(L, strerror(errno));
+        lls_pusherror(L, strerror(errno), "recv", errno);
         return 2;
 
     case 0:
@@ -1454,7 +1548,7 @@ static int recvfrom_lua(lua_State *L)
     if (len <= 0) {
         lua_pushnil(L);
         lua_pushnil(L);
-        lua_pushstring(L, strerror(EINVAL));
+        lls_pusherror(L, strerror(EINVAL), "recvfrom_lua", EINVAL);
         return 3;
     }
 
@@ -1471,7 +1565,7 @@ static int recvfrom_lua(lua_State *L)
             return 3;
         }
         // got error
-        lua_pushstring(L, strerror(errno));
+        lls_pusherror(L, strerror(errno), "recvfrom", errno);
         return 2;
 
     case 0:
@@ -1538,7 +1632,7 @@ static int recvfd_lua(lua_State *L)
             return 3;
         }
         // got error
-        lua_pushstring(L, strerror(errno));
+        lls_pusherror(L, strerror(errno), "recvmsg", errno);
         return 2;
 
     default:
@@ -1606,7 +1700,7 @@ static int recvmsg_lua(lua_State *L)
             return 3;
         }
         // got error
-        lua_pushstring(L, strerror(errno));
+        lls_pusherror(L, strerror(errno), "recvmsg", errno);
         return 2;
 
     default:
@@ -1634,7 +1728,7 @@ static int connect_lua(lua_State *L)
     }
 
     // got error
-    lua_pushstring(L, strerror(errno));
+    lls_pusherror(L, strerror(errno), "connect", errno);
 
     return 2;
 }
@@ -1688,7 +1782,7 @@ static inline int select_lua(lua_State *L, int receivable, int sendable)
 
     case -1:
         lua_pushboolean(L, 0);
-        lua_pushstring(L, strerror(errno));
+        lls_pusherror(L, strerror(errno), "select", errno);
         return 2;
 
     // selected
@@ -1721,7 +1815,7 @@ static int bind_lua(lua_State *L)
 
     // got error
     lua_pushboolean(L, 0);
-    lua_pushstring(L, strerror(errno));
+    lls_pusherror(L, strerror(errno), "bind", errno);
 
     return 2;
 }
@@ -1783,29 +1877,28 @@ static int dup_lua(lua_State *L)
 {
     lls_socket_t *s  = lauxh_checkudata(L, 1, SOCKET_MT);
     lls_socket_t *sd = lua_newuserdata(L, sizeof(lls_socket_t));
-    int fd           = 0;
+    int fd           = dup(s->fd);
 
-    if ((fd = dup(s->fd)) != -1) {
-        if (fcntl(fd, F_SETFD, FD_CLOEXEC) != -1) {
-            *sd = (lls_socket_t){
-                .fd       = fd,
-                .family   = s->family,
-                .socktype = s->socktype,
-                .protocol = s->protocol,
-            };
-            lauxh_setmetatable(L, SOCKET_MT);
-            return 1;
-        }
-
-        // got error
+    if (fd == -1) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "dup", errno);
+        return 2;
+    } else if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
         close(fd);
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "fcntl", errno);
+        return 2;
     }
 
-    // got error
-    lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    *sd = (lls_socket_t){
+        .fd       = fd,
+        .family   = s->family,
+        .socktype = s->socktype,
+        .protocol = s->protocol,
+    };
+    lauxh_setmetatable(L, SOCKET_MT);
 
-    return 2;
+    return 1;
 }
 
 static int unwrap_lua(lua_State *L)
@@ -1838,115 +1931,116 @@ static int wrap_lua(lua_State *L)
 
     lua_settop(L, 1);
     s = lua_newuserdata(L, sizeof(lls_socket_t));
-    if (getsockname(fd, (void *)&addr, &addrlen) == 0 &&
+    if (getsockname(fd, (void *)&addr, &addrlen) != 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "getsockname", errno);
+        return 2;
+    } else if (
 #if defined(SO_PROTOCOL)
-        getsockopt(fd, SOL_SOCKET, SO_PROTOCOL, &s->protocol, &protolen) == 0 &&
+        getsockopt(fd, SOL_SOCKET, SO_PROTOCOL, &s->protocol, &protolen) != 0 ||
 #endif
-        getsockopt(fd, SOL_SOCKET, SO_TYPE, &s->socktype, &typelen) == 0 &&
-        (!nonblock || ((fl = fcntl(fd, F_GETFL)) != -1 &&
-                       fcntl(fd, F_SETFL, fl | O_NONBLOCK) != -1))) {
-        lauxh_setmetatable(L, SOCKET_MT);
-        s->fd     = fd;
-        s->family = addr.ss_family;
-#if !defined(SO_PROTOCOL)
-        s->protocol = 0;
-#endif
-        return 1;
+        getsockopt(fd, SOL_SOCKET, SO_TYPE, &s->socktype, &typelen) != 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "getsockopt", errno);
+        return 2;
+    } else if (nonblock && ((fl = fcntl(fd, F_GETFL)) == -1 ||
+                            fcntl(fd, F_SETFL, fl | O_NONBLOCK) == -1)) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "fcntl", errno);
+        return 2;
     }
 
-    // got error
-    lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    lauxh_setmetatable(L, SOCKET_MT);
+    s->fd     = fd;
+    s->family = addr.ss_family;
+#if !defined(SO_PROTOCOL)
+    s->protocol = 0;
+#endif
 
-    return 2;
+    return 1;
 }
 
 static int new_lua(lua_State *L)
 {
-    int family   = lauxh_checkinteger(L, 1);
-    int socktype = lauxh_checkinteger(L, 2);
-    int protocol = lauxh_optinteger(L, 3, 0);
-    int nonblock = lauxh_optboolean(L, 4, 0);
-    int fd       = socket(family, socktype, protocol);
+    int family      = lauxh_checkinteger(L, 1);
+    int socktype    = lauxh_checkinteger(L, 2);
+    int protocol    = lauxh_optinteger(L, 3, 0);
+    int nonblock    = lauxh_optboolean(L, 4, 0);
+    int fd          = socket(family, socktype, protocol);
+    lls_socket_t *s = NULL;
+    int fl          = 0;
 
-    if (fd != -1) {
-        lls_socket_t *s = NULL;
-        int fl          = 0;
-
-        lua_settop(L, 1);
-        // set cloexec and nonblock flag
-        if (fcntl(fd, F_SETFD, FD_CLOEXEC) != -1 &&
-            (!nonblock || ((fl = fcntl(fd, F_GETFL)) != -1 &&
-                           fcntl(fd, F_SETFL, fl | O_NONBLOCK) != -1))) {
-            s  = lua_newuserdata(L, sizeof(lls_socket_t));
-            *s = (lls_socket_t){
-                .fd       = fd,
-                .family   = family,
-                .socktype = socktype,
-                .protocol = protocol,
-            };
-            lauxh_setmetatable(L, SOCKET_MT);
-            return 1;
-        }
-
-        // got error
-        close(fd);
+    if (fd == -1) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "socket", errno);
+        return 2;
     }
 
-    // got error
-    lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    lua_settop(L, 1);
+    // set cloexec and nonblock flag
+    if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 ||
+        (nonblock && ((fl = fcntl(fd, F_GETFL)) == -1 ||
+                      fcntl(fd, F_SETFL, fl | O_NONBLOCK) == -1))) {
+        close(fd);
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "fcntl", errno);
+        return 2;
+    }
 
-    return 2;
+    s  = lua_newuserdata(L, sizeof(lls_socket_t));
+    *s = (lls_socket_t){
+        .fd       = fd,
+        .family   = family,
+        .socktype = socktype,
+        .protocol = protocol,
+    };
+    lauxh_setmetatable(L, SOCKET_MT);
+
+    return 1;
 }
 
 static int pair_lua(lua_State *L)
 {
-    int socktype = (int)lauxh_checkinteger(L, 1);
-    int protocol = (int)lauxh_optinteger(L, 2, 0);
-    int nonblock = lauxh_optboolean(L, 3, 0);
+    int socktype    = (int)lauxh_checkinteger(L, 1);
+    int protocol    = (int)lauxh_optinteger(L, 2, 0);
+    int nonblock    = lauxh_optboolean(L, 3, 0);
+    lls_socket_t *s = NULL;
     int fds[2];
 
-    if (socketpair(AF_UNIX, socktype, protocol, fds) == 0) {
-        lls_socket_t *s = NULL;
-        int i           = 0;
-
-        lua_createtable(L, 2, 0);
-        for (; i < 2; i++) {
-            int fd = fds[i];
-            int fl = 0;
-
-            // set flags
-            if (fcntl(fd, F_SETFD, FD_CLOEXEC) != -1 &&
-                (!nonblock || ((fl = fcntl(fd, F_GETFL)) != -1 &&
-                               fcntl(fd, F_SETFL, fl | O_NONBLOCK) != -1))) {
-                s  = lua_newuserdata(L, sizeof(lls_socket_t));
-                *s = (lls_socket_t){
-                    .fd       = fd,
-                    .family   = AF_UNIX,
-                    .socktype = socktype,
-                    .protocol = protocol,
-                };
-                lauxh_setmetatable(L, SOCKET_MT);
-                lua_rawseti(L, -2, i + 1);
-
-                continue;
-            }
-
-            close(fds[0]);
-            close(fds[1]);
-            goto FAIL;
-        }
-
-        return 1;
+    if (socketpair(AF_UNIX, socktype, protocol, fds) != 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "socketpair", errno);
+        return 2;
     }
 
-FAIL:
-    // got error
-    lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    lua_createtable(L, 2, 0);
+    for (int i = 0; i < 2; i++) {
+        int fd = fds[i];
+        int fl = 0;
 
-    return 2;
+        // set flags
+        if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 ||
+            (nonblock && ((fl = fcntl(fd, F_GETFL)) == -1 ||
+                          fcntl(fd, F_SETFL, fl | O_NONBLOCK) == -1))) {
+            close(fds[0]);
+            close(fds[1]);
+            lua_pushnil(L);
+            lls_pusherror(L, strerror(errno), "fcntl", errno);
+            return 2;
+        }
+
+        s  = lua_newuserdata(L, sizeof(lls_socket_t));
+        *s = (lls_socket_t){
+            .fd       = fd,
+            .family   = AF_UNIX,
+            .socktype = socktype,
+            .protocol = protocol,
+        };
+        lauxh_setmetatable(L, SOCKET_MT);
+        lua_rawseti(L, -2, i + 1);
+    }
+
+    return 1;
 }
 
 static int shutdownfd_lua(lua_State *L)

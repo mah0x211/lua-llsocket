@@ -12,6 +12,7 @@ description = {
 }
 dependencies = {
     "lua >= 5.1",
+    "error >= 0.6.0",
     "iovec >= 0.3.0",
 }
 build = {

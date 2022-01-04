@@ -37,18 +37,18 @@ static int getnameinfo_lua(lua_State *L)
     int rc = getnameinfo(info->ai.ai_addr, info->ai.ai_addrlen, host,
                          NI_MAXHOST, serv, NI_MAXSERV, flag);
 
-    if (rc == 0) {
-        lua_createtable(L, 0, 2);
-        lauxh_pushstr2tbl(L, "host", host);
-        lauxh_pushstr2tbl(L, "service", serv);
-        return 1;
+    // got error
+    if (rc != 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, gai_strerror(rc), "getnameinfo", rc);
+        return 2;
     }
 
-    // got error
-    lua_pushnil(L);
-    lua_pushstring(L, gai_strerror(rc));
+    lua_createtable(L, 0, 2);
+    lauxh_pushstr2tbl(L, "host", host);
+    lauxh_pushstr2tbl(L, "service", serv);
 
-    return 2;
+    return 1;
 }
 
 static int addr_lua(lua_State *L)
@@ -179,7 +179,7 @@ static int getaddrinfo_lua(lua_State *L)
 
     if (rc != 0) {
         lua_pushnil(L);
-        lua_pushstring(L, gai_strerror(rc));
+        lls_pusherror(L, gai_strerror(rc), "getaddrinfo", rc);
         return 2;
     }
 
@@ -227,11 +227,12 @@ static int inet6_lua(lua_State *L)
         switch (inet_pton(AF_INET6, addr, (void *)&saddr.sin6_addr)) {
         case -1:
             lua_pushnil(L);
-            lua_pushstring(L, strerror(errno));
+            lls_pusherror(L, strerror(errno), "inet_pton", errno);
             return 2;
         case 0:
             lua_pushnil(L);
-            lua_pushfstring(L, "addr cannot be parsed as ipv6 address");
+            lls_pusherror(L, "addr cannot be parsed as ipv6 address",
+                          "inet_pton", 0);
             return 2;
         }
     }
@@ -266,13 +267,14 @@ static int inet_lua(lua_State *L)
 
     if (addr) {
         switch (inet_pton(AF_INET, addr, (void *)&saddr.sin_addr)) {
-        case 0:
-            lua_pushnil(L);
-            lua_pushstring(L, strerror(errno));
-            return 2;
         case -1:
             lua_pushnil(L);
-            lua_pushfstring(L, "addr cannot be parsed as ipv4 address");
+            lls_pusherror(L, strerror(errno), "inet_pton", errno);
+            return 2;
+        case 0:
+            lua_pushnil(L);
+            lls_pusherror(L, "addr cannot be parsed as ipv4 address",
+                          "inet_pton", 0);
             return 2;
         }
     }
@@ -302,7 +304,7 @@ static int unix_lua(lua_State *L)
     // length too large
     if (len >= UNIXPATH_MAX) {
         lua_pushnil(L);
-        lua_pushstring(L, strerror(ENAMETOOLONG));
+        lls_pusherror(L, strerror(ENAMETOOLONG), "unix_lua", ENAMETOOLONG);
         return 2;
     }
     memcpy((void *)&saddr.sun_path, (void *)pathname, len);

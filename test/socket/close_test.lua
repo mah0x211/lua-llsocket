@@ -72,7 +72,7 @@ function testcase.close_with_invalid_arguments()
 
     -- test that return an error with invalid argument
     local _, err = sp[1]:close(-1)
-    assert.match(err, 'Invalid argument', false)
+    assert.match(tostring(err), 'Invalid argument', false)
     assert.equal(sp[1]:fd(), -1)
 
     for _, s in ipairs(sp) do
@@ -85,8 +85,8 @@ function testcase.call_close_twice()
 
     -- test that return an error if calls twice
     assert(socket.close(sp[1]:fd()))
-    local _, err = socket.close(sp[1]:fd())
-    assert.match(err, 'Bad file', false)
+    local _, err = socket.close(sp[1]:fd(), 123)
+    assert.match(tostring(err), 'Bad file', false)
 
     -- test that return an error if calls twice
     assert(sp[2]:close())

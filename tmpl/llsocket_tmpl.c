@@ -29,6 +29,9 @@
 
 LUALIB_API int luaopen_llsocket(lua_State *L)
 {
+    // init error module
+    lls_initerror(L);
+
     // register submodule
     lua_newtable(L);
 

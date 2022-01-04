@@ -169,100 +169,97 @@ static inline void add_ifa_mtu(lua_State *L, char *ifa_name)
 
 static int getifaddrs_lua(lua_State *L)
 {
-    struct ifaddrs *list = NULL;
-
-    if (getifaddrs(&list) == 0) {
-        struct ifaddrs *ifa   = list;
-        const int tblidx      = lua_gettop(L) + 1;
-        char host[NI_MAXHOST] = {0};
-        socklen_t addrlen     = 0;
-
-        lua_newtable(L);
-        for (; ifa; ifa = ifa->ifa_next) {
-            if (!ifa->ifa_addr) {
-                continue;
-            }
-
-            // create interface table if it returns 1
-            if (gettable(L, tblidx, ifa->ifa_name) == 1) {
-                add_ifa_flags(L, ifa->ifa_flags);
-                add_ifa_index(L, ifa->ifa_name);
-                add_ifa_mtu(L, ifa->ifa_name);
-            }
-
-            switch (ifa->ifa_addr->sa_family) {
-            case AF_INET: {
-                gettable(L, tblidx + 1, "inet");
-                addrlen = sizeof(struct sockaddr_in);
-            } break;
-
-            case AF_INET6: {
-                gettable(L, tblidx + 1, "inet6");
-                addrlen = sizeof(struct sockaddr_in6);
-            } break;
-
-#if defined(__linux__)
-            case AF_PACKET: {
-                struct sockaddr_ll *addr = (struct sockaddr_ll *)ifa->ifa_addr;
-                if (addr->sll_halen) {
-                    snprintf(host, NI_MAXHOST, "%02x:%02x:%02x:%02x:%02x:%02x",
-                             addr->sll_addr[0], addr->sll_addr[1],
-                             addr->sll_addr[2], addr->sll_addr[3],
-                             addr->sll_addr[4], addr->sll_addr[5]);
-                    lauxh_pushstr2tbl(L, "ether", host);
-                }
-            }
-#else
-            case AF_LINK: {
-                addrlen = ((struct sockaddr_dl *)ifa->ifa_addr)->sdl_alen;
-                // set address
-                if (addrlen > 0 &&
-                    getnameinfo(ifa->ifa_addr, addrlen, host, NI_MAXHOST, NULL,
-                                0, NI_NUMERICHOST) == 0) {
-                    lauxh_pushstr2tbl(L, "ether", host);
-                }
-            }
-#endif
-            default:
-                lua_pop(L, 1);
-                continue;
-            }
-
-            // set address
-            lua_createtable(L, 0, 2);
-            if (getnameinfo(ifa->ifa_addr, addrlen, host, NI_MAXHOST, NULL, 0,
-                            NI_NUMERICHOST) == 0) {
-                lauxh_pushstr2tbl(L, "address", host);
-            }
-            if (ifa->ifa_netmask &&
-                getnameinfo(ifa->ifa_netmask, addrlen, host, NI_MAXHOST, NULL,
-                            0, NI_NUMERICHOST) == 0) {
-                lauxh_pushstr2tbl(L, "netmask", host);
-            }
-            if (ifa->ifa_flags & IFF_BROADCAST &&
-                getnameinfo(ifa->ifa_broadaddr, addrlen, host, NI_MAXHOST, NULL,
-                            0, NI_NUMERICHOST) == 0) {
-                lauxh_pushstr2tbl(L, "broadcast", host);
-            }
-            if (ifa->ifa_flags & IFF_POINTOPOINT &&
-                getnameinfo(ifa->ifa_dstaddr, addrlen, host, NI_MAXHOST, NULL,
-                            0, NI_NUMERICHOST) == 0) {
-                lauxh_pushstr2tbl(L, "point2point", host);
-            }
-            lua_rawseti(L, -2, lauxh_rawlen(L, -2) + 1);
-            lua_pop(L, 1);
-            lua_pop(L, 1);
-        }
-
-        freeifaddrs(list);
-        return 1;
-    }
+    struct ifaddrs *list  = NULL;
+    const int tblidx      = lua_gettop(L) + 1;
+    char host[NI_MAXHOST] = {0};
+    socklen_t addrlen     = 0;
 
     // got error
-    lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    if (getifaddrs(&list) != 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "getifaddrs", errno);
+        return 2;
+    }
 
-    return 2;
+    lua_newtable(L);
+    for (struct ifaddrs *ifa = list; ifa; ifa = ifa->ifa_next) {
+        if (!ifa->ifa_addr) {
+            continue;
+        }
+
+        // create interface table if it returns 1
+        if (gettable(L, tblidx, ifa->ifa_name) == 1) {
+            add_ifa_flags(L, ifa->ifa_flags);
+            add_ifa_index(L, ifa->ifa_name);
+            add_ifa_mtu(L, ifa->ifa_name);
+        }
+
+        switch (ifa->ifa_addr->sa_family) {
+        case AF_INET: {
+            gettable(L, tblidx + 1, "inet");
+            addrlen = sizeof(struct sockaddr_in);
+        } break;
+
+        case AF_INET6: {
+            gettable(L, tblidx + 1, "inet6");
+            addrlen = sizeof(struct sockaddr_in6);
+        } break;
+
+#if defined(__linux__)
+        case AF_PACKET: {
+            struct sockaddr_ll *addr = (struct sockaddr_ll *)ifa->ifa_addr;
+            if (addr->sll_halen) {
+                snprintf(host, NI_MAXHOST, "%02x:%02x:%02x:%02x:%02x:%02x",
+                         addr->sll_addr[0], addr->sll_addr[1],
+                         addr->sll_addr[2], addr->sll_addr[3],
+                         addr->sll_addr[4], addr->sll_addr[5]);
+                lauxh_pushstr2tbl(L, "ether", host);
+            }
+        }
+#else
+        case AF_LINK: {
+            addrlen = ((struct sockaddr_dl *)ifa->ifa_addr)->sdl_alen;
+            // set address
+            if (addrlen > 0 &&
+                getnameinfo(ifa->ifa_addr, addrlen, host, NI_MAXHOST, NULL, 0,
+                            NI_NUMERICHOST) == 0) {
+                lauxh_pushstr2tbl(L, "ether", host);
+            }
+        }
+#endif
+        default:
+            lua_pop(L, 1);
+            continue;
+        }
+
+        // set address
+        lua_createtable(L, 0, 2);
+        if (getnameinfo(ifa->ifa_addr, addrlen, host, NI_MAXHOST, NULL, 0,
+                        NI_NUMERICHOST) == 0) {
+            lauxh_pushstr2tbl(L, "address", host);
+        }
+        if (ifa->ifa_netmask &&
+            getnameinfo(ifa->ifa_netmask, addrlen, host, NI_MAXHOST, NULL, 0,
+                        NI_NUMERICHOST) == 0) {
+            lauxh_pushstr2tbl(L, "netmask", host);
+        }
+        if (ifa->ifa_flags & IFF_BROADCAST &&
+            getnameinfo(ifa->ifa_broadaddr, addrlen, host, NI_MAXHOST, NULL, 0,
+                        NI_NUMERICHOST) == 0) {
+            lauxh_pushstr2tbl(L, "broadcast", host);
+        }
+        if (ifa->ifa_flags & IFF_POINTOPOINT &&
+            getnameinfo(ifa->ifa_dstaddr, addrlen, host, NI_MAXHOST, NULL, 0,
+                        NI_NUMERICHOST) == 0) {
+            lauxh_pushstr2tbl(L, "point2point", host);
+        }
+        lua_rawseti(L, -2, lauxh_rawlen(L, -2) + 1);
+        lua_pop(L, 1);
+        lua_pop(L, 1);
+    }
+    freeifaddrs(list);
+
+    return 1;
 }
 
 LUALIB_API int luaopen_llsocket_device(lua_State *L)
