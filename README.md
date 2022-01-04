@@ -677,7 +677,7 @@ send file descriptors along unix domain sockets.
 
 - `len:number`: the number of bytes sent (always zero).
 - `err:string`: error string.
-- `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK`, `EINTR` or `EMSGSIZE`.
+- `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 
 **NOTE:** all return values will be nil if closed by peer.
 
@@ -693,7 +693,7 @@ send multiple messages including auxiliary data at once.
 
 **Returns**
 
-- `len:number`: the number of bytes sent, or `-1` if `errno` is `EMSGSIZE` (send buffer is insufficient).
+- `len:number`: the number of bytes sent.
 - `err:string`: error string.
 - `again:boolean`: `true` if len != `mh:bytes()`, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 
