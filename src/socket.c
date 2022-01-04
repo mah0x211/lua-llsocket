@@ -1187,8 +1187,7 @@ static int sendfd_lua(lua_State *L)
     // got error
     case -1:
         // again
-        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR ||
-            errno == EMSGSIZE) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
             lua_pushinteger(L, 0);
             lua_pushnil(L);
             lua_pushboolean(L, 1);
@@ -1251,13 +1250,6 @@ static int sendmsg_lua(lua_State *L)
         // again
         if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
             lua_pushinteger(L, 0);
-            lua_pushnil(L);
-            lua_pushboolean(L, 1);
-            return 3;
-        }
-        // send buffer is insufficient
-        else if (errno == EMSGSIZE) {
-            lua_pushinteger(L, -1);
             lua_pushnil(L);
             lua_pushboolean(L, 1);
             return 3;
@@ -1547,9 +1539,8 @@ static int recvfrom_lua(lua_State *L)
     // invalid length
     if (len <= 0) {
         lua_pushnil(L);
-        lua_pushnil(L);
         lls_pusherror(L, strerror(EINVAL), "recvfrom_lua", EINVAL);
-        return 3;
+        return 2;
     }
 
     buf = lua_newuserdata(L, len);
