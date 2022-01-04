@@ -52,6 +52,7 @@
 // lualib
 #include "config.h"
 #include "lauxhlib.h"
+#include "lua_error.h"
 #include "lua_iovec.h"
 
 #define SOCKET_MT   "llsocket.socket"
@@ -81,6 +82,46 @@ LUALIB_API int luaopen_llsocket_cmsghdr(lua_State *L);
 LUALIB_API int luaopen_llsocket_cmsghdrs(lua_State *L);
 LUALIB_API int luaopen_llsocket_msghdr(lua_State *L);
 LUALIB_API int luaopen_llsocket_env(lua_State *L);
+
+#define ERROR_TYPE_NAME "llsocket.error"
+
+static inline void lls_initerror(lua_State *L)
+{
+    le_loadlib(L, 1);
+    lua_getfield(L, LUA_REGISTRYINDEX, ERROR_TYPE_NAME);
+    if (lua_isnil(L, -1)) {
+        lua_pushliteral(L, ERROR_TYPE_NAME);
+        le_new_type(L, -1);
+        lua_setfield(L, LUA_REGISTRYINDEX, ERROR_TYPE_NAME);
+    }
+    lua_pop(L, 1);
+}
+
+static inline void lls_pusherror_ex(lua_State *L, const char *msg,
+                                    const char *op, int code, int wrapidx)
+{
+    int top = lua_gettop(L);
+
+    if (wrapidx < 0) {
+        wrapidx = top + wrapidx + 1;
+    }
+
+    lua_getfield(L, LUA_REGISTRYINDEX, ERROR_TYPE_NAME);
+    lua_pushstring(L, msg);
+    lua_pushstring(L, op);
+    lua_pushinteger(L, code);
+    le_new_message(L, top + 2);
+    if (wrapidx) {
+        lua_pushvalue(L, wrapidx);
+    }
+    le_new_typed_error(L, top + 1);
+}
+
+static inline void lls_pusherror(lua_State *L, const char *msg, const char *op,
+                                 int code)
+{
+    lls_pusherror_ex(L, msg, op, code, 0);
+}
 
 typedef struct {
     int ref;
@@ -292,38 +333,38 @@ static inline int lls_opt6inaddr(lua_State *L, int idx, int socktype,
 static inline int lls_fcntl_lua(lua_State *L, int fd, int getfl, int setfl,
                                 int fl)
 {
+    int top = lua_gettop(L);
     int flg = fcntl(fd, getfl);
 
-    if (flg != -1) {
-        int top = lua_gettop(L);
-
-        // push current value
-        lua_pushboolean(L, flg & fl);
-        // no-change
-        if (top == 1 || lua_isnoneornil(L, 2)) {
-            return 1;
-        }
-
-        // change
-        luaL_checktype(L, 2, LUA_TBOOLEAN);
-        if (lua_toboolean(L, 2)) {
-            // set flag
-            flg |= fl;
-        } else {
-            // unset flag
-            flg &= ~fl;
-        }
-
-        if (fcntl(fd, setfl, flg) == 0) {
-            return 1;
-        }
+    if (flg == -1) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "fcntl", errno);
+        return 2;
     }
 
-    // got error
-    lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    // push current value
+    lua_pushboolean(L, flg & fl);
+    // no-change
+    if (top == 1 || lua_isnoneornil(L, 2)) {
+        return 1;
+    }
 
-    return 2;
+    // change
+    luaL_checktype(L, 2, LUA_TBOOLEAN);
+    if (lua_toboolean(L, 2)) {
+        // set flag
+        flg |= fl;
+    } else {
+        // unset flag
+        flg &= ~fl;
+    }
+    if (fcntl(fd, setfl, flg) != 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "fcntl", errno);
+        return 2;
+    }
+
+    return 1;
 }
 
 // socket option
@@ -331,47 +372,50 @@ static inline int lls_fcntl_lua(lua_State *L, int fd, int getfl, int setfl,
 static inline int lls_sockopt_int_lua(lua_State *L, int fd, int level, int opt,
                                       int type)
 {
+    int top       = lua_gettop(L);
     int flg       = 0;
     socklen_t len = sizeof(int);
 
-    if (getsockopt(fd, level, opt, (void *)&flg, &len) == 0) {
-        int top = lua_gettop(L);
+    if (getsockopt(fd, level, opt, (void *)&flg, &len) != 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "getsockopt", errno);
+        return 2;
+    }
 
-        switch (type) {
-        case LUA_TBOOLEAN:
-            lua_pushboolean(L, flg);
-            break;
+    switch (type) {
+    case LUA_TBOOLEAN:
+        lua_pushboolean(L, flg);
+        break;
 
-        default:
-            lua_pushinteger(L, flg);
-        }
+    default:
+        lua_pushinteger(L, flg);
+    }
 
-        // no-change
-        if (top == 1 || lua_isnoneornil(L, 2)) {
+    // no-change
+    if (top == 1 || lua_isnoneornil(L, 2)) {
+        return 1;
+    }
+
+    // type check
+    luaL_checktype(L, 2, type);
+    switch (type) {
+    case LUA_TBOOLEAN:
+        flg = (int)lua_toboolean(L, 2);
+        if (setsockopt(fd, level, opt, (void *)&flg, len) == 0) {
             return 1;
         }
+        break;
 
-        // type check
-        luaL_checktype(L, 2, type);
-        switch (type) {
-        case LUA_TBOOLEAN:
-            flg = (int)lua_toboolean(L, 2);
-            if (setsockopt(fd, level, opt, (void *)&flg, len) == 0) {
-                return 1;
-            }
-            break;
-
-        default:
-            flg = (int)lua_tointeger(L, 2);
-            if (setsockopt(fd, level, opt, (void *)&flg, len) == 0) {
-                return 1;
-            }
+    default:
+        flg = (int)lua_tointeger(L, 2);
+        if (setsockopt(fd, level, opt, (void *)&flg, len) == 0) {
+            return 1;
         }
     }
 
     // got error
     lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
+    lls_pusherror(L, strerror(errno), "setsockopt", errno);
 
     return 2;
 }
@@ -379,37 +423,34 @@ static inline int lls_sockopt_int_lua(lua_State *L, int fd, int level, int opt,
 static inline int lls_sockopt_timeval_lua(lua_State *L, int fd, int level,
                                           int opt)
 {
+    int top             = lua_gettop(L);
     struct timeval tval = {0, 0};
     socklen_t len       = sizeof(struct timeval);
 
-    if (getsockopt(fd, level, opt, (void *)&tval, &len) == 0) {
-        int top = lua_gettop(L);
+    if (getsockopt(fd, level, opt, (void *)&tval, &len) != 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "getsockopt", errno);
+        return 2;
+    }
 
-        lua_pushnumber(L,
-                       (double)tval.tv_sec + ((double)tval.tv_usec / 1000000));
+    lua_pushnumber(L, (double)tval.tv_sec + ((double)tval.tv_usec / 1000000));
+    // change
+    if (top != 1 && !lua_isnoneornil(L, 2)) {
+        double tnum = (double)luaL_checknumber(L, 2);
+        double hi   = 0;
+        double lo   = modf(tnum, &hi);
 
-        if (top == 1 || lua_isnoneornil(L, 2)) {
-            // no-change
-            return 1;
-        } else {
-            double tnum = (double)luaL_checknumber(L, 2);
-            double hi   = 0;
-            double lo   = modf(tnum, &hi);
-
-            tval.tv_sec  = (time_t)hi;
-            tval.tv_usec = (suseconds_t)(lo * 1000000);
-            // set delay flag
-            if (setsockopt(fd, level, opt, (void *)&tval, len) == 0) {
-                return 1;
-            }
+        tval.tv_sec  = (time_t)hi;
+        tval.tv_usec = (suseconds_t)(lo * 1000000);
+        // set delay flag
+        if (setsockopt(fd, level, opt, (void *)&tval, len) != 0) {
+            lua_pushnil(L);
+            lls_pusherror(L, strerror(errno), "setsockopt", errno);
+            return 2;
         }
     }
 
-    // got error
-    lua_pushnil(L);
-    lua_pushstring(L, strerror(errno));
-
-    return 2;
+    return 1;
 }
 
 #endif
