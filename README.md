@@ -15,9 +15,15 @@ low-level socket module.
 
 ## Installation
 
-```bash
-$ luarocks install llsocket
 ```
+luarocks install llsocket
+```
+
+## Error Handling
+
+the error object of llsocket is created using a [https://github.com/mah0x211/lua-error](https://github.com/mah0x211/lua-error) module.
+
+if you need to know more about what kind of error occurred, you can use the [error.cause](https://github.com/mah0x211/lua-error#message--errorcauseerr) API of the `lua-error` module to get the structured message.
 
 
 ## llsocket.env Module
@@ -42,7 +48,7 @@ get interface addresses.
 **Returns**
 
 - `tbl:table`: key-value pairs of interface addresses.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 
@@ -65,7 +71,7 @@ create a new addrinfo instance of `AF_UNIX`.
 **Returns**
 
 - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ai, err = addrinfo.inet( [addr [, port [, socktype [, protocol [, flag, ...]]]]] )
@@ -83,7 +89,7 @@ create a new addrinfo instance of `AF_INET`.
 **Returns**
 
 - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ai, err = addrinfo.inet6( [addr [, port [, socktype [, protocol [, flag, ...]]]]] )
@@ -101,7 +107,7 @@ create a new addrinfo instance of `AF_INET6`.
 **Returns**
 
 - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### arr, err = addrinfo.getaddrinfo( [host [, port [, family [, socktype [, protocol [, flag, ...]]]]]] )
@@ -120,7 +126,7 @@ get a list of address info of tcp stream socket.
 **Returns**
 
 - `arr:table`: list of [addrinfo](#llsocketaddrinfo-instance-methods).
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ## llsocket.addrinfo Instance Methods
@@ -140,7 +146,7 @@ get hostname and service name.
 - `ni:table`: name info table.
     - `host:string`: hostname.
     - `serv:string`: service name.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### af = ai:family()
@@ -390,7 +396,7 @@ create a pair of connected sockets.
 - `socks:table`: pair of connected sockets.
     - `1:socket`: instance of [socket](#llsocketsocket-instance-methods)
     - `2:socket`: instance of [socket](#llsocketsocket-instance-methods)
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### sock, err = socket.wrap( fd [, nonblock] )
@@ -405,7 +411,7 @@ create an instance of socket from specified socket file descriptor.
 **Returns**
 
 - `sock:socket`: instance of [socket](#llsocketsocket-instance-methods).
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### sock, err = socket.new( family, socktype, [protocol [, nonblock]] )
@@ -422,7 +428,7 @@ create an instance of socket
 **Returns**
 
 - `sock:socket`: instance of [socket](#llsocketsocket-instance-methods).
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ok, err = socket.shutdown( fd, [flag] )
@@ -437,7 +443,7 @@ shut down part of a full-duplex connection.
 **Returns**
 
 - `ok:boolean`: `true` on success.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ok, err = socket.close( fd, [flag] )
@@ -452,7 +458,7 @@ close a file descriptor.
 **Returns**
 
 - `ok:boolean`: `true` on success.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ## llsocket.socket Instance Methods
@@ -474,7 +480,7 @@ duplicate an instance of socket.
 **Returns**
 
 - `sock:socket`: instance of [socket](#llsocketsocket-instance-methods).
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### fd = sock:fd()
@@ -524,7 +530,7 @@ bind the socket to an address.
 **Returns**
 
 - `ok:boolean`: `true` on success.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ok, err, again = sock:connect( ai )
@@ -538,7 +544,7 @@ initiate a new connection.
 **Returns**
 
 - `ok:boolean`: `true` on success.
-- `err:string`: error string.
+- `err:error`: error object.
 - `again:boolean`: `true` if errno is `EINPROGRESS` or `ETIMEDOUT`.
 
 
@@ -553,7 +559,7 @@ shut down part of a full-duplex connection.
 **Returns**
 
 - `ok:boolean`: `true` on success.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ok, err = sock:close( [flag] )
@@ -567,7 +573,7 @@ close a file descriptor.
 **Returns**
 
 - `ok:boolean`: `true` on success.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ok, err = sock:listen( [backlog] )
@@ -581,7 +587,7 @@ listen for connections.
 **Returns**
 
 - `ok:boolean`: `true` on success.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### sock, err, again, ai = sock:accept( [with_ai] )
@@ -595,7 +601,7 @@ accept a connection.
 **Returns**
 
 - `sock:socket`: instance of [socket](#llsocketsocket-instance-methods).
-- `err:string`: error string.
+- `err:error`: error object.
 - `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK`, `EINTR` or `ECONNABORTED`.
 - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 
@@ -607,7 +613,7 @@ accept a connection.
 **Returns**
 
 - `fd:number`: socket file descriptor.
-- `err:string`: error string.
+- `err:error`: error object.
 - `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK`, `EINTR` or `ECONNABORTED`.
 
 
@@ -623,7 +629,7 @@ wait until socket can be sendable within specified timeout milliseconds.
 **Returns**
 
 - `ok:boolean`: if `true`, socket is ready to send.
-- `err:string`: error string.
+- `err:error`: error object.
 - `timeout:boolean`: timed-out.
 
 
@@ -638,7 +644,7 @@ send a message from a socket.
 **Returns**
 
 - `len:number`: the number of bytes sent.
-- `err:string`: error string.
+- `err:error`: error object.
 - `again:boolean`: `true` if len != #msg, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR.
 
 **NOTE:** all return values will be nil if closed by peer.
@@ -657,7 +663,7 @@ send a message to specified destination address.
 **Returns**
 
 - `len:number`: the number of bytes sent.
-- `err:string`: error string.
+- `err:error`: error object.
 - `again:boolean`: `true` if len != #msg, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 
 **NOTE:** all return values will be nil if closed by peer.
@@ -676,7 +682,7 @@ send file descriptors along unix domain sockets.
 **Returns**
 
 - `len:number`: the number of bytes sent (always zero).
-- `err:string`: error string.
+- `err:error`: error object.
 - `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 
 **NOTE:** all return values will be nil if closed by peer.
@@ -694,7 +700,7 @@ send multiple messages including auxiliary data at once.
 **Returns**
 
 - `len:number`: the number of bytes sent.
-- `err:string`: error string.
+- `err:error`: error object.
 - `again:boolean`: `true` if len != `mh:bytes()`, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 
 **NOTE:** all return values will be nil if closed by peer.
@@ -713,7 +719,7 @@ send a file.
 **Returns**
 
 - `len:number`: the number of bytes sent.
-- `err:string`: error string.
+- `err:error`: error object.
 - `again:boolean`: `true` if len != #bytes, or `errno` is `EAGAIN` or `EINTR`.
 
 **NOTE:** all return values will be nil if closed by peer.
@@ -731,7 +737,7 @@ wait until the socket can be receivable within specified timeout milliseconds.
 **Returns**
 
 - `ok:boolean`: if `true`, socket is ready to receive.
-- `err:string`: error string.
+- `err:error`: error object.
 - `timeout:boolean`: timed-out.
 
 
@@ -747,7 +753,7 @@ receive a message.
 **Returns**
 
 - `msg:string`: received message string.
-- `err:string`: error string.
+- `err:error`: error object.
 - `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 
 **NOTE:** all return values will be nil if closed by peer.
@@ -765,7 +771,7 @@ receive message and address info.
 **Returns**
 
 - `msg:string`: received message string.
-- `err:string`: error string.
+- `err:error`: error object.
 - `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
 
@@ -783,7 +789,7 @@ receive file descriptors along unix domain sockets.
 **Returns**
 
 - `fd:number`: file descriptor.
-- `err:string`: error string.
+- `err:error`: error object.
 - `again:boolean`: `true` either if `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`, or if socket type is `SOCK_DGRAM` or `SOCK_RAW`.
 
 **NOTE:** all return values will be nil if closed by peer.
@@ -801,7 +807,7 @@ receive multiple messages including auxiliary data at once.
 **Returns**
 
 - `len:number`: the number of bytes received.
-- `err:string`: error string.
+- `err:error`: error object.
 - `again:boolean`: `true` if len != `mh:bytes()`, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 
 **NOTE:** all return values will be nil if closed by peer.
@@ -814,7 +820,7 @@ determine whether socket is at out-of-band mark.
 **Returns**
 
 - `bool:boolean`: `true` if the socket is at the out-of-band mark.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ai, err = sock:getsockname()
@@ -824,7 +830,7 @@ get socket name.
 **Returns**
 
 - `ai:addrinfo`: instance of [addrinfo](#llsocketaddrinfo-instance-methods).
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ai, err = sock:getpeername()
@@ -845,7 +851,7 @@ determine whether the `FD_CLOEXEC` flag enabled, or change the state to an argum
 **Returns**
 
 - `enable:boolean`: the state before changing the `FD_CLOEXEC` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### enable, err = sock:nonblock( [enable] )
@@ -859,7 +865,7 @@ determine whether the `O_NONBLOCK` flag enabled, or change the state to an argum
 **Returns**
 
 - `enable:boolean`: the state before changing the `O_NONBLOCK` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### errno, err = sock:error()
@@ -869,7 +875,7 @@ get pending socket error status and clear it.
 **Returns**
 
 - `errno:number`: number of last error.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### enabled, err = sock:acceptconn()
@@ -879,7 +885,7 @@ determine whether the `SO_ACCEPTCONN` flag enabled.
 **Returns**
 
 - `enabled:boolean`: the state of the `SO_ACCEPTCONN` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### enable, err = sock:tcpnodelay( [enable] )
@@ -893,7 +899,7 @@ determine whether the `TCP_NODELAY` flag enabled, or change the state to an argu
 **Returns**
 
 - `enable:boolean`: the state before changing the `TCP_NODELAY` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### sec, err = sock:tcpkeepintvl( [sec] )
@@ -907,7 +913,7 @@ get the `TCP_KEEPINTVL` value, or change that value to an argument value.
 **Returns**
 
 - `sec:number`: the value before changing the `TCP_KEEPINTVL`.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### cnt, err = sock:tcpkeepcnt( [cnt] )
@@ -921,7 +927,7 @@ get the `TCP_KEEPCNT` value, or change that value to an argument value.
 **Returns**
 
 - `sec:number`: the value before changing the `TCP_KEEPCNT`.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### sec, err = sock:tcpkeepalive( [sec] )
@@ -935,7 +941,7 @@ get the `TCP_KEEPALIVE` value, or set that value if argument passed.
 **Returns**
 
 - `sec:number`: the value before changing the `TCP_KEEPALIVE`.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### enable, err = sock:tcpcork( [enable] )
@@ -949,7 +955,7 @@ determine whether the `TCP_CORK` flag enabled, or change the state to an argumen
 **Returns**
 
 - `enable:boolean`: the state before changing the `TCP_CORK` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### enable, err = sock:reuseport( [enable] )
@@ -963,7 +969,7 @@ determine whether the `SO_REUSEPORT` flag enabled, or change the state to an arg
 **Returns**
 
 - `enable:boolean`: the state before changing the `SO_REUSEADDR` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### enable, err = sock:reuseaddr( [enable] )
@@ -977,7 +983,7 @@ determine whether the `SO_REUSEADDR` flag enabled, or change the state to an arg
 **Returns**
 
 - `enable:boolean`: the state before changing the `SO_REUSEADDR` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### enable, err = sock:broadcast( [enable] )
@@ -991,7 +997,7 @@ determine whether the `SO_BROADCAST` flag enabled, or change the state to an arg
 **Returns**
 
 - `enable:boolean`: the state before changing the `SO_BROADCAST` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### enable, err = sock:debug( [enable] )
@@ -1005,7 +1011,7 @@ determine whether the `SO_DEBUG` flag enabled, or change the state to an argumen
 **Returns**
 
 - `enable:boolean`: the state before changing the `SO_DEBUG` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### enable, err = sock:keepalive( [enable] )
@@ -1019,7 +1025,7 @@ determine whether the `SO_KEEPALIVE` flag enabled, or change the state to an arg
 **Returns**
 
 - `enable:boolean`: the state before changing the `SO_KEEPALIVE` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### enable, err = sock:oobinline( [enable] )
@@ -1033,7 +1039,7 @@ determine whether the `SO_OOBINLINE` flag enabled, or change the state to an arg
 **Returns**
 
 - `enable:boolean`: the state before changing the `SO_OOBINLINE` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### enable, err = sock:dontroute( [enable] )
@@ -1047,7 +1053,7 @@ determine whether the `SO_DONTROUTE` flag enabled, or change the state to an arg
 **Returns**
 
 - `enable:boolean`: the state before changing the `SO_DONTROUTE` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### enable, err = sock:timestamp( [enable] )
@@ -1061,7 +1067,7 @@ determine whether the `SO_TIMESTAMP` flag enabled, or change the state to an arg
 **Returns**
 
 - `enable:boolean`: the state before changing the `SO_TIMESTAMP` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### sz, err = sock:rcvbuf( [sz] )
@@ -1075,7 +1081,7 @@ get the `SO_RCVBUF` value, or change that value to an argument value.
 **Returns**
 
 - `sz:number`: the value before changing the `SO_RCVBUF`.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### sz, err = sock:rcvlowat( [sz] )
@@ -1089,7 +1095,7 @@ get the `SO_RCVLOWAT` value, or change that value to an argument value.
 **Returns**
 
 - `sz:number`: the value before changing the `SO_RCVLOWAT`.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### sz, err = sock:sndbuf( [sz] )
@@ -1103,7 +1109,7 @@ get the `SO_SNDBUF` value, or change that value to an argument value.
 **Returns**
 
 - `sz:number`: the value before changing the `SO_SNDBUF`.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### sz, err = sock:sndlowat( [sz] )
@@ -1117,7 +1123,7 @@ get the `SO_SNDLOWAT` value, or change that value to an argument value.
 **Returns**
 
 - `sz:number`: the value before changing the `SO_SNDLOWAT`.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### sec, err = sock:rcvtimeo( [sec] )
@@ -1131,7 +1137,7 @@ get the `SO_RCVTIMEO` value, or change that value to an argument value.
 **Returns**
 
 - `sec:number`: the value before changing the `SO_RCVTIMEO`.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### sec, err = sock:sndtimeo( [sec] )
@@ -1145,7 +1151,7 @@ get the `SO_SNDTIMEO` value, or change that value to an argument value.
 **Returns**
 
 - `sec:number`: the value before changing the `SO_SNDTIMEO`.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### sec, err = sock:linger( [sec] )
@@ -1159,7 +1165,7 @@ get the `SO_LINGER` value, or change that value to an argument value.
 **Returns**
 
 - `sec:number`: the value before changing the `SO_LINGER`.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### enable, err = sock:mcastloop( [enable] )
@@ -1173,7 +1179,7 @@ determine whether the `IP_MULTICAST_LOOP` flag enabled, or change the state to a
 **Returns**
 
 - `enable:boolean`: the state before changing the `IP_MULTICAST_LOOP` flag.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ttl, err = sock:mcastttl( [ttl] )
@@ -1187,7 +1193,7 @@ get the `IP_MULTICAST_TTL` value, or change that value to an argument value.
 **Returns**
 
 - `sec:number`: the value before changing the `IP_MULTICAST_TTL`.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ifname, err = sock:mcastif( [ifname] )
@@ -1201,7 +1207,7 @@ get the `IP_MULTICAST_IF` value, or change that value to an argument value.
 **Returns**
 
 - `ifname:string`: the value before changing the `IP_MULTICAST_IF`.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ok, err = sock:mcastjoin( mcaddr [, ifname] )
@@ -1216,7 +1222,7 @@ set the `IP_ADD_MEMBERSHIP` or `IPV6_JOIN_GROUP` (if IPv6) value.
 **Returns**
 
 - `ok:boolean`: `true` on success.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ok, err = sock:mcastleave( mcaddr [, ifname] )
@@ -1231,7 +1237,7 @@ set the `IP_DROP_MEMBERSHIP` or `IPV6_LEAVE_GROUP` (if IPv6) value.
 **Returns**
 
 - `ok:boolean`: `true` on success.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ok, err = sock:mcastjoinsrc( mcaddr, srcaddr [, ifname] )
@@ -1247,7 +1253,7 @@ set the `IP_ADD_SOURCE_MEMBERSHIP` or `MCAST_JOIN_SOURCE_GROUP` (if IPv6) value.
 **Returns**
 
 - `ok:boolean`: `true` on success.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ok, err = sock:mcastleavesrc( mcaddr, srcaddr [, ifname] )
@@ -1263,7 +1269,7 @@ set the `IP_DROP_SOURCE_MEMBERSHIP` or `MCAST_LEAVE_SOURCE_GROUP` (if IPv6) valu
 **Returns**
 
 - `ok:boolean`: `true` on success.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ok, err = sock:mcastblocksrc( mcaddr, srcaddr [, ifname] )
@@ -1279,7 +1285,7 @@ set the `IP_BLOCK_SOURCE` or `MCAST_BLOCK_SOURCE` (if IPv6) value.
 **Returns**
 
 - `ok:boolean`: `true` on success.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 ### ok, err = sock:mcastunblocksrc( mcaddr, srcaddr [, ifname] )
@@ -1295,7 +1301,7 @@ set the `IP_UNBLOCK_SOURCE` or `MCAST_UNBLOCK_SOURCE` (if IPv6) value.
 **Returns**
 
 - `ok:boolean`: `true` on success.
-- `err:string`: error string.
+- `err:error`: error object.
 
 
 
