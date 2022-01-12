@@ -1,5 +1,4 @@
 local collectgarbage = collectgarbage
-local assert = require('assertex')
 local testcase = require('testcase')
 local timer = require('testcase.timer')
 local llsocket = require('llsocket')

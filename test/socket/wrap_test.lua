@@ -1,4 +1,3 @@
-local assert = require('assertex')
 local testcase = require('testcase')
 local llsocket = require('llsocket')
 local socket = llsocket.socket

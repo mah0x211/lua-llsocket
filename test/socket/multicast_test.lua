@@ -1,6 +1,5 @@
 local unpack = unpack or table.unpack
 local pcall = pcall
-local assert = require('assertex')
 local testcase = require('testcase')
 local has_suffix = require('stringex').has_suffix
 local llsocket = require('llsocket')

@@ -1,7 +1,6 @@
 require('nosigpipe')
 local collectgarbage = collectgarbage
 local unpack = unpack or table.unpack
-local assert = require('assertex')
 local testcase = require('testcase')
 local timer = require('testcase.timer')
 local llsocket = require('llsocket')

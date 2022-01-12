@@ -1,4 +1,3 @@
-local assert = require('assertex')
 local testcase = require('testcase')
 local trim_prefix = require('stringex').trim_prefix
 local llsocket = require('llsocket')
