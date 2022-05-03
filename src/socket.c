@@ -1493,7 +1493,7 @@ static int recv_lua(lua_State *L)
     // invalid length
     if (len <= 0) {
         lua_pushnil(L);
-        lls_pusherror(L, strerror(EINVAL), "sendfile_lua", EINVAL);
+        lls_pusherror(L, strerror(EINVAL), "recv_lua", EINVAL);
         return 2;
     }
 
@@ -1697,6 +1697,48 @@ static int recvmsg_lua(lua_State *L)
     default:
         lua_pushinteger(L, rv);
         return 1;
+    }
+}
+
+static int write_lua(lua_State *L)
+{
+    lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
+    size_t len      = 0;
+    const char *buf = lauxh_checklstring(L, 2, &len);
+    ssize_t rv      = 0;
+
+    // invalid length
+    if (!len) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(EINVAL), "write_lua", EINVAL);
+        return 2;
+    }
+
+    rv = write(s->fd, buf, len);
+    switch (rv) {
+    // got error
+    case -1:
+        // again
+        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+            lua_pushinteger(L, 0);
+            lua_pushnil(L);
+            lua_pushboolean(L, 1);
+            return 3;
+        }
+        // closed by peer
+        else if (errno == EPIPE || errno == ECONNRESET) {
+            return 0;
+        }
+        // got error
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "write", errno);
+        return 2;
+
+    default:
+        lua_pushinteger(L, rv);
+        lua_pushnil(L);
+        lua_pushboolean(L, len - (size_t)rv);
+        return 3;
     }
 }
 
@@ -2084,6 +2126,7 @@ LUALIB_API int luaopen_llsocket_socket(lua_State *L)
             {"recvfrom",        recvfrom_lua       },
             {"recvfd",          recvfd_lua         },
             {"recvmsg",         recvmsg_lua        },
+            {"write",           write_lua          },
 
  // state
             {"atmark",          atmark_lua         },
