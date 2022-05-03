@@ -1,0 +1,7 @@
+coverage/
+*.o
+*.so
+*.gcda
+*.gcno
+*.profraw
+Makefile

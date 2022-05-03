@@ -135,7 +135,7 @@ function testcase.getaddrinfo()
         addrinfo.getaddrinfo(node, service, 'invalid socktype')
     end)
     assert(err, 'getaddrinfo() does not throws error')
-    assert.match(err, '#3 .+number expected', false)
+    assert.match(err, '#3 .+integer expected', false)
 
     -- test that throws error with invalid protocol
     err = assert.throws(function()
@@ -143,7 +143,7 @@ function testcase.getaddrinfo()
                              'invalid protocol')
     end)
     assert(err, 'getaddrinfo() does not throws error')
-    assert.match(err, '#4 .+number expected', false)
+    assert.match(err, '#4 .+integer expected', false)
 
     -- test that throws error with invalid flags
     err = assert.throws(function()
@@ -151,5 +151,5 @@ function testcase.getaddrinfo()
                              llsocket.IPPROTO_TCP, 'invalid falgs')
     end)
     assert(err, 'getaddrinfo() does not throws error')
-    assert.match(err, '#5 .+number expected', false)
+    assert.match(err, '#5 .+integer expected', false)
 end

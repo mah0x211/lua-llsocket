@@ -136,14 +136,14 @@ function testcase.shutdown_with_invalid_arguments()
             arg = {
                 true,
             },
-            err = '#1 .+ [(]number expected, got boolean',
+            err = '#1 .+ [(]integer expected, got boolean',
         },
         {
             arg = {
                 sp[1]:fd(),
                 'foo',
             },
-            err = '#2 .+ [(]number expected, got string',
+            err = '#2 .+ [(]integer expected, got string',
         },
     }) do
         local err = assert.throws(function()
@@ -156,7 +156,7 @@ function testcase.shutdown_with_invalid_arguments()
     local err = assert.throws(function()
         sp[1]:shutdown('foo')
     end)
-    assert.match(err, '#1 .+ [(]number expected, got string', false)
+    assert.match(err, '#1 .+ [(]integer expected, got string', false)
 
     for _, s in ipairs(sp) do
         s:close()

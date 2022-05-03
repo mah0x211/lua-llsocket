@@ -11,14 +11,17 @@ LIBDIR=@LIBDIR@
 VARS=$(wildcard ../@VARDIR@/*.txt)
 TMPL=$(wildcard ../@TMPLDIR@/*.c)
 
+ifdef LLSOCKET_COVERAGE
+COVFLAGS=--coverage
+endif
 
 all: preprocess $(TARGET)
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(WARNINGS) $(CPPFLAGS) -c $^
+	$(CC) $(CFLAGS) $(WARNINGS) $(COVFLAGS) $(CPPFLAGS) -c $^
 
 $(TARGET): $(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(COVFLAGS) $(LIBS)
 
 preprocess:
 	lua ../codegen.lua $(VARS) $(TMPL)
