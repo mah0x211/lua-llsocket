@@ -29,10 +29,6 @@
 
 #define DEFAULT_RECVSIZE 4096
 
-static const char *const SA_STORAGE_BUF[sizeof(struct sockaddr_storage)] = {0};
-#define SOCKADDR_STORAGE_INITIALIZER                                           \
- *((struct sockaddr_storage *)SA_STORAGE_BUF)
-
 typedef struct {
     int fd;
     int family;
@@ -817,7 +813,7 @@ static int atmark_lua(lua_State *L)
 static int getsockname_lua(lua_State *L)
 {
     lls_socket_t *s              = lauxh_checkudata(L, 1, SOCKET_MT);
-    struct sockaddr_storage addr = SOCKADDR_STORAGE_INITIALIZER;
+    struct sockaddr_storage addr = {0};
     socklen_t addrlen            = sizeof(struct sockaddr_storage);
     struct addrinfo wrap;
 
@@ -845,7 +841,7 @@ static int getpeername_lua(lua_State *L)
 {
     lls_socket_t *s              = lauxh_checkudata(L, 1, SOCKET_MT);
     socklen_t len                = sizeof(struct sockaddr_storage);
-    struct sockaddr_storage addr = SOCKADDR_STORAGE_INITIALIZER;
+    struct sockaddr_storage addr = {0};
     struct addrinfo wrap;
 
     if (getpeername(s->fd, (struct sockaddr *)&addr, &len) != 0) {
@@ -1007,7 +1003,7 @@ static int accept_lua(lua_State *L)
 {
     lls_socket_t *s               = lauxh_checkudata(L, 1, SOCKET_MT);
     int with_addr                 = lauxh_optboolean(L, 2, 0);
-    struct sockaddr_storage saddr = SOCKADDR_STORAGE_INITIALIZER;
+    struct sockaddr_storage saddr = {0};
     socklen_t saddrlen            = sizeof(struct sockaddr_storage);
     struct sockaddr *addr         = NULL;
     socklen_t *addrlen            = NULL;
@@ -1532,7 +1528,7 @@ static int recvfrom_lua(lua_State *L)
     lua_Integer len             = lauxh_optinteger(L, 2, DEFAULT_RECVSIZE);
     int flg                     = lauxh_optflags(L, 3);
     socklen_t slen              = sizeof(struct sockaddr_storage);
-    struct sockaddr_storage src = SOCKADDR_STORAGE_INITIALIZER;
+    struct sockaddr_storage src = {0};
     ssize_t rv                  = 0;
     char *buf                   = NULL;
 
