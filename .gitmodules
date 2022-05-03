@@ -1,3 +1,0 @@
-[submodule "deps/lua-iovec"]
-	path = deps/lua-iovec
-	url = https://github.com/mah0x211/lua-iovec.git
