@@ -163,9 +163,9 @@ static int mcastif4_lua(lua_State *L, lls_socket_t *s)
             }
         } else {
             const char *ifname = lauxh_checkstring(L, 2);
-            struct ifreq ifr;
+            struct ifreq ifr   = {0};
 
-            strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+            strncpy(ifr.ifr_name, ifname, IFNAMSIZ - 1);
             // get interface address
             if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
                 // got error
@@ -293,9 +293,9 @@ static inline int mcast4group_lua(lua_State *L, lls_socket_t *s, int opt)
                               ((struct sockaddr_in *)grp->ai.ai_addr)->sin_addr,
                           .imr_interface = {INADDR_ANY}};
     if (ifname) {
-        struct ifreq ifr;
+        struct ifreq ifr = {0};
 
-        strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+        strncpy(ifr.ifr_name, ifname, IFNAMSIZ - 1);
         // get interface address
         if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
             lua_pushboolean(L, 0);
@@ -460,8 +460,9 @@ static inline int mcast4srcgroup_lua(lua_State *L, lls_socket_t *s, int opt)
         lls_pusherror(L, strerror(errno), "mcast4srcgroup_lua", errno);
         return 2;
     } else if (ifname) {
-        struct ifreq ifr;
-        strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+        struct ifreq ifr = {0};
+
+        strncpy(ifr.ifr_name, ifname, IFNAMSIZ - 1);
         // get interface address
         if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
             lua_pushboolean(L, 0);
