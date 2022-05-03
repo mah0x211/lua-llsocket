@@ -9,7 +9,6 @@ low-level socket module.
 
 ## Dependencies
 
-- lauxhlib: <https://github.com/mah0x211/lauxhlib>
 - lua-iovec: <https://github.com/mah0x211/lua-iovec>
 
 

@@ -13,6 +13,7 @@ description = {
 dependencies = {
     "lua >= 5.1",
     "error >= 0.6.0",
+    "lauxhlib >= 0.3.1",
     "iovec >= 0.3.0",
 }
 build = {
