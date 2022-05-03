@@ -1742,6 +1742,51 @@ static int write_lua(lua_State *L)
     }
 }
 
+static int read_lua(lua_State *L)
+{
+    lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
+    lua_Integer len = lauxh_optinteger(L, 2, DEFAULT_RECVSIZE);
+    char *buf       = NULL;
+    ssize_t rv      = 0;
+
+    lua_settop(L, 0);
+
+    // invalid length
+    if (len <= 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(EINVAL), "read_lua", EINVAL);
+        return 2;
+    }
+
+    buf = lua_newuserdata(L, len);
+    rv  = read(s->fd, buf, (size_t)len);
+    switch (rv) {
+    // got error
+    case -1:
+        lua_pushnil(L);
+        // again
+        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+            lua_pushnil(L);
+            lua_pushboolean(L, 1);
+            return 3;
+        }
+        // got error
+        lls_pusherror(L, strerror(errno), "read", errno);
+        return 2;
+
+    case 0:
+        // close by peer
+        if (s->socktype != SOCK_DGRAM && s->socktype != SOCK_RAW) {
+            return 0;
+        }
+        // fall through
+
+    default:
+        lua_pushlstring(L, buf, rv);
+        return 1;
+    }
+}
+
 static int connect_lua(lua_State *L)
 {
     lls_socket_t *s      = lauxh_checkudata(L, 1, SOCKET_MT);
@@ -2127,6 +2172,7 @@ LUALIB_API int luaopen_llsocket_socket(lua_State *L)
             {"recvfd",          recvfd_lua         },
             {"recvmsg",         recvmsg_lua        },
             {"write",           write_lua          },
+            {"read",            read_lua           },
 
  // state
             {"atmark",          atmark_lua         },
