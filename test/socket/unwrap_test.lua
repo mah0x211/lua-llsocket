@@ -1,5 +1,5 @@
 local testcase = require('testcase')
-local trim_prefix = require('stringex').trim_prefix
+local trim_prefix = require('string.trim').prefix
 local llsocket = require('llsocket')
 local socket = llsocket.socket
 

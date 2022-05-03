@@ -47,14 +47,14 @@ function testcase.close_with_invalid_arguments()
             arg = {
                 true,
             },
-            err = '#1 .+ [(]number expected, got boolean',
+            err = '#1 .+ [(]integer expected, got boolean',
         },
         {
             arg = {
                 sp[1]:fd(),
                 'foo',
             },
-            err = '#2 .+ [(]number expected, got string',
+            err = '#2 .+ [(]integer expected, got string',
         },
     }) do
         local err = assert.throws(function()
@@ -67,7 +67,7 @@ function testcase.close_with_invalid_arguments()
     local err = assert.throws(function()
         sp[1]:close('foo')
     end)
-    assert.match(err, '#1 .+ [(]number expected, got string', false)
+    assert.match(err, '#1 .+ [(]integer expected, got string', false)
 
     -- test that return an error with invalid argument
     local _, err = sp[1]:close(-1)

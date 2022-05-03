@@ -51,9 +51,9 @@
 #include <unistd.h>
 // lualib
 #include "config.h"
-#include "lauxhlib.h"
 #include "lua_error.h"
 #include "lua_iovec.h"
+#include <lauxhlib.h>
 
 #define SOCKET_MT   "llsocket.socket"
 #define ADDRINFO_MT "llsocket.addrinfo"

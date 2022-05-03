@@ -1,7 +1,7 @@
 local unpack = unpack or table.unpack
 local pcall = pcall
 local testcase = require('testcase')
-local has_suffix = require('stringex').has_suffix
+local has_suffix = require('string.contains').suffix
 local llsocket = require('llsocket')
 local socket = llsocket.socket
 local addrinfo = llsocket.addrinfo

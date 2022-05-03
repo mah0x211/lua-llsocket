@@ -17,7 +17,7 @@ function testcase.inet()
         local err = assert.throws(function()
             s:listen('foo')
         end)
-        assert.match(err, '#1 .+ [(]number expected, got string', false)
+        assert.match(err, '#1 .+ [(]integer expected, got string', false)
 
         if socktype == llsocket.SOCK_STREAM then
             -- test that the stream socket can listen
@@ -46,7 +46,7 @@ function testcase.inet()
     err = assert.throws(function()
         s:listen('foo')
     end)
-    assert.match(err, '#1 .+ [(]number expected, got string', false)
+    assert.match(err, '#1 .+ [(]integer expected, got string', false)
 
     s:close()
 end
@@ -91,7 +91,7 @@ function testcase.unix()
     err = assert.throws(function()
         s:listen('foo')
     end)
-    assert.match(err, '#1 .+ [(]number expected, got string', false)
+    assert.match(err, '#1 .+ [(]integer expected, got string', false)
     s:close()
     os.remove(filename)
 end

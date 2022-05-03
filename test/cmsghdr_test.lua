@@ -16,20 +16,20 @@ function testcase.new()
     for _, v in ipairs({
         {
             arg = {},
-            err = '#1 .+ [(]number expected, got no value',
+            err = '#1 .+ [(]integer expected, got no value',
         },
         {
             arg = {
                 1,
             },
-            err = '#2 .+ [(]number expected, got no value',
+            err = '#2 .+ [(]integer expected, got no value',
         },
         {
             arg = {
                 1,
                 1,
             },
-            err = '#-1 .+ [(]string expected, got nil',
+            err = '[(]string expected, got nil',
         },
         {
             arg = {
@@ -37,7 +37,7 @@ function testcase.new()
                 1,
                 true,
             },
-            err = '#-1 .+ [(]string expected, got boolean',
+            err = '[(]string expected, got boolean',
         },
     }) do
         local err = assert.throws(function()
@@ -72,14 +72,14 @@ function testcase.rights()
             arg = {
                 true,
             },
-            err = '#1 .+ [(]number expected, got boolean',
+            err = '#1 .+ [(]integer expected, got boolean',
         },
         {
             arg = {
                 1,
                 {},
             },
-            err = '#2 .+ [(]number expected, got table',
+            err = '#2 .+ [(]integer expected, got table',
         },
     }) do
         local err = assert.throws(function()

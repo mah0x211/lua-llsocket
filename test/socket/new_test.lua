@@ -40,14 +40,14 @@ function testcase.new()
                 arg = {
                     'foo',
                 },
-                err = '#1 .+ [(]number expected, got string',
+                err = '#1 .+ [(]integer expected, got string',
             },
             {
                 arg = {
                     ai:family(),
                     true,
                 },
-                err = '#2 .+ [(]number expected, got boolean',
+                err = '#2 .+ [(]integer expected, got boolean',
             },
             {
                 arg = {
@@ -55,7 +55,7 @@ function testcase.new()
                     ai:socktype(),
                     {},
                 },
-                err = '#3 .+ [(]number expected, got table',
+                err = '#3 .+ [(]integer expected, got table',
             },
             {
                 arg = {

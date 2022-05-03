@@ -36,14 +36,14 @@ function testcase.stream_pair()
             arg = {
                 true,
             },
-            err = '#1 .+ [(]number expected, got boolean',
+            err = '#1 .+ [(]integer expected, got boolean',
         },
         {
             arg = {
                 1,
                 {},
             },
-            err = '#2 .+ [(]number expected, got table',
+            err = '#2 .+ [(]integer expected, got table',
         },
         {
             arg = {

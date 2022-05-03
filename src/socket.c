@@ -29,10 +29,6 @@
 
 #define DEFAULT_RECVSIZE 4096
 
-static const char *const SA_STORAGE_BUF[sizeof(struct sockaddr_storage)] = {0};
-#define SOCKADDR_STORAGE_INITIALIZER                                           \
- *((struct sockaddr_storage *)SA_STORAGE_BUF)
-
 typedef struct {
     int fd;
     int family;
@@ -167,9 +163,9 @@ static int mcastif4_lua(lua_State *L, lls_socket_t *s)
             }
         } else {
             const char *ifname = lauxh_checkstring(L, 2);
-            struct ifreq ifr;
+            struct ifreq ifr   = {0};
 
-            strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+            strncpy(ifr.ifr_name, ifname, IFNAMSIZ - 1);
             // get interface address
             if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
                 // got error
@@ -297,9 +293,9 @@ static inline int mcast4group_lua(lua_State *L, lls_socket_t *s, int opt)
                               ((struct sockaddr_in *)grp->ai.ai_addr)->sin_addr,
                           .imr_interface = {INADDR_ANY}};
     if (ifname) {
-        struct ifreq ifr;
+        struct ifreq ifr = {0};
 
-        strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+        strncpy(ifr.ifr_name, ifname, IFNAMSIZ - 1);
         // get interface address
         if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
             lua_pushboolean(L, 0);
@@ -464,8 +460,9 @@ static inline int mcast4srcgroup_lua(lua_State *L, lls_socket_t *s, int opt)
         lls_pusherror(L, strerror(errno), "mcast4srcgroup_lua", errno);
         return 2;
     } else if (ifname) {
-        struct ifreq ifr;
-        strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+        struct ifreq ifr = {0};
+
+        strncpy(ifr.ifr_name, ifname, IFNAMSIZ - 1);
         // get interface address
         if (ioctl(s->fd, SIOCGIFADDR, &ifr) != 0) {
             lua_pushboolean(L, 0);
@@ -817,7 +814,7 @@ static int atmark_lua(lua_State *L)
 static int getsockname_lua(lua_State *L)
 {
     lls_socket_t *s              = lauxh_checkudata(L, 1, SOCKET_MT);
-    struct sockaddr_storage addr = SOCKADDR_STORAGE_INITIALIZER;
+    struct sockaddr_storage addr = {0};
     socklen_t addrlen            = sizeof(struct sockaddr_storage);
     struct addrinfo wrap;
 
@@ -845,7 +842,7 @@ static int getpeername_lua(lua_State *L)
 {
     lls_socket_t *s              = lauxh_checkudata(L, 1, SOCKET_MT);
     socklen_t len                = sizeof(struct sockaddr_storage);
-    struct sockaddr_storage addr = SOCKADDR_STORAGE_INITIALIZER;
+    struct sockaddr_storage addr = {0};
     struct addrinfo wrap;
 
     if (getpeername(s->fd, (struct sockaddr *)&addr, &len) != 0) {
@@ -1007,7 +1004,7 @@ static int accept_lua(lua_State *L)
 {
     lls_socket_t *s               = lauxh_checkudata(L, 1, SOCKET_MT);
     int with_addr                 = lauxh_optboolean(L, 2, 0);
-    struct sockaddr_storage saddr = SOCKADDR_STORAGE_INITIALIZER;
+    struct sockaddr_storage saddr = {0};
     socklen_t saddrlen            = sizeof(struct sockaddr_storage);
     struct sockaddr *addr         = NULL;
     socklen_t *addrlen            = NULL;
@@ -1493,7 +1490,7 @@ static int recv_lua(lua_State *L)
     // invalid length
     if (len <= 0) {
         lua_pushnil(L);
-        lls_pusherror(L, strerror(EINVAL), "sendfile_lua", EINVAL);
+        lls_pusherror(L, strerror(EINVAL), "recv_lua", EINVAL);
         return 2;
     }
 
@@ -1532,7 +1529,7 @@ static int recvfrom_lua(lua_State *L)
     lua_Integer len             = lauxh_optinteger(L, 2, DEFAULT_RECVSIZE);
     int flg                     = lauxh_optflags(L, 3);
     socklen_t slen              = sizeof(struct sockaddr_storage);
-    struct sockaddr_storage src = SOCKADDR_STORAGE_INITIALIZER;
+    struct sockaddr_storage src = {0};
     ssize_t rv                  = 0;
     char *buf                   = NULL;
 
@@ -1696,6 +1693,93 @@ static int recvmsg_lua(lua_State *L)
 
     default:
         lua_pushinteger(L, rv);
+        return 1;
+    }
+}
+
+static int write_lua(lua_State *L)
+{
+    lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
+    size_t len      = 0;
+    const char *buf = lauxh_checklstring(L, 2, &len);
+    ssize_t rv      = 0;
+
+    // invalid length
+    if (!len) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(EINVAL), "write_lua", EINVAL);
+        return 2;
+    }
+
+    rv = write(s->fd, buf, len);
+    switch (rv) {
+    // got error
+    case -1:
+        // again
+        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+            lua_pushinteger(L, 0);
+            lua_pushnil(L);
+            lua_pushboolean(L, 1);
+            return 3;
+        }
+        // closed by peer
+        else if (errno == EPIPE || errno == ECONNRESET) {
+            return 0;
+        }
+        // got error
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(errno), "write", errno);
+        return 2;
+
+    default:
+        lua_pushinteger(L, rv);
+        lua_pushnil(L);
+        lua_pushboolean(L, len - (size_t)rv);
+        return 3;
+    }
+}
+
+static int read_lua(lua_State *L)
+{
+    lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
+    lua_Integer len = lauxh_optinteger(L, 2, DEFAULT_RECVSIZE);
+    char *buf       = NULL;
+    ssize_t rv      = 0;
+
+    lua_settop(L, 0);
+
+    // invalid length
+    if (len <= 0) {
+        lua_pushnil(L);
+        lls_pusherror(L, strerror(EINVAL), "read_lua", EINVAL);
+        return 2;
+    }
+
+    buf = lua_newuserdata(L, len);
+    rv  = read(s->fd, buf, (size_t)len);
+    switch (rv) {
+    // got error
+    case -1:
+        lua_pushnil(L);
+        // again
+        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+            lua_pushnil(L);
+            lua_pushboolean(L, 1);
+            return 3;
+        }
+        // got error
+        lls_pusherror(L, strerror(errno), "read", errno);
+        return 2;
+
+    case 0:
+        // close by peer
+        if (s->socktype != SOCK_DGRAM && s->socktype != SOCK_RAW) {
+            return 0;
+        }
+        // fall through
+
+    default:
+        lua_pushlstring(L, buf, rv);
         return 1;
     }
 }
@@ -2084,6 +2168,8 @@ LUALIB_API int luaopen_llsocket_socket(lua_State *L)
             {"recvfrom",        recvfrom_lua       },
             {"recvfd",          recvfd_lua         },
             {"recvmsg",         recvmsg_lua        },
+            {"write",           write_lua          },
+            {"read",            read_lua           },
 
  // state
             {"atmark",          atmark_lua         },

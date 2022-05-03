@@ -1,6 +1,7 @@
 # lua-llsocket
 
 [![test](https://github.com/mah0x211/lua-llsocket/actions/workflows/test.yml/badge.svg)](https://github.com/mah0x211/lua-llsocket/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/mah0x211/lua-llsocket/branch/master/graph/badge.svg)](https://codecov.io/gh/mah0x211/lua-llsocket)
 
 low-level socket module.
 
@@ -9,7 +10,6 @@ low-level socket module.
 
 ## Dependencies
 
-- lauxhlib: <https://github.com/mah0x211/lauxhlib>
 - lua-iovec: <https://github.com/mah0x211/lua-iovec>
 
 
@@ -633,11 +633,29 @@ wait until socket can be sendable within specified timeout milliseconds.
 - `timeout:boolean`: timed-out.
 
 
-### len, err, again = sock:send( msg [, flag, ...] )
+### len, err, again = sock:write( msg )
 
-send a message from a socket.
+write a message.
 
 **Parameters**
+
+- `msg:string`: message string.
+
+**Returns**
+
+- `len:number`: the number of bytes written.
+- `err:error`: error object.
+- `again:boolean`: `true` if len != #msg, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR.
+
+**NOTE:** all return values will be nil if closed by peer.
+
+
+### len, err, again = sock:send( msg [, flag, ...] )
+
+send a message.
+
+**Parameters**
+
 - `msg:string`: message string.
 - `flag:...`: [MSG_* flags](#msg_-flags) constants.
 
@@ -739,6 +757,23 @@ wait until the socket can be receivable within specified timeout milliseconds.
 - `ok:boolean`: if `true`, socket is ready to receive.
 - `err:error`: error object.
 - `timeout:boolean`: timed-out.
+
+
+### msg, err, again = sock:read( [bufsize] )
+
+read a message.
+
+**Parameters**
+
+- `bufsize:number`: working buffer size of receive operation.
+
+**Returns**
+
+- `msg:string`: message string.
+- `err:error`: error object.
+- `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
+
+**NOTE:** all return values will be nil if closed by peer.
 
 
 ### msg, err, again = sock:recv( [bufsize [, flag, ...]] )
