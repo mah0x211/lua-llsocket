@@ -8,11 +8,6 @@ low-level socket module.
 **NOTE: Do not use this module.  this module is under heavy development.**
 
 
-## Dependencies
-
-- lua-iovec: <https://github.com/mah0x211/lua-iovec>
-
-
 ## Installation
 
 ```
