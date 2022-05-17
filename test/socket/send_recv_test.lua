@@ -93,13 +93,16 @@ function testcase.sendfile_recv()
     local limg = assert(io.open('./large.png'))
 
     -- test that send a small file
-    local n = assert(sp[1]:sendfile(simg, simg:seek('end')))
+    local n, err, again = assert(sp[1]:sendfile(simg, simg:seek('end')))
     assert.equal(n, simg:seek('end'))
+    assert.is_nil(err)
+    assert.is_nil(again)
     local data = assert(sp[2]:recv())
     assert.equal(#data, n)
 
     -- test that send a large file
-    local _, err = sp[1]:nonblock(true)
+    local _
+    _, err = sp[1]:nonblock(true)
     assert(not err, err)
     local size = limg:seek('end')
     local remain = size
@@ -107,20 +110,20 @@ function testcase.sendfile_recv()
     local total = 0
     -- repeat until file has been received
     repeat
-        local sent, err, again = sp[1]:sendfile(limg, remain, offset)
+        n, err, again = sp[1]:sendfile(limg, remain, offset)
         assert(not err, err)
 
         -- update next params
-        offset = assert.less_or_equal(offset + sent, size)
-        remain = assert.greater_or_equal(remain - sent, 0)
+        offset = assert.less_or_equal(offset + n, size)
+        remain = assert.greater_or_equal(remain - n, 0)
 
         -- repeat until all sent data has been received
         repeat
             -- luacheck: ignore data
-            local data = assert(sp[2]:recv())
-            sent = assert.greater_or_equal(sent - #data, 0)
+            data = assert(sp[2]:recv())
+            n = assert.greater_or_equal(n - #data, 0)
             total = total + #data
-        until sent == 0
+        until n == 0
     until not again
     assert.equal(size, total)
 

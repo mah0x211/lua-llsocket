@@ -46,9 +46,9 @@ function testcase.sendable()
     -- test that returns timeout=true after 150 ms
     s:nonblock(true)
     while 1 do
-        -- luacheck: ignore err
         -- fill the buffer
-        local _, err, again = s:send('foo')
+        local _, again
+        _, err, again = s:send('foo')
         assert(not err, err)
         if again then
             collectgarbage('collect')

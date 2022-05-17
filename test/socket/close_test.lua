@@ -1,6 +1,7 @@
 require('nosigpipe')
 local unpack = unpack or table.unpack
 local testcase = require('testcase')
+local errno = require('errno')
 local llsocket = require('llsocket')
 local socket = llsocket.socket
 
@@ -20,7 +21,7 @@ function testcase.close_with_valid_arguments()
 
         -- test that returns error
         local _, err = sp[1]:close()
-        assert(err, 'close() did not return an error')
+        assert.equal(err.type, errno.EBADF)
 
         for _, s in ipairs(sp) do
             s:close()
@@ -70,8 +71,9 @@ function testcase.close_with_invalid_arguments()
     assert.match(err, '#1 .+ [(]integer expected, got string', false)
 
     -- test that return an error with invalid argument
-    local _, err = sp[1]:close(-1)
-    assert.match(tostring(err), 'Invalid argument', false)
+    local _
+    _, err = sp[1]:close(-1)
+    assert.equal(err.type, errno.EINVAL)
     assert.equal(sp[1]:fd(), -1)
 
     for _, s in ipairs(sp) do
@@ -85,7 +87,7 @@ function testcase.call_close_twice()
     -- test that return an error if calls twice
     assert(socket.close(sp[1]:fd()))
     local _, err = socket.close(sp[1]:fd(), 123)
-    assert.match(tostring(err), 'Bad file', false)
+    assert.equal(err.type, errno.EBADF)
 
     -- test that return an error if calls twice
     assert(sp[2]:close())

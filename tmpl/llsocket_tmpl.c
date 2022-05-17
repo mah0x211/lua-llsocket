@@ -30,7 +30,7 @@
 LUALIB_API int luaopen_llsocket(lua_State *L)
 {
     // init error module
-    lls_initerror(L);
+    lua_errno_loadlib(L);
 
     // register submodule
     lua_newtable(L);

@@ -33,7 +33,6 @@ function testcase.new()
         assert.is_true(s:nonblock())
         s:close()
 
-        -- luacheck: ignore err
         -- test that throws an error with invalid arguments
         for _, v in ipairs({
             {

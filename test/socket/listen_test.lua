@@ -1,5 +1,6 @@
 local llsocket = require('llsocket')
 local testcase = require('testcase')
+local errno = require('errno')
 local socket = llsocket.socket
 local addrinfo = llsocket.addrinfo
 
@@ -14,7 +15,7 @@ function testcase.inet()
         assert(not err, err)
 
         -- test that throws an error with invalid argument
-        local err = assert.throws(function()
+        err = assert.throws(function()
             s:listen('foo')
         end)
         assert.match(err, '#1 .+ [(]integer expected, got string', false)
@@ -32,7 +33,7 @@ function testcase.inet()
         else
             -- test that the dgram socket cannot listen
             _, err = s:listen()
-            assert(err, 'listen() did not return an error')
+            assert.equal(err.type, errno.EOPNOTSUPP)
         end
 
         s:close()
@@ -75,8 +76,8 @@ function testcase.unix()
             c:close()
         else
             -- test that the dgram socket cannot listen
-            local _, err = s:listen()
-            assert(err, 'listen() did not return an error')
+            _, err = s:listen()
+            assert.equal(err.type, errno.EOPNOTSUPP)
         end
 
         s:close()

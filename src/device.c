@@ -177,7 +177,7 @@ static int getifaddrs_lua(lua_State *L)
     // got error
     if (getifaddrs(&list) != 0) {
         lua_pushnil(L);
-        lls_pusherror(L, strerror(errno), "getifaddrs", errno);
+        lua_errno_new(L, errno, "getifaddrs");
         return 2;
     }
 

@@ -20,13 +20,13 @@ function testcase.stream_pair()
         assert.is_true(v:nonblock())
     end
 
-    -- luacheck: ignore err
     -- test that sockets are connected to each other
     local smsg = 'hello'
     local n, err = sp[1]:send(smsg)
     assert(not err, err)
     assert.equal(n, #smsg)
-    local rmsg, err = sp[2]:recv()
+    local rmsg
+    rmsg, err = sp[2]:recv()
     assert(not err, err)
     assert.equal(rmsg, smsg)
 
