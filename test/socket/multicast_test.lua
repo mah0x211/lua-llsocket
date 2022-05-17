@@ -1,6 +1,7 @@
 local unpack = unpack or table.unpack
 local pcall = pcall
 local testcase = require('testcase')
+local errno = require('errno')
 local has_suffix = require('string.contains').suffix
 local llsocket = require('llsocket')
 local socket = llsocket.socket
@@ -58,12 +59,12 @@ function testcase.inet_mcastttl()
                 local err = assert.throws(function()
                     s:mcastttl('foo')
                 end)
-                assert.match(err, '#1 .+ [(]number expected, got string', false)
+                assert.match(err, '#1 .+ [(]integer expected, got string', false)
             else
                 -- test that cannot be sets the IP_MULTICAST_TTL value
                 local ttl, err = s:mcastttl()
                 assert.is_nil(ttl)
-                assert(err, 'mcastttl did not returns error')
+                assert.equal(err.type, errno.ESOCKTNOSUPPORT)
             end
         end)
         s:close()
@@ -87,12 +88,12 @@ function testcase.inet6_mcastttl()
                 local err = assert.throws(function()
                     s:mcastttl('foo')
                 end)
-                assert.match(err, '#1 .+ [(]number expected, got string', false)
+                assert.match(err, '#1 .+ [(]integer expected, got string', false)
             else
                 -- test that cannot be sets the IP_MULTICAST_TTL value
                 local ttl, err = s:mcastttl()
                 assert.is_nil(ttl)
-                assert(err, 'mcastttl did not returns error')
+                assert.equal(err.type, errno.ESOCKTNOSUPPORT)
             end
         end)
         s:close()
@@ -114,7 +115,7 @@ function testcase.inet_mcastloop()
                 assert.equal(s:mcastloop(), false)
 
                 -- test that throws error with invalid argument
-                local err = assert.throws(function()
+                err = assert.throws(function()
                     s:mcastloop('foo')
                 end)
                 assert.match(err, '#1 .+ [(]boolean expected, got string', false)
@@ -122,7 +123,7 @@ function testcase.inet_mcastloop()
                 -- test that cannot be sets the IP_MULTICAST_TTL value
                 local ttl, err = s:mcastttl()
                 assert.is_nil(ttl)
-                assert(err, 'mcastttl did not returns error')
+                assert.equal(err.type, errno.ESOCKTNOSUPPORT)
             end
         end)
         s:close()
@@ -144,7 +145,7 @@ function testcase.inet6_mcastloop()
                 assert.equal(s:mcastloop(), false)
 
                 -- test that throws error with invalid argument
-                local err = assert.throws(function()
+                err = assert.throws(function()
                     s:mcastloop('foo')
                 end)
                 assert.match(err, '#1 .+ [(]boolean expected, got string', false)
@@ -152,7 +153,7 @@ function testcase.inet6_mcastloop()
                 -- test that cannot be sets the IP_MULTICAST_TTL value
                 local ttl, err = s:mcastttl()
                 assert.is_nil(ttl)
-                assert(err, 'mcastttl did not returns error')
+                assert.equal(err.type, errno.ESOCKTNOSUPPORT)
             end
         end)
         s:close()
@@ -188,7 +189,7 @@ function testcase.inet_mcastif()
                 -- test that cannot be sets the IP_MULTICAST_IF value
                 local defval, err = s:mcastif()
                 assert.is_nil(defval)
-                assert(err, 'mcastif did not returns error')
+                assert.equal(err.type, errno.ESOCKTNOSUPPORT)
             end
         end)
         s:close()
@@ -224,7 +225,7 @@ function testcase.inet6_mcastif()
                 -- test that cannot be sets the IP_MULTICAST_IF value
                 local defval, err = s:mcastif()
                 assert.is_nil(defval)
-                assert(err, 'mcastif did not returns error')
+                assert.equal(err.type, errno.ESOCKTNOSUPPORT)
             end
         end)
         s:close()

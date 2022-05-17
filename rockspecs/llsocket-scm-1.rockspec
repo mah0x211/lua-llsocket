@@ -12,9 +12,9 @@ description = {
 }
 dependencies = {
     "lua >= 5.1",
-    "error >= 0.6.0",
+    "errno >= 0.3.0",
     "lauxhlib >= 0.3.1",
-    "iovec >= 0.4.0",
+    "iovec >= 0.5.0",
 }
 build = {
     type = "command",

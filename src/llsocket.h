@@ -51,8 +51,8 @@
 #include <unistd.h>
 // lualib
 #include "config.h"
-#include "lua_error.h"
 #include <lauxhlib.h>
+#include <lua_errno.h>
 #include <lua_iovec.h>
 
 #define SOCKET_MT   "llsocket.socket"
@@ -95,32 +95,6 @@ static inline void lls_initerror(lua_State *L)
         lua_setfield(L, LUA_REGISTRYINDEX, ERROR_TYPE_NAME);
     }
     lua_pop(L, 1);
-}
-
-static inline void lls_pusherror_ex(lua_State *L, const char *msg,
-                                    const char *op, int code, int wrapidx)
-{
-    int top = lua_gettop(L);
-
-    if (wrapidx < 0) {
-        wrapidx = top + wrapidx + 1;
-    }
-
-    lua_getfield(L, LUA_REGISTRYINDEX, ERROR_TYPE_NAME);
-    lua_pushstring(L, msg);
-    lua_pushstring(L, op);
-    lua_pushinteger(L, code);
-    le_new_message(L, top + 2);
-    if (wrapidx) {
-        lua_pushvalue(L, wrapidx);
-    }
-    le_new_typed_error(L, top + 1);
-}
-
-static inline void lls_pusherror(lua_State *L, const char *msg, const char *op,
-                                 int code)
-{
-    lls_pusherror_ex(L, msg, op, code, 0);
 }
 
 typedef struct {
@@ -338,7 +312,7 @@ static inline int lls_fcntl_lua(lua_State *L, int fd, int getfl, int setfl,
 
     if (flg == -1) {
         lua_pushnil(L);
-        lls_pusherror(L, strerror(errno), "fcntl", errno);
+        lua_errno_new(L, errno, "fcntl");
         return 2;
     }
 
@@ -360,7 +334,7 @@ static inline int lls_fcntl_lua(lua_State *L, int fd, int getfl, int setfl,
     }
     if (fcntl(fd, setfl, flg) != 0) {
         lua_pushnil(L);
-        lls_pusherror(L, strerror(errno), "fcntl", errno);
+        lua_errno_new(L, errno, "fcntl");
         return 2;
     }
 
@@ -378,7 +352,7 @@ static inline int lls_sockopt_int_lua(lua_State *L, int fd, int level, int opt,
 
     if (getsockopt(fd, level, opt, (void *)&flg, &len) != 0) {
         lua_pushnil(L);
-        lls_pusherror(L, strerror(errno), "getsockopt", errno);
+        lua_errno_new(L, errno, "getsockopt");
         return 2;
     }
 
@@ -397,17 +371,16 @@ static inline int lls_sockopt_int_lua(lua_State *L, int fd, int level, int opt,
     }
 
     // type check
-    luaL_checktype(L, 2, type);
     switch (type) {
     case LUA_TBOOLEAN:
-        flg = (int)lua_toboolean(L, 2);
+        flg = lauxh_checkboolean(L, 2);
         if (setsockopt(fd, level, opt, (void *)&flg, len) == 0) {
             return 1;
         }
         break;
 
     default:
-        flg = (int)lua_tointeger(L, 2);
+        flg = lauxh_checkinteger(L, 2);
         if (setsockopt(fd, level, opt, (void *)&flg, len) == 0) {
             return 1;
         }
@@ -415,8 +388,7 @@ static inline int lls_sockopt_int_lua(lua_State *L, int fd, int level, int opt,
 
     // got error
     lua_pushnil(L);
-    lls_pusherror(L, strerror(errno), "setsockopt", errno);
-
+    lua_errno_new(L, errno, "setsockopt");
     return 2;
 }
 
@@ -429,7 +401,7 @@ static inline int lls_sockopt_timeval_lua(lua_State *L, int fd, int level,
 
     if (getsockopt(fd, level, opt, (void *)&tval, &len) != 0) {
         lua_pushnil(L);
-        lls_pusherror(L, strerror(errno), "getsockopt", errno);
+        lua_errno_new(L, errno, "getsockopt");
         return 2;
     }
 
@@ -445,7 +417,7 @@ static inline int lls_sockopt_timeval_lua(lua_State *L, int fd, int level,
         // set delay flag
         if (setsockopt(fd, level, opt, (void *)&tval, len) != 0) {
             lua_pushnil(L);
-            lls_pusherror(L, strerror(errno), "setsockopt", errno);
+            lua_errno_new(L, errno, "setsockopt");
             return 2;
         }
     }

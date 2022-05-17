@@ -1,5 +1,6 @@
 local collectgarbage = collectgarbage
 local testcase = require('testcase')
+local errno = require('errno')
 local timer = require('testcase.timer')
 local llsocket = require('llsocket')
 local socket = llsocket.socket
@@ -29,12 +30,14 @@ function testcase.error()
             assert(not err, err)
 
             -- test that returns an errno associated with socket
-            local ok, err, again = s:connect(ai)
-            assert(not ok, 'connect() returns ok=true')
-            assert(not err, err)
-            assert(again, 'connect() returns again=false')
+            local ok, again
+            ok, err, again = s:connect(ai)
+            assert(ok, err)
+            assert.equal(err.type, errno.EINPROGRESS)
+            assert.is_nil(again)
             timer.usleep(1000)
-            assert.greater(s:error(), 0)
+            err = s:error()
+            assert.equal(err.type, errno.ECONNREFUSED)
 
             s:close()
         end

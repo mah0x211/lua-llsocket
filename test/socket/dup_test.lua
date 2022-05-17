@@ -14,15 +14,17 @@ function testcase.dup()
 
     -- test that the dup socket can read message
     assert(s2:send('hello'))
-    local msg = assert(ds:recv())
+    local msg, err, again = assert(ds:recv())
     assert.equal(msg, 'hello')
+    assert.is_nil(err)
+    assert.is_nil(again)
 
     -- test that the dup socket cannot read message when it is consumed by
     -- another socket
     assert(s2:send('hello'))
     msg = s1:recv()
     assert.equal(msg, 'hello')
-    local msg, err, again = ds:recv()
+    msg, err, again = ds:recv()
     assert.is_nil(msg)
     assert.is_nil(err)
     assert.is_true(again)
