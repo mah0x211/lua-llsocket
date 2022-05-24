@@ -1,6 +1,7 @@
 require('nosigpipe')
 local unpack = unpack or table.unpack
 local testcase = require('testcase')
+local errno = require('errno')
 local llsocket = require('llsocket')
 local socket = llsocket.socket
 
@@ -21,10 +22,10 @@ function testcase.shutdown_with_valid_arguments()
 
         -- nil == SHUT_RDWR
         if flg == nil or flg == llsocket.SHUT_RDWR then
-            -- test that send does not return values
-            assert.empty({
-                sp[1]:send('foo'),
-            })
+            -- test that return EPIPE error
+            local n, err = sp[1]:send('foo')
+            assert.is_nil(n)
+            assert.equal(err.type, errno.EPIPE)
 
             -- test that recv does not return values
             assert.empty({
@@ -50,10 +51,10 @@ function testcase.shutdown_with_valid_arguments()
         elseif flg == llsocket.SHUT_WR then
             assert(sp[2]:send('foo'))
 
-            -- test that send does not return values
-            assert.empty({
-                sp[1]:send('foo'),
-            })
+            -- test that return EPIPE error
+            local n, err = sp[1]:send('foo')
+            assert.is_nil(n)
+            assert.equal(err.type, errno.EPIPE)
 
             -- test that recv does not return values
             assert.equal(sp[1]:recv(), 'foo')
@@ -78,10 +79,10 @@ function testcase.shutdown_with_valid_arguments()
 
         -- nil == SHUT_RDWR
         if flg == nil or flg == llsocket.SHUT_RDWR then
-            -- test that send does not return values
-            assert.empty({
-                sp[1]:send('foo'),
-            })
+            -- test that return EPIPE error
+            local n, err = sp[1]:send('foo')
+            assert.is_nil(n)
+            assert.equal(err.type, errno.EPIPE)
 
             -- test that recv does not return values
             assert.empty({
@@ -107,10 +108,10 @@ function testcase.shutdown_with_valid_arguments()
         elseif flg == llsocket.SHUT_WR then
             assert(sp[2]:send('foo'))
 
-            -- test that send does not return values
-            assert.empty({
-                sp[1]:send('foo'),
-            })
+            -- test that return EPIPE error
+            local n, err = sp[1]:send('foo')
+            assert.is_nil(n)
+            assert.equal(err.type, errno.EPIPE)
 
             -- test that recv does not return values
             assert.equal(sp[1]:recv(), 'foo')

@@ -299,7 +299,6 @@ write a message.
 - `err:error`: error object.
 - `again:boolean`: `true` if len != #msg, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR.
 
-**NOTE:** all return values will be nil if `errno` is `EPIPE` or `ECONNRESET`.
 
 
 ## len, err, again = sock:send( msg [, flag, ...] )
@@ -316,8 +315,6 @@ send a message.
 - `len:integer`: the number of bytes sent.
 - `err:error`: error object.
 - `again:boolean`: `true` if len != #msg, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR.
-
-**NOTE:** all return values will be nil if `errno` is `EPIPE` or `ECONNRESET`.
 
 
 ## len, err, again = sock:sendto( msg, ai [, flag, ...] )
@@ -336,8 +333,6 @@ send a message to specified destination address.
 - `err:error`: error object.
 - `again:boolean`: `true` if len != #msg, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 
-**NOTE:** all return values will be nil if `errno` is `EPIPE` or `ECONNRESET`.
-
 
 ## len, err, again = sock:sendfd( fd, [ai, [flag, ...]] )
 
@@ -355,8 +350,6 @@ send file descriptors along unix domain sockets.
 - `err:error`: error object.
 - `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 
-**NOTE:** all return values will be nil if `errno` is `EPIPE` or `ECONNRESET`.
-
 
 ## len, err, again = sock:sendmsg( mh [, flag, ...] )
 
@@ -372,8 +365,6 @@ send multiple messages including auxiliary data at once.
 - `len:integer`: the number of bytes sent.
 - `err:error`: error object.
 - `again:boolean`: `true` if len != `mh:bytes()`, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
-
-**NOTE:** all return values will be nil if `errno` is `EPIPE` or `ECONNRESET`.
 
 
 ## len, err, again = sock:sendfile( fd, bytes [, offset] )
@@ -391,8 +382,6 @@ send a file.
 - `len:integer`: the number of bytes sent.
 - `err:error`: error object.
 - `again:boolean`: `true` if len != #bytes, or `errno` is `EAGAIN` or `EINTR`.
-
-**NOTE:** all return values will be nil if `errno` is `EPIPE` or `ECONNRESET`.
 
 
 ## ok, err, timeout = sock:recvable( [msec [, exception]] )
