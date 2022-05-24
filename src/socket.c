@@ -1089,11 +1089,9 @@ static int send_lua(lua_State *L)
             lua_pushnil(L);
             lua_pushboolean(L, 1);
             return 3;
-        } else if (errno == EPIPE || errno == ECONNRESET) {
-            // closed by peer
-            return 0;
         }
         // got error
+        // closed by peer: EPIPE || ECONNRESET
         lua_pushnil(L);
         lua_errno_new(L, errno, "send");
         return 2;
@@ -1133,11 +1131,9 @@ static int sendto_lua(lua_State *L)
             lua_pushnil(L);
             lua_pushboolean(L, 1);
             return 3;
-        } else if (errno == EPIPE || errno == ECONNRESET) {
-            // closed by peer
-            return 0;
         }
         // got error
+        // closed by peer: EPIPE || ECONNRESET
         lua_pushnil(L);
         lua_errno_new(L, errno, "sendto");
         return 2;
@@ -1192,11 +1188,9 @@ static int sendfd_lua(lua_State *L)
             lua_pushnil(L);
             lua_pushboolean(L, 1);
             return 3;
-        } else if (errno == EPIPE || errno == ECONNRESET) {
-            // closed by peer
-            return 0;
         }
         // got error
+        // closed by peer: EPIPE || ECONNRESET
         lua_pushnil(L);
         lua_errno_new(L, errno, "sendmsg");
         return 2;
@@ -1251,11 +1245,9 @@ static int sendmsg_lua(lua_State *L)
             lua_pushnil(L);
             lua_pushboolean(L, 1);
             return 3;
-        } else if (errno == EPIPE || errno == ECONNRESET) {
-            // closed by peer
-            return 0;
         }
         // got error
+        // closed by peer: EPIPE || ECONNRESET
         lua_pushnil(L);
         lua_errno_new(L, errno, "sendmsg");
         return 2;
@@ -1310,12 +1302,10 @@ static int sendfile_lua(lua_State *L)
         lua_pushnil(L);
         lua_pushboolean(L, 1);
         return 3;
-    } else if (errno == EPIPE || errno == ECONNRESET) {
-        // closed by peer
-        return 0;
     }
 
     // got error
+    // closed by peer: EPIPE || ECONNRESET
     lua_pushnil(L);
     lua_errno_new(L, errno, "sendfile");
     return 2;
@@ -1345,12 +1335,10 @@ static int sendfile_lua(lua_State *L)
         lua_pushnil(L);
         lua_pushboolean(L, 1);
         return 3;
-    } else if (errno == EPIPE) {
-        // closed by peer
-        return 0;
     }
 
     // got error
+    // closed by peer: EPIPE
     lua_pushnil(L);
     lua_errno_new(L, errno, "sendfile");
     return 2;
@@ -1383,12 +1371,9 @@ static int sendfile_lua(lua_State *L)
         lua_pushboolean(L, 1);
         return 3;
     }
-    // closed by peer
-    else if (errno == EPIPE) {
-        return 0;
-    }
 
     // got error
+    // closed by peer: EPIPE
     lua_pushnil(L);
     lua_errno_new(L, errno, "sendfile");
     return 2;
@@ -1453,11 +1438,9 @@ static int sendfile_lua(lua_State *L)
             lua_pushnil(L);
             lua_pushboolean(L, 1);
             return 3;
-        } else if (errno == EPIPE || errno == ECONNRESET) {
-            // closed by peer
-            return 0;
         }
         // got error
+        // closed by peer: EPIPE || ECONNRESET
         lua_pushnil(L);
         lua_errno_new(L, errno, "send");
         return 2;
@@ -1727,11 +1710,9 @@ static int write_lua(lua_State *L)
             lua_pushnil(L);
             lua_pushboolean(L, 1);
             return 3;
-        } else if (errno == EPIPE || errno == ECONNRESET) {
-            // closed by peer
-            return 0;
         }
         // got error
+        // closed by peer: EPIPE || ECONNRESET
         lua_pushnil(L);
         lua_errno_new(L, errno, "write");
         return 2;
