@@ -34,6 +34,22 @@ function testcase.inet()
     assert.not_empty(nameinfo)
     assert.equal(nameinfo.host, 'localhost')
     assert.equal(nameinfo.service, 'http-alt')
+
+    -- create new addrinfo without port
+    ai = assert(addrinfo.inet(host, nil, llsocket.SOCK_STREAM,
+                              llsocket.IPPROTO_TCP, llsocket.AI_PASSIVE))
+    assert.match(tostring(ai), '^llsocket.addrinfo:', false)
+
+    -- create new addrinfo with empty-host
+    ai = assert(addrinfo.inet('', port, llsocket.SOCK_STREAM,
+                              llsocket.IPPROTO_TCP, llsocket.AI_PASSIVE))
+    assert.match(tostring(ai), '^llsocket.addrinfo:', false)
+
+    -- create new addrinfo without host
+    ai = assert(addrinfo.inet(nil, port, llsocket.SOCK_STREAM,
+                              llsocket.IPPROTO_TCP, llsocket.AI_PASSIVE))
+    assert.match(tostring(ai), '^llsocket.addrinfo:', false)
+
 end
 
 function testcase.inet6()
@@ -68,6 +84,21 @@ function testcase.inet6()
     assert.not_empty(nameinfo)
     assert.equal(nameinfo.host, 'localhost')
     assert.equal(nameinfo.service, 'http-alt')
+
+    -- create new addrinfo without port
+    ai = assert(addrinfo.inet6(host, nil, llsocket.SOCK_STREAM,
+                               llsocket.IPPROTO_TCP, llsocket.AI_PASSIVE))
+    assert.match(tostring(ai), '^llsocket.addrinfo:', false)
+
+    -- create new addrinfo without host
+    ai = assert(addrinfo.inet6(nil, port, llsocket.SOCK_STREAM,
+                               llsocket.IPPROTO_TCP, llsocket.AI_PASSIVE))
+    assert.match(tostring(ai), '^llsocket.addrinfo:', false)
+
+    -- create new addrinfo with empty-host
+    ai = assert(addrinfo.inet6('', port, llsocket.SOCK_STREAM,
+                               llsocket.IPPROTO_TCP, llsocket.AI_PASSIVE))
+    assert.match(tostring(ai), '^llsocket.addrinfo:', false)
 end
 
 function testcase.unix()
@@ -108,16 +139,39 @@ function testcase.getaddrinfo()
     local node = '127.0.0.1'
     local service = '8080'
 
-    -- test that returns address list
-    local list, err = addrinfo.getaddrinfo(node, service, llsocket.AF_UNSPEC,
-                                           llsocket.SOCK_STREAM,
-                                           llsocket.IPPROTO_TCP,
-                                           llsocket.AI_PASSIVE)
-    assert(not err, err)
+    -- test that get address list from node and service
+    local list = assert(addrinfo.getaddrinfo(node, service, llsocket.AF_UNSPEC,
+                                             llsocket.SOCK_STREAM,
+                                             llsocket.IPPROTO_TCP,
+                                             llsocket.AI_PASSIVE))
+    assert.not_empty(list)
+
+    -- test that get address list without service
+    list = assert(addrinfo.getaddrinfo(node, nil, llsocket.AF_UNSPEC,
+                                       llsocket.SOCK_STREAM,
+                                       llsocket.IPPROTO_TCP, llsocket.AI_PASSIVE))
+    assert.not_empty(list)
+
+    -- test that get address list without node
+    list = assert(addrinfo.getaddrinfo(nil, service, llsocket.AF_UNSPEC,
+                                       llsocket.SOCK_STREAM,
+                                       llsocket.IPPROTO_TCP, llsocket.AI_PASSIVE))
+    assert.not_empty(list)
+
+    -- test that get address list with empty node
+    list = assert(addrinfo.getaddrinfo('', service, llsocket.AF_UNSPEC,
+                                       llsocket.SOCK_STREAM,
+                                       llsocket.IPPROTO_TCP, llsocket.AI_PASSIVE))
+    assert.not_empty(list)
+
+    -- test that get address list with empty service
+    list = assert(addrinfo.getaddrinfo(node, '', llsocket.AF_UNSPEC,
+                                       llsocket.SOCK_STREAM,
+                                       llsocket.IPPROTO_TCP, llsocket.AI_PASSIVE))
     assert.not_empty(list)
 
     -- test that throws error with invalid host
-    err = assert.throws(function()
+    local err = assert.throws(function()
         addrinfo.getaddrinfo(1)
     end)
     assert(err, 'getaddrinfo() does not throws error')

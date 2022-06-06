@@ -162,8 +162,10 @@ static int gc_lua(lua_State *L)
 
 static int getaddrinfo_lua(lua_State *L)
 {
-    const char *node      = lauxh_optstring(L, 1, NULL);
-    const char *service   = lauxh_optstring(L, 2, NULL);
+    size_t nodelen        = 0;
+    const char *node      = lauxh_optlstring(L, 1, NULL, &nodelen);
+    size_t servicelen     = 0;
+    const char *service   = lauxh_optlstring(L, 2, NULL, &servicelen);
     int family            = (int)lauxh_optinteger(L, 3, AF_UNSPEC);
     // SOCK_STREAM:tcp | SOCK_DGRAM:udp | SOCK_SEQPACKET
     int socktype          = (int)lauxh_optinteger(L, 4, 0);
@@ -174,8 +176,9 @@ static int getaddrinfo_lua(lua_State *L)
     struct addrinfo *list = NULL;
     struct addrinfo *ptr  = NULL;
     int idx               = 1;
-    int rc = lls_getaddrinfo(&list, node, service, family, socktype, protocol,
-                             flags);
+    int rc                = lls_getaddrinfo(&list, (nodelen) ? node : NULL,
+                             (servicelen) ? service : NULL, family, socktype,
+                                            protocol, flags);
 
     if (rc != 0) {
         lua_pushnil(L);
@@ -201,7 +204,8 @@ static int getaddrinfo_lua(lua_State *L)
 
 static int inet6_lua(lua_State *L)
 {
-    const char *addr          = lauxh_optstring(L, 1, NULL);
+    size_t len                = 0;
+    const char *addr          = lauxh_optlstring(L, 1, NULL, &len);
     uint16_t port             = lauxh_optuint16(L, 2, 0);
     struct sockaddr_in6 saddr = {.sin6_family = AF_INET6,
                                  .sin6_port   = htons(port),
@@ -223,7 +227,7 @@ static int inet6_lua(lua_State *L)
     saddr.sin6_len = sizeof(saddr);
 #endif
 
-    if (addr) {
+    if (len) {
         switch (inet_pton(AF_INET6, addr, (void *)&saddr.sin6_addr)) {
         case -1:
             lua_pushnil(L);
@@ -244,7 +248,8 @@ static int inet6_lua(lua_State *L)
 
 static int inet_lua(lua_State *L)
 {
-    const char *addr         = lauxh_optstring(L, 1, NULL);
+    size_t len               = 0;
+    const char *addr         = lauxh_optlstring(L, 1, NULL, &len);
     uint16_t port            = lauxh_optuint16(L, 2, 0);
     struct sockaddr_in saddr = {.sin_family = AF_INET,
                                 .sin_port   = htons(port),
@@ -266,7 +271,7 @@ static int inet_lua(lua_State *L)
     saddr.sin_len = sizeof(saddr);
 #endif
 
-    if (addr) {
+    if (len) {
         switch (inet_pton(AF_INET, addr, (void *)&saddr.sin_addr)) {
         case -1:
             lua_pushnil(L);
