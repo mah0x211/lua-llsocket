@@ -87,11 +87,11 @@ LUALIB_API int luaopen_llsocket_env(lua_State *L);
 
 static inline void lls_initerror(lua_State *L)
 {
-    le_loadlib(L, 1);
+    lua_error_loadlib(L, 1);
     lua_getfield(L, LUA_REGISTRYINDEX, ERROR_TYPE_NAME);
     if (lua_isnil(L, -1)) {
         lua_pushliteral(L, ERROR_TYPE_NAME);
-        le_new_type(L, -1);
+        lua_error_new_type(L, -1);
         lua_setfield(L, LUA_REGISTRYINDEX, ERROR_TYPE_NAME);
     }
     lua_pop(L, 1);
