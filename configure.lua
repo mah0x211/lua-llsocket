@@ -399,22 +399,17 @@ do
     local cfg = ConfigHeader.new(path)
     cfg:set_feature('_GNU_SOURCE')
 
+    local headers = {}
     cfg:config_headers({
-        -- -- headers on linux
-        -- 'linux/if.h',
-        -- 'linux/if_packet.h',
-        -- -- headers on other unix
-        -- 'net/if_dl.h',
-    })
+        'sys/types.h',
+        'sys/socket.h',
+        'sys/sendfile.h',
+    }, headers)
 
     cfg:config_funcs({
         'sendfile',
         'accept4',
-    }, {
-        'sys/types.h',
-        'sys/socket.h',
-        'sys/sendfile.h',
-    })
+    }, headers)
 
     cfg:config_fields({
         ['struct sockaddr'] = {
