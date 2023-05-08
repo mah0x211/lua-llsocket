@@ -1226,8 +1226,8 @@ static int sendmsg_lua(lua_State *L)
     // set msg_iov
     if (lmsg->iov && lmsg->iov->nbyte) {
         data.msg_iovlen = IOV_MAX;
-        len             = lua_iovec_setv(lmsg->iov, iov, &data.msg_iovlen, 0,
-                                         lmsg->iov->nbyte);
+        len = lua_iovec_setv(lmsg->iov, iov, (int *)&data.msg_iovlen, 0,
+                             lmsg->iov->nbyte);
     }
     // set msg_control
     if (lmsg->control && lmsg->control->len) {
@@ -1649,7 +1649,7 @@ static int recvmsg_lua(lua_State *L)
     if (lmsg->iov && lmsg->iov->nbyte) {
         len             = lmsg->iov->nbyte;
         data.msg_iovlen = IOV_MAX;
-        lua_iovec_setv(lmsg->iov, data.msg_iov, &data.msg_iovlen, 0,
+        lua_iovec_setv(lmsg->iov, data.msg_iov, (int *)&data.msg_iovlen, 0,
                        lmsg->iov->nbyte);
     }
     // set msg_control
