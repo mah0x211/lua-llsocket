@@ -54,6 +54,8 @@ jobs:
         sudo apt install lcov -y
         luarocks install testcase
         luarocks install nosigpipe
+        luarocks install string-trim
+        luarocks install string-contains
     -
       name: Install
       run: |
@@ -65,10 +67,10 @@ jobs:
     -
       name: Generate coverage reports
       run: |
-        sh ./covergen.sh
+        sh ./covgen.sh
     -
       name: Upload c coverage to Codecov
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
         files: ./coverage/lcov.info
         flags: unittests

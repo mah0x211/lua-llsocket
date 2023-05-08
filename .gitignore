@@ -1,7 +1,8 @@
+.vscode/
 coverage/
 *.o
 *.so
 *.gcda
 *.gcno
 *.profraw
-Makefile
+config.h
