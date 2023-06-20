@@ -1,4 +1,3 @@
-require('nosigpipe')
 local unpack = unpack or table.unpack
 local testcase = require('testcase')
 local errno = require('errno')
