@@ -1,4 +1,3 @@
-require('nosigpipe')
 local collectgarbage = collectgarbage
 local unpack = unpack or table.unpack
 local testcase = require('testcase')
