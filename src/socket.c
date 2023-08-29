@@ -1795,7 +1795,7 @@ static int connect_lua(lua_State *L)
 static inline int select_lua(lua_State *L, int receivable, int sendable)
 {
     lls_socket_t *s        = lauxh_checkudata(L, 1, SOCKET_MT);
-    lua_Integer msec       = luaL_optinteger(L, 2, 0);
+    lua_Number sec         = luaL_optnumber(L, 2, 0);
     int except             = lauxh_optboolean(L, 3, 0);
     struct timeval timeout = {.tv_sec = 0, .tv_usec = 0};
     fd_set rfds;
@@ -1806,9 +1806,9 @@ static inline int select_lua(lua_State *L, int receivable, int sendable)
     fd_set *eptr = NULL;
 
     lua_settop(L, 0);
-    if (msec > 0) {
-        timeout.tv_sec  = msec / 1000;
-        timeout.tv_usec = msec % 1000 * 1000;
+    if (sec > 0) {
+        timeout.tv_sec  = sec;
+        timeout.tv_usec = (sec - (lua_Number)timeout.tv_sec) * 1000000;
     }
 
     // select receivable
