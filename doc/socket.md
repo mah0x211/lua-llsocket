@@ -269,13 +269,13 @@ accept a connection.
 - `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK`, `EINTR` or `ECONNABORTED`.
 
 
-## ok, err, timeout = sock:sendable( [msec [, exception]] )
+## ok, err, timeout = sock:sendable( [sec [, exception]] )
 
-wait until socket can be sendable within specified timeout milliseconds.
+wait until socket can be sendable within specified timeout seconds.
 
 **Parameters**
 
-- `msec:integer`: timeout milliseconds. (default `0`)
+- `sec:number`: timeout seconds. (default `0`)
 - `exception:boolean`: enable exception waiting. (default `false`)
 
 **Returns**
@@ -384,13 +384,13 @@ send a file.
 - `again:boolean`: `true` if len != #bytes, or `errno` is `EAGAIN` or `EINTR`.
 
 
-## ok, err, timeout = sock:recvable( [msec [, exception]] )
+## ok, err, timeout = sock:recvable( [sec [, exception]] )
 
-wait until the socket can be receivable within specified timeout milliseconds.
+wait until the socket can be receivable within specified timeout seconds.
 
 **Parameters**
 
-- `msec:integer`: timeout milliseconds. (default `0`)
+- `sec:integer`: timeout seconds. (default `0`)
 - `exception:boolean`: enable exception waiting. (default `false`)
 
 **Returns**
