@@ -31,6 +31,8 @@ LUALIB_API int luaopen_llsocket(lua_State *L)
 {
     // init error module
     lua_errno_loadlib(L);
+    // init gc function module
+    lls_gcfn_init(L);
 
     // register submodule
     lua_newtable(L);

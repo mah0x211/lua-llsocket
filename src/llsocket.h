@@ -60,6 +60,7 @@
 #define CMSGHDR_MT  "llsocket.cmsghdr"
 #define CMSGHDRS_MT "llsocket.cmsghdrs"
 #define MSGHDR_MT   "llsocket.msghdr"
+#define GCFN_MT     "llsocket.gcfn"
 
 #if defined(__linux__)
 # include <linux/if.h>
@@ -82,6 +83,59 @@ LUALIB_API int luaopen_llsocket_cmsghdr(lua_State *L);
 LUALIB_API int luaopen_llsocket_cmsghdrs(lua_State *L);
 LUALIB_API int luaopen_llsocket_msghdr(lua_State *L);
 LUALIB_API int luaopen_llsocket_env(lua_State *L);
+
+// gc function
+
+/**
+ * @brief lls_gcfn_t
+ * the gc function structure that keep reference of user defined gc function
+ * (UDF). the UDF is called when the socket object will be closed.
+ */
+typedef struct lls_gcfn_st {
+    int ref_self;
+    int ref_fn;
+    struct lls_gcfn_st *prev;
+    struct lls_gcfn_st *next;
+} lls_gcfn_t;
+
+/**
+ * @brief lls_gcfn_init register llsocket.gcfn module to the Lua state.
+ * @param L Lua state
+ */
+void lls_gcfn_init(lua_State *L);
+
+/**
+ * @brief lls_gcfn_new create new lls_gcfn_t instance.
+ * argidx must be the stack index of the error function for the user defined gc
+ * function (UDF). if the error function is nil, then the error message of the
+ * UDF is ignored.
+ *
+ * And, the next stack index of argidx must be the user defined gc function. The
+ * UDF is called when the socket object will be closed.
+ *
+ * the remaining arguments are passed to the UDF when the UDF is called.
+ *
+ * @param L Lua state
+ * @param argidx index of argument that is error function for the user defined
+ * gc function.
+ * @return lls_gcfn_t*
+ */
+lls_gcfn_t *lls_gcfn_new(lua_State *L, int argidx);
+
+/**
+ * @brief lls_gcfn_del remove lls_gcfn_t instance.
+ * @param L Lua state
+ * @param gcf lls_gcfn_t instance
+ * @return int 1 if the instance has been deleted, otherwise 0.
+ */
+int lls_gcfn_del(lua_State *L, lls_gcfn_t *gcf);
+
+/**
+ * @brief lls_gcfn_call call UDF and remove lls_gcfn_t instance by lls_gcfn_del.
+ * @param L Lua state
+ * @param gcf lls_gcfn_t instance
+ */
+void lls_gcfn_call(lua_State *L, lls_gcfn_t *gcf);
 
 #define ERROR_TYPE_NAME "llsocket.error"
 
