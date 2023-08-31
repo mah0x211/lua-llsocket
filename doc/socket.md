@@ -87,7 +87,40 @@ close a file descriptor.
 - `err:error`: error object.
 
 
-## fd = sock:unwrap()
+## gcfn, err = socket:addgcfn( errfunc, func, ... )
+
+add the user-defined function that will be called when socket is closed or unwrapped.
+
+**NOTE**
+
+user-defined functions are called in the order in which they were last added.
+
+**Parameters**
+
+- `errfunc:function`: error function that will be called when user-defined function is failed on error.
+- `func:function`: user-defined function.
+- `...:...`: arguments for user-defined function.
+
+**Returns**
+
+- `gcfn:llsocket.gcfn`: An object to be passed to the [socket:delgcfn()](#ok--socketdelgcfn-gcfn-) method when a user-defined function needs to be deleted.
+- `err:error`: error object.
+
+
+## ok = socket:delgcfn( gcfn )
+
+delete a user-defined function.
+
+**Parameters**
+
+- `gcfn:llsocket.gcfn`: an object returned by [socket:addgcfn()](#gcfn-err--socketaddgcfn-errfunc-func--) method.
+
+**Returns**
+
+- `ok:boolean`: `true` on success.
+
+
+## fd = socket:unwrap()
 
 get a socket file descriptor, and disable a `sock`.
 
@@ -96,7 +129,7 @@ get a socket file descriptor, and disable a `sock`.
 - `fd:integer`: socket file descriptor.
 
 
-## sock, err = sock:dup()
+## sock, err = socket:dup()
 
 duplicate a `sock`.
 
@@ -106,7 +139,7 @@ duplicate a `sock`.
 - `err:error`: error object.
 
 
-## fd = sock:fd()
+## fd = socket:fd()
 
 get a socket file descriptor.
 
@@ -115,7 +148,7 @@ get a socket file descriptor.
 - `fd:integer`: socket file descriptor.
 
 
-## family = sock:family()
+## family = socket:family()
 
 get a address family type.
 
@@ -124,7 +157,7 @@ get a address family type.
 - `family:integer`: [AF_* types](constants.md#af_-types) constants.
 
 
-## socktype = sock:socktype()
+## socktype = socket:socktype()
 
 get a socket type.
 
@@ -133,7 +166,7 @@ get a socket type.
 - `socktype:integer`: [SOCK_* type](constants.md#sock_-types) constants.
 
 
-## protocol = sock:protocol()
+## protocol = socket:protocol()
 
 get a protocol type.
 
@@ -142,7 +175,7 @@ get a protocol type.
 - `protocol:integer`: [IPPROTO_* type](constants.md#ipproto_-types) constants.
 
 
-## ok, err = sock:bind( ai )
+## ok, err = socket:bind( ai )
 
 bind a `sock` to an address `ai`.
 
@@ -156,7 +189,7 @@ bind a `sock` to an address `ai`.
 - `err:error`: error object.
 
 
-## ok, err, again = sock:connect( ai )
+## ok, err, again = socket:connect( ai )
 
 initiate a new connection.
 
@@ -167,7 +200,7 @@ initiate a new connection.
 **Returns**
 
 - `ok:boolean`: `true` on success.
-    - if `err.type` is `errno.EINPROGRESS` or `errno.EALREADY`, you must check the `errno` by `sock:error()` after a while.
+    - if `err.type` is `errno.EINPROGRESS` or `errno.EALREADY`, you must check the `errno` by [socket:error()](#soerr-err--socketerror) after a while.
 - `err:error`: error object.
 - `again:boolean`: `true` if errno is `EAGAIN` or `ETIMEDOUT`.
 
@@ -200,7 +233,7 @@ for _, ai in ipairs(ais) do
 end
 ```
 
-## ok, err = sock:shutdown( [flag] )
+## ok, err = socket:shutdown( [flag] )
 
 shut down part of a full-duplex connection.
 
@@ -214,7 +247,7 @@ shut down part of a full-duplex connection.
 - `err:error`: error object.
 
 
-## ok, err = sock:close( [flag] )
+## ok, err = socket:close( [flag] )
 
 close a file descriptor.
 
@@ -228,7 +261,7 @@ close a file descriptor.
 - `err:error`: error object.
 
 
-## ok, err = sock:listen( [backlog] )
+## ok, err = socket:listen( [backlog] )
 
 listen for connections.
 
@@ -242,7 +275,7 @@ listen for connections.
 - `err:error`: error object.
 
 
-## sock, err, again, ai = sock:accept( [with_ai] )
+## sock, err, again, ai = socket:accept( [with_ai] )
 
 accept a connection.
 
@@ -258,7 +291,7 @@ accept a connection.
 - `ai:llsocket.addrinfo`: [llsocket.addrinfo](addrinfo.md) object.
 
 
-## fd, err, again = sock:acceptfd()
+## fd, err, again = socket:acceptfd()
 
 accept a connection.
 
@@ -269,7 +302,7 @@ accept a connection.
 - `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK`, `EINTR` or `ECONNABORTED`.
 
 
-## ok, err, timeout = sock:sendable( [sec [, exception]] )
+## ok, err, timeout = socket:sendable( [sec [, exception]] )
 
 wait until socket can be sendable within specified timeout seconds.
 
@@ -285,7 +318,7 @@ wait until socket can be sendable within specified timeout seconds.
 - `timeout:boolean`: timed-out.
 
 
-## len, err, again = sock:write( msg )
+## len, err, again = socket:write( msg )
 
 write a message.
 
@@ -301,7 +334,7 @@ write a message.
 
 
 
-## len, err, again = sock:send( msg [, flag, ...] )
+## len, err, again = socket:send( msg [, flag, ...] )
 
 send a message.
 
@@ -317,7 +350,7 @@ send a message.
 - `again:boolean`: `true` if len != #msg, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR.
 
 
-## len, err, again = sock:sendto( msg, ai [, flag, ...] )
+## len, err, again = socket:sendto( msg, ai [, flag, ...] )
 
 send a message to specified destination address.
 
@@ -334,7 +367,7 @@ send a message to specified destination address.
 - `again:boolean`: `true` if len != #msg, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 
 
-## len, err, again = sock:sendfd( fd, [ai, [flag, ...]] )
+## len, err, again = socket:sendfd( fd, [ai, [flag, ...]] )
 
 send file descriptors along unix domain sockets.
 
@@ -351,7 +384,7 @@ send file descriptors along unix domain sockets.
 - `again:boolean`: `true` if `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 
 
-## len, err, again = sock:sendmsg( mh [, flag, ...] )
+## len, err, again = socket:sendmsg( mh [, flag, ...] )
 
 send multiple messages including auxiliary data at once.
 
@@ -367,7 +400,7 @@ send multiple messages including auxiliary data at once.
 - `again:boolean`: `true` if len != `mh:bytes()`, or `errno` is `EAGAIN`, `EWOULDBLOCK` or `EINTR`.
 
 
-## len, err, again = sock:sendfile( fd, bytes [, offset] )
+## len, err, again = socket:sendfile( fd, bytes [, offset] )
 
 send a file.
 
@@ -384,7 +417,7 @@ send a file.
 - `again:boolean`: `true` if len != #bytes, or `errno` is `EAGAIN` or `EINTR`.
 
 
-## ok, err, timeout = sock:recvable( [sec [, exception]] )
+## ok, err, timeout = socket:recvable( [sec [, exception]] )
 
 wait until the socket can be receivable within specified timeout seconds.
 
@@ -400,7 +433,7 @@ wait until the socket can be receivable within specified timeout seconds.
 - `timeout:boolean`: timed-out.
 
 
-## msg, err, again = sock:read( [bufsize] )
+## msg, err, again = socket:read( [bufsize] )
 
 read a message.
 
@@ -417,7 +450,7 @@ read a message.
 **NOTE:** all return values will be nil if the number of bytes received is `0` and socket type is not `SOCK_DGRAM` and `SOCK_RAW`.
 
 
-## msg, err, again = sock:recv( [bufsize [, flag, ...]] )
+## msg, err, again = socket:recv( [bufsize [, flag, ...]] )
 
 receive a message.
 
@@ -435,7 +468,7 @@ receive a message.
 **NOTE:** all return values will be nil if the number of bytes received is `0` and socket type is not `SOCK_DGRAM` and `SOCK_RAW`.
 
 
-## msg, err, again, ai = sock:recvfrom( [bufsize [, flag, ...]] )
+## msg, err, again, ai = socket:recvfrom( [bufsize [, flag, ...]] )
 
 receive message and address info.
 
@@ -454,7 +487,7 @@ receive message and address info.
 **NOTE:** all return values will be nil if the number of bytes received is `0` and socket type is not `SOCK_DGRAM` and `SOCK_RAW`.
 
 
-## fd, err, again = sock:recvfd( [flag, ...] )
+## fd, err, again = socket:recvfd( [flag, ...] )
 
 receive file descriptors along unix domain sockets.
 
@@ -471,7 +504,7 @@ receive file descriptors along unix domain sockets.
 **NOTE:** all return values will be nil if the number of bytes received is `0` and socket type is not `SOCK_DGRAM` and `SOCK_RAW`.
 
 
-## len, err, again = sock:recvmsg( mh [, flag, ...] )
+## len, err, again = socket:recvmsg( mh [, flag, ...] )
 
 receive multiple messages including auxiliary data at once.
 
@@ -489,7 +522,7 @@ receive multiple messages including auxiliary data at once.
 **NOTE:** all return values will be nil if the number of bytes received is `0` and socket type is not `SOCK_DGRAM` and `SOCK_RAW`.
 
 
-## bool, err = sock:atmark()
+## bool, err = socket:atmark()
 
 determine whether socket is at out-of-band mark.
 
@@ -499,7 +532,7 @@ determine whether socket is at out-of-band mark.
 - `err:error`: error object.
 
 
-## ai, err = sock:getsockname()
+## ai, err = socket:getsockname()
 
 get socket name.
 
@@ -509,14 +542,14 @@ get socket name.
 - `err:error`: error object.
 
 
-## ai, err = sock:getpeername()
+## ai, err = socket:getpeername()
 
 get address of connected peer.
 
-**Returns**: same as [sock:getsockname](#ai-err--sockgetsockname).
+**Returns**: same as [socket:getsockname()](#ai-err--socketgetsockname).
 
 
-## enable, err = sock:cloexec( [enable] )
+## enable, err = socket:cloexec( [enable] )
 
 determine whether the `FD_CLOEXEC` flag enabled, or change the state to an argument value.
 
@@ -530,7 +563,7 @@ determine whether the `FD_CLOEXEC` flag enabled, or change the state to an argum
 - `err:error`: error object.
 
 
-## enable, err = sock:nonblock( [enable] )
+## enable, err = socket:nonblock( [enable] )
 
 determine whether the `O_NONBLOCK` flag enabled, or change the state to an argument value.
 
@@ -544,7 +577,7 @@ determine whether the `O_NONBLOCK` flag enabled, or change the state to an argum
 - `err:error`: error object.
 
 
-## soerr, err = sock:error()
+## soerr, err = socket:error()
 
 get pending socket error status and clear it.
 
@@ -554,7 +587,7 @@ get pending socket error status and clear it.
 - `err:error`: error object.
 
 
-## enabled, err = sock:acceptconn()
+## enabled, err = socket:acceptconn()
 
 determine whether the `SO_ACCEPTCONN` flag enabled.
 
@@ -564,7 +597,7 @@ determine whether the `SO_ACCEPTCONN` flag enabled.
 - `err:error`: error object.
 
 
-## enable, err = sock:tcpnodelay( [enable] )
+## enable, err = socket:tcpnodelay( [enable] )
 
 determine whether the `TCP_NODELAY` flag enabled, or change the state to an argument value.
 
@@ -578,7 +611,7 @@ determine whether the `TCP_NODELAY` flag enabled, or change the state to an argu
 - `err:error`: error object.
 
 
-## sec, err = sock:tcpkeepintvl( [sec] )
+## sec, err = socket:tcpkeepintvl( [sec] )
 
 get the `TCP_KEEPINTVL` value, or change that value to an argument value.
 
@@ -592,7 +625,7 @@ get the `TCP_KEEPINTVL` value, or change that value to an argument value.
 - `err:error`: error object.
 
 
-## cnt, err = sock:tcpkeepcnt( [cnt] )
+## cnt, err = socket:tcpkeepcnt( [cnt] )
 
 get the `TCP_KEEPCNT` value, or change that value to an argument value.
 
@@ -606,7 +639,7 @@ get the `TCP_KEEPCNT` value, or change that value to an argument value.
 - `err:error`: error object.
 
 
-## sec, err = sock:tcpkeepalive( [sec] )
+## sec, err = socket:tcpkeepalive( [sec] )
 
 get the `TCP_KEEPALIVE` value, or set that value if argument passed.
 
@@ -620,7 +653,7 @@ get the `TCP_KEEPALIVE` value, or set that value if argument passed.
 - `err:error`: error object.
 
 
-## enable, err = sock:tcpcork( [enable] )
+## enable, err = socket:tcpcork( [enable] )
 
 determine whether the `TCP_CORK` flag enabled, or change the state to an argument value.
 
@@ -634,7 +667,7 @@ determine whether the `TCP_CORK` flag enabled, or change the state to an argumen
 - `err:error`: error object.
 
 
-## enable, err = sock:reuseport( [enable] )
+## enable, err = socket:reuseport( [enable] )
 
 determine whether the `SO_REUSEPORT` flag enabled, or change the state to an argument value.
 
@@ -648,7 +681,7 @@ determine whether the `SO_REUSEPORT` flag enabled, or change the state to an arg
 - `err:error`: error object.
 
 
-## enable, err = sock:reuseaddr( [enable] )
+## enable, err = socket:reuseaddr( [enable] )
 
 determine whether the `SO_REUSEADDR` flag enabled, or change the state to an argument value.
 
@@ -662,7 +695,7 @@ determine whether the `SO_REUSEADDR` flag enabled, or change the state to an arg
 - `err:error`: error object.
 
 
-## enable, err = sock:broadcast( [enable] )
+## enable, err = socket:broadcast( [enable] )
 
 determine whether the `SO_BROADCAST` flag enabled, or change the state to an argument value.
 
@@ -676,7 +709,7 @@ determine whether the `SO_BROADCAST` flag enabled, or change the state to an arg
 - `err:error`: error object.
 
 
-## enable, err = sock:debug( [enable] )
+## enable, err = socket:debug( [enable] )
 
 determine whether the `SO_DEBUG` flag enabled, or change the state to an argument value.
 
@@ -690,7 +723,7 @@ determine whether the `SO_DEBUG` flag enabled, or change the state to an argumen
 - `err:error`: error object.
 
 
-## enable, err = sock:keepalive( [enable] )
+## enable, err = socket:keepalive( [enable] )
 
 determine whether the `SO_KEEPALIVE` flag enabled, or change the state to an argument value.
 
@@ -704,7 +737,7 @@ determine whether the `SO_KEEPALIVE` flag enabled, or change the state to an arg
 - `err:error`: error object.
 
 
-## enable, err = sock:oobinline( [enable] )
+## enable, err = socket:oobinline( [enable] )
 
 determine whether the `SO_OOBINLINE` flag enabled, or change the state to an argument value.
 
@@ -718,7 +751,7 @@ determine whether the `SO_OOBINLINE` flag enabled, or change the state to an arg
 - `err:error`: error object.
 
 
-## enable, err = sock:dontroute( [enable] )
+## enable, err = socket:dontroute( [enable] )
 
 determine whether the `SO_DONTROUTE` flag enabled, or change the state to an argument value.
 
@@ -732,7 +765,7 @@ determine whether the `SO_DONTROUTE` flag enabled, or change the state to an arg
 - `err:error`: error object.
 
 
-## enable, err = sock:timestamp( [enable] )
+## enable, err = socket:timestamp( [enable] )
 
 determine whether the `SO_TIMESTAMP` flag enabled, or change the state to an argument value.
 
@@ -746,7 +779,7 @@ determine whether the `SO_TIMESTAMP` flag enabled, or change the state to an arg
 - `err:error`: error object.
 
 
-## sz, err = sock:rcvbuf( [sz] )
+## sz, err = socket:rcvbuf( [sz] )
 
 get the `SO_RCVBUF` value, or change that value to an argument value.
 
@@ -760,7 +793,7 @@ get the `SO_RCVBUF` value, or change that value to an argument value.
 - `err:error`: error object.
 
 
-## sz, err = sock:rcvlowat( [sz] )
+## sz, err = socket:rcvlowat( [sz] )
 
 get the `SO_RCVLOWAT` value, or change that value to an argument value.
 
@@ -774,7 +807,7 @@ get the `SO_RCVLOWAT` value, or change that value to an argument value.
 - `err:error`: error object.
 
 
-## sz, err = sock:sndbuf( [sz] )
+## sz, err = socket:sndbuf( [sz] )
 
 get the `SO_SNDBUF` value, or change that value to an argument value.
 
@@ -788,7 +821,7 @@ get the `SO_SNDBUF` value, or change that value to an argument value.
 - `err:error`: error object.
 
 
-## sz, err = sock:sndlowat( [sz] )
+## sz, err = socket:sndlowat( [sz] )
 
 get the `SO_SNDLOWAT` value, or change that value to an argument value.
 
@@ -802,7 +835,7 @@ get the `SO_SNDLOWAT` value, or change that value to an argument value.
 - `err:error`: error object.
 
 
-## sec, err = sock:rcvtimeo( [sec] )
+## sec, err = socket:rcvtimeo( [sec] )
 
 get the `SO_RCVTIMEO` value, or change that value to an argument value.
 
@@ -816,7 +849,7 @@ get the `SO_RCVTIMEO` value, or change that value to an argument value.
 - `err:error`: error object.
 
 
-## sec, err = sock:sndtimeo( [sec] )
+## sec, err = socket:sndtimeo( [sec] )
 
 get the `SO_SNDTIMEO` value, or change that value to an argument value.
 
@@ -830,7 +863,7 @@ get the `SO_SNDTIMEO` value, or change that value to an argument value.
 - `err:error`: error object.
 
 
-## sec, err = sock:linger( [sec] )
+## sec, err = socket:linger( [sec] )
 
 get the `SO_LINGER` value, or change that value to an argument value.
 
@@ -844,7 +877,7 @@ get the `SO_LINGER` value, or change that value to an argument value.
 - `err:error`: error object.
 
 
-## enable, err = sock:mcastloop( [enable] )
+## enable, err = socket:mcastloop( [enable] )
 
 determine whether the `IP_MULTICAST_LOOP` flag enabled, or change the state to an argument value.
 
@@ -858,7 +891,7 @@ determine whether the `IP_MULTICAST_LOOP` flag enabled, or change the state to a
 - `err:error`: error object.
 
 
-## ttl, err = sock:mcastttl( [ttl] )
+## ttl, err = socket:mcastttl( [ttl] )
 
 get the `IP_MULTICAST_TTL` value, or change that value to an argument value.
 
@@ -872,7 +905,7 @@ get the `IP_MULTICAST_TTL` value, or change that value to an argument value.
 - `err:error`: error object.
 
 
-## ifname, err = sock:mcastif( [ifname] )
+## ifname, err = socket:mcastif( [ifname] )
 
 get the `IP_MULTICAST_IF` value, or change that value to an argument value.
 
@@ -886,7 +919,7 @@ get the `IP_MULTICAST_IF` value, or change that value to an argument value.
 - `err:error`: error object.
 
 
-## ok, err = sock:mcastjoin( mcaddr [, ifname] )
+## ok, err = socket:mcastjoin( mcaddr [, ifname] )
 
 set the `IP_ADD_MEMBERSHIP` or `IPV6_JOIN_GROUP` (if IPv6) value.
 
@@ -901,7 +934,7 @@ set the `IP_ADD_MEMBERSHIP` or `IPV6_JOIN_GROUP` (if IPv6) value.
 - `err:error`: error object.
 
 
-## ok, err = sock:mcastleave( mcaddr [, ifname] )
+## ok, err = socket:mcastleave( mcaddr [, ifname] )
 
 set the `IP_DROP_MEMBERSHIP` or `IPV6_LEAVE_GROUP` (if IPv6) value.
 
@@ -916,7 +949,7 @@ set the `IP_DROP_MEMBERSHIP` or `IPV6_LEAVE_GROUP` (if IPv6) value.
 - `err:error`: error object.
 
 
-## ok, err = sock:mcastjoinsrc( mcaddr, srcaddr [, ifname] )
+## ok, err = socket:mcastjoinsrc( mcaddr, srcaddr [, ifname] )
 
 set the `IP_ADD_SOURCE_MEMBERSHIP` or `MCAST_JOIN_SOURCE_GROUP` (if IPv6) value.
 
@@ -932,7 +965,7 @@ set the `IP_ADD_SOURCE_MEMBERSHIP` or `MCAST_JOIN_SOURCE_GROUP` (if IPv6) value.
 - `err:error`: error object.
 
 
-## ok, err = sock:mcastleavesrc( mcaddr, srcaddr [, ifname] )
+## ok, err = socket:mcastleavesrc( mcaddr, srcaddr [, ifname] )
 
 set the `IP_DROP_SOURCE_MEMBERSHIP` or `MCAST_LEAVE_SOURCE_GROUP` (if IPv6) value.
 
@@ -948,7 +981,7 @@ set the `IP_DROP_SOURCE_MEMBERSHIP` or `MCAST_LEAVE_SOURCE_GROUP` (if IPv6) valu
 - `err:error`: error object.
 
 
-## ok, err = sock:mcastblocksrc( mcaddr, srcaddr [, ifname] )
+## ok, err = socket:mcastblocksrc( mcaddr, srcaddr [, ifname] )
 
 set the `IP_BLOCK_SOURCE` or `MCAST_BLOCK_SOURCE` (if IPv6) value.
 
@@ -964,7 +997,7 @@ set the `IP_BLOCK_SOURCE` or `MCAST_BLOCK_SOURCE` (if IPv6) value.
 - `err:error`: error object.
 
 
-## ok, err = sock:mcastunblocksrc( mcaddr, srcaddr [, ifname] )
+## ok, err = socket:mcastunblocksrc( mcaddr, srcaddr [, ifname] )
 
 set the `IP_UNBLOCK_SOURCE` or `MCAST_UNBLOCK_SOURCE` (if IPv6) value.
 

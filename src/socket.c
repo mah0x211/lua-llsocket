@@ -34,6 +34,7 @@ typedef struct {
     int family;
     int socktype;
     int protocol;
+    lls_gcfn_t *gcfunc;
 } lls_socket_t;
 
 // MARK: fd option
@@ -898,6 +899,20 @@ static int shutdown_lua(lua_State *L)
     return shutdownfd(L, s->fd, how);
 }
 
+static lls_gcfn_t GCFN_DONE = {};
+
+static inline void call_gcfn(lua_State *L, lls_socket_t *s)
+{
+    lls_gcfn_t *gcfunc = s->gcfunc;
+
+    s->gcfunc = &GCFN_DONE;
+    while (gcfunc) {
+        lls_gcfn_t *next = gcfunc->next;
+        lls_gcfn_call(L, gcfunc);
+        gcfunc = next;
+    }
+}
+
 static inline int closefd(lua_State *L, int fd, int how, int with_shutdown)
 {
     int err = 0;
@@ -942,6 +957,7 @@ static int close_lua(lua_State *L)
         lua_pushboolean(L, 1);
         return 1;
     }
+    call_gcfn(L, s);
     s->fd = -1;
 
     return closefd(L, fd, how, !lua_isnoneornil(L, 2));
@@ -1032,6 +1048,7 @@ static int accept_lua(lua_State *L)
         cs->family   = s->family;
         cs->socktype = s->socktype;
         cs->protocol = s->protocol;
+        cs->gcfunc   = NULL;
         lauxh_setmetatable(L, SOCKET_MT);
         if (with_addr) {
             struct addrinfo wrap = {.ai_flags     = 0,
@@ -1926,6 +1943,7 @@ static int gc_lua(lua_State *L)
     lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
 
     if (s->fd != -1) {
+        call_gcfn(L, s);
         close(s->fd);
     }
 
@@ -1954,9 +1972,52 @@ static int dup_lua(lua_State *L)
         .family   = s->family,
         .socktype = s->socktype,
         .protocol = s->protocol,
+        .gcfunc   = NULL,
     };
     lauxh_setmetatable(L, SOCKET_MT);
 
+    return 1;
+}
+
+static int delgcfn_lua(lua_State *L)
+{
+    lls_socket_t *s  = lauxh_checkudata(L, 1, SOCKET_MT);
+    lls_gcfn_t *gcfn = lauxh_checkudata(L, 2, GCFN_MT);
+
+    if (s->gcfunc == &GCFN_DONE) {
+        // socket already closed
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+
+    if (s->gcfunc == gcfn) {
+        // replace head of gcfunc
+        s->gcfunc = gcfn->next;
+    }
+    lua_pushboolean(L, lls_gcfn_del(L, gcfn));
+    return 1;
+}
+
+static int addgcfn_lua(lua_State *L)
+{
+    lls_socket_t *s  = lauxh_checkudata(L, 1, SOCKET_MT);
+    lls_gcfn_t *gcfn = NULL;
+
+    if (s->gcfunc == &GCFN_DONE) {
+        // socket already closed
+        lua_pushnil(L);
+        lua_errno_new(L, EBADF, "addgcfn_lua");
+        return 2;
+    }
+
+    gcfn       = lls_gcfn_new(L, 2);
+    gcfn->next = s->gcfunc;
+    if (s->gcfunc) {
+        s->gcfunc->prev = gcfn;
+    }
+    // set head of gcfunc
+    s->gcfunc = gcfn;
+    lauxh_pushref(L, gcfn->ref_self);
     return 1;
 }
 
@@ -1965,6 +2026,8 @@ static int unwrap_lua(lua_State *L)
     lls_socket_t *s = lauxh_checkudata(L, 1, SOCKET_MT);
 
     lua_settop(L, 1);
+    call_gcfn(L, s);
+
     // remove metatable
     lua_pushnil(L);
     lua_setmetatable(L, -2);
@@ -2015,6 +2078,7 @@ static int wrap_lua(lua_State *L)
 #if !defined(SO_PROTOCOL)
     s->protocol = 0;
 #endif
+    s->gcfunc = NULL;
 
     return 1;
 }
@@ -2052,6 +2116,7 @@ static int new_lua(lua_State *L)
         .family   = family,
         .socktype = socktype,
         .protocol = protocol,
+        .gcfunc   = NULL,
     };
     lauxh_setmetatable(L, SOCKET_MT);
 
@@ -2094,6 +2159,7 @@ static int pair_lua(lua_State *L)
             .family   = AF_UNIX,
             .socktype = socktype,
             .protocol = protocol,
+            .gcfunc   = NULL,
         };
         lauxh_setmetatable(L, SOCKET_MT);
         lua_rawseti(L, -2, i + 1);
@@ -2128,6 +2194,8 @@ LUALIB_API int luaopen_llsocket_socket(lua_State *L)
             {NULL,         NULL        }
         };
         struct luaL_Reg method[] = {
+            {"addgcfn",         addgcfn_lua        },
+            {"delgcfn",         delgcfn_lua        },
             {"unwrap",          unwrap_lua         },
             {"dup",             dup_lua            },
             {"fd",              fd_lua             },
