@@ -157,7 +157,7 @@ static inline void add_ifa_mtu(lua_State *L, char *ifa_name)
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
 
     if (fd != -1) {
-        struct ifreq ifr;
+        struct ifreq ifr = {0};
 
         strncpy(ifr.ifr_name, ifa_name, IFNAMSIZ - 1);
         if (ioctl(fd, SIOCGIFMTU, &ifr) == 0) {
