@@ -191,17 +191,21 @@ end
 
 function testcase.reuseport()
     for _, ai in pairs(addrs) do
-        local s = assert(socket.new(ai:family(), ai:socktype()))
+        -- NOTE: restrict SO_REUSERPORT to inet sockets. so, we should test
+        -- only inet sockets
+        if ai:family() == llsocket.AF_INET then
+            local s = assert(socket.new(ai:family(), ai:socktype()))
 
-        -- test that reuseport socket option can be set
-        local defval = s:reuseport()
-        assert.equal(s:reuseport(true), defval)
-        assert.is_true(s:reuseport())
-        assert.is_true(s:reuseport(false))
-        assert.is_false(s:reuseport())
+            -- test that reuseport socket option can be set
+            local defval = s:reuseport()
+            assert.equal(s:reuseport(true), defval)
+            assert.is_true(s:reuseport())
+            assert.is_true(s:reuseport(false))
+            assert.is_false(s:reuseport())
 
-        s:close()
-        os.remove('./test.sock');
+            s:close()
+            os.remove('./test.sock');
+        end
     end
 end
 
