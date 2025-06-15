@@ -32,18 +32,31 @@ static int data_lua(lua_State *L)
     lls_cmsghdr_t *cmsg = lauxh_checkudata(L, 1, CMSGHDR_MT);
 
     lauxh_pushref(L, cmsg->ref);
-    if (cmsg->level == SOL_SOCKET) {
-        if (cmsg->type == SCM_RIGHTS) {
-            int *fds = (int *)lua_tostring(L, -1);
-            int nfd  = cmsg->len / sizeof(int);
-            int i    = 0;
+    if (cmsg->level == SOL_SOCKET && cmsg->type == SCM_RIGHTS) {
+        size_t len       = 0;
+        const char *data = lauxh_checklstring(L, -1, &len);
+        int nfd          = 0;
 
-            for (; i < nfd; i++) {
-                lua_pushinteger(L, fds[i]);
-            }
-
-            return nfd;
+        if (!len) {
+            lua_pushnil(L);
+            return 1;
         }
+
+        // SCM_RIGHTS data must be a multiple of sizeof(int32_t)
+        if (len % sizeof(int32_t) != 0) {
+            return luaL_error(L,
+                              "SCM_RIGHTS protocol violation: "
+                              "data length is not a multiple of %zu",
+                              sizeof(int32_t));
+        }
+
+        nfd = len / sizeof(int);
+        for (int i = 0; i < nfd; i++) {
+            int32_t fd;
+            memcpy(&fd, data + i * sizeof(int32_t), sizeof(int32_t));
+            lua_pushinteger(L, fd);
+        }
+        return nfd;
     }
 
     return 1;
@@ -109,13 +122,10 @@ static int rights_lua(lua_State *L)
     int argc = lua_gettop(L);
 
     if (argc) {
-        char b[sizeof(int)];
-        int *fd = (int *)b;
-
         // check arguments
         for (int i = 1; i <= argc; i++) {
-            *fd = (int)lauxh_checkinteger(L, i);
-            lua_pushlstring(L, b, sizeof(b));
+            int32_t fd = lauxh_checkint32(L, i);
+            lua_pushlstring(L, (const char *)&fd, sizeof(fd));
         }
         lua_concat(L, argc);
         lua_replace(L, 1);

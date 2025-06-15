@@ -72,14 +72,14 @@ function testcase.rights()
             arg = {
                 true,
             },
-            err = '#1 .+ [(]integer expected, got boolean',
+            err = '#1 .+ [(]int32_t expected, got boolean',
         },
         {
             arg = {
                 1,
                 {},
             },
-            err = '#2 .+ [(]integer expected, got table',
+            err = '#2 .+ [(]int32_t expected, got table',
         },
     }) do
         local err = assert.throws(function()

@@ -51,7 +51,7 @@
 #include <unistd.h>
 // lualib
 #include "config.h"
-#include <lauxhlib.h>
+#include "lauxhlib.h"
 #include <lua_errno.h>
 #include <lua_iovec.h>
 
@@ -247,7 +247,7 @@ static inline lls_addrinfo_t *lls_addrinfo_alloc(lua_State *L,
     memcpy((void *)info->ai.ai_addr, (void *)src->ai_addr, src->ai_addrlen);
     info->ai.ai_canonname  = NULL;
     info->ai_canonname_ref = LUA_NOREF;
-    if (!src->ai_canonname) {
+    if (src->ai_canonname) {
         lua_pushstring(L, src->ai_canonname);
         info->ai.ai_canonname  = (char *)lua_tostring(L, -1);
         info->ai_canonname_ref = lauxh_ref(L);
