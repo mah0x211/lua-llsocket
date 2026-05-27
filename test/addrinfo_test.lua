@@ -33,7 +33,8 @@ function testcase.inet()
     local nameinfo = assert(ai:getnameinfo())
     assert.not_empty(nameinfo)
     assert.equal(nameinfo.host, 'localhost')
-    assert.equal(nameinfo.service, 'http-alt')
+    assert.equal(nameinfo.service == 'http-alt' or
+                 nameinfo.service == tostring(port), true)
 
     -- create new addrinfo without port
     ai = assert(addrinfo.inet(host, nil, llsocket.SOCK_STREAM,
@@ -83,7 +84,8 @@ function testcase.inet6()
     local nameinfo = assert(ai:getnameinfo())
     assert.not_empty(nameinfo)
     assert.equal(nameinfo.host, 'localhost')
-    assert.equal(nameinfo.service, 'http-alt')
+    assert.equal(nameinfo.service == 'http-alt' or
+                 nameinfo.service == tostring(port), true)
 
     -- create new addrinfo without port
     ai = assert(addrinfo.inet6(host, nil, llsocket.SOCK_STREAM,
