@@ -26,9 +26,8 @@
  *
  */
 
+// project
 #include "llsocket.h"
-#include <ifaddrs.h>
-#include <sys/ioctl.h>
 
 static inline int gettable(lua_State *L, int tblidx, const char *name)
 {

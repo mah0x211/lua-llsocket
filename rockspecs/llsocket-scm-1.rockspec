@@ -12,24 +12,72 @@ description = {
 }
 dependencies = {
     "lua >= 5.1",
-    "configh >= 0.2.0",
-    "errno >= 0.3.0",
-    "lauxhlib >= 0.3.1",
+    "configh >= 0.3.0",
+    "errno >= 0.5.0",
+    "lauxhlib >= 0.6.0",
     "iovec >= 0.5.0",
 }
+build_dependencies = {
+    "luarocks-build-hooks >= 0.8.0",
+}
 build = {
-    type = "make",
-    build_variables = {
-        CFLAGS = "$(CFLAGS)",
-        WARNINGS = "-Wall -Wno-trigraphs -Wmissing-field-initializers -Wreturn-type -Wmissing-braces -Wparentheses -Wno-switch -Wunused-function -Wunused-label -Wunused-parameter -Wunused-variable -Wunused-value -Wuninitialized -Wunknown-pragmas -Wshadow -Wsign-compare",
-        CPPFLAGS = "-I$(LUA_INCDIR)",
-        LDFLAGS = "$(LIBFLAG)",
-        LIB_EXTENSION = "$(LIB_EXTENSION)",
-        LLSOCKET_COVERAGE = "$(LLSOCKET_COVERAGE)",
+    type = "hooks",
+    before_build = {
+        "$(extra-vars)",
+        "$(configh)",
+        "codegen.lua",
     },
-    install_variables = {
-        LIB_EXTENSION = "$(LIB_EXTENSION)",
-        INST_LIBDIR = "$(LIBDIR)",
-        INST_LUADIR = "$(LUADIR)",
+    extra_variables = {
+        CFLAGS = "-Wall -Wno-trigraphs -Wmissing-field-initializers -Wreturn-type -Wmissing-braces -Wparentheses -Wno-switch -Wunused-function -Wunused-label -Wunused-parameter -Wunused-variable -Wunused-value -Wuninitialized -Wunknown-pragmas -Wshadow -Wsign-compare",
+    },
+    conditional_variables = {
+        LLSOCKET_COVERAGE = {
+            CFLAGS = "--coverage",
+            LIBFLAG = "--coverage",
+        },
+    },
+    modules = {
+        ["llsocket"] = {
+            sources = {
+                "src/addrinfo.c",
+                "src/cmsghdr.c",
+                "src/cmsghdrs.c",
+                "src/device.c",
+                "src/env.c",
+                "src/gcfn.c",
+                "src/llsocket.c",
+                "src/msghdr.c",
+                "src/socket.c",
+            },
+            incdirs = {
+                "src",
+                "$(DEP_LAUXHLIB_INCDIR)",
+                "$(DEP_ERRNO_INCDIR)",
+                "$(DEP_IOVEC_INCDIR)",
+            },
+            configh = {
+                output = "src/config.h",
+                output_status = true,
+                cc = "$(CC)",
+                features = {
+                    "_GNU_SOURCE",
+                },
+                funcs = {
+                    ["sys/socket.h"] = {
+                        "accept4",
+                    },
+                    ["sys/sendfile.h"] = {
+                        "sendfile",
+                    },
+                },
+                members = {
+                    ["sys/socket.h"] = {
+                        ["struct sockaddr"] = {
+                            "sa_len",
+                        },
+                    },
+                },
+            },
+        },
     },
 }

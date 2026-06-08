@@ -30,11 +30,19 @@
 
 #define _GNU_SOURCE
 
+// project
+#include "config.h"
+// depend
+#include "lauxhlib.h"
+#include "lua_errno.h"
+#include "lua_iovec.h"
+// lua
+#include <lauxlib.h>
+// system
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
-#include <math.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -49,11 +57,6 @@
 #include <sys/un.h>
 #include <time.h>
 #include <unistd.h>
-// lualib
-#include "config.h"
-#include "lauxhlib.h"
-#include <lua_errno.h>
-#include <lua_iovec.h>
 
 #define SOCKET_MT   "llsocket.socket"
 #define ADDRINFO_MT "llsocket.addrinfo"
